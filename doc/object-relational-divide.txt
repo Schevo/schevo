@@ -1,0 +1,240 @@
+=======================================
+ Bridging The Object-Relational Divide
+=======================================
+
+------------------------------------------------------
+ Presentation to DAMA St. Louis at Oracle Corporation
+------------------------------------------------------
+
+.. role:: raw-html(raw)
+   :format: html
+
+:Speaker: Patrick K. O'Brien
+
+:Presented On: April 28, 2005
+
+:Last Changed: $Date$
+
+:Copyright: Copyright 2005 by Orbtech_, LLC.  All Rights Reserved.
+            :raw-html:`<br />`
+            Licensed under the `GNU Free Documentation License`_.
+
+.. _GNU Free Documentation License: 
+   http://www.gnu.org/copyleft/fdl.html
+
+.. _Orbtech: http://orbtech.com/
+
+
+Patrick K. O'Brien
+------------------
+
+* 20 years of experience developing database applications for
+  businesses large and small
+
+* Open Source contributions: PyCrust, Pydispatcher, Pypersyst
+
+* Original designer and developer of Schevo
+
+
+What is Schevo?
+---------------
+
+* Schevo is a data management system.
+
+* Schevo is an application framework.
+
+* Schevo is an Open Source project.
+
+
+Additional details about Schevo
+-------------------------------
+
+* Provides a relational-like object model
+
+* Uses the object-oriented language Python
+
+* Represents **everything** as a Python object
+
+
+Some things that Schevo is not
+------------------------------
+
+* Schevo is **not** a relational database.
+
+* Schevo is **not** an object-relational hybrid.
+
+* Schevo is **not** an object-relational mapping layer.
+
+* Schevo is **not** a typical object database.
+
+
+Demo using Schevo Navigator
+---------------------------
+
+From the command prompt::
+
+  C:\Demos>evo new --template=todo mytodo
+  INFO:root:Creating mytodo
+  INFO:root:Creating mytodo.__init__
+  INFO:root:Creating mytodo.config
+  INFO:root:Copying todo template to mytodo
+
+  C:\Demos>evo run mytodo
+
+
+Problems that Schevo solves
+---------------------------
+
+* Boilerplate application code
+
+* RDBMS complexity and inflexibility
+
+* Object-relational impedence-mismatch
+
+
+Schevo philosphy
+----------------
+
+* 80% of typical database applications is boilerplate code.
+
+* The Relational model misses out on the benefits of objects.
+
+* Declarative is better than imperative.
+
+* SQL is about as "unPythonic" as it gets.
+
+
+Schevo philosphy
+----------------
+
+* The best API is no API.
+
+* The best database code is no database code.
+
+* Database applications must evolve or they will die.
+
+* The key is schema evolution and object migration.
+
+
+Demo using interactive Python
+-----------------------------
+
+From the command prompt::
+
+  C:\Demos>evo run mytodo -- --use-memory --no-navigator
+
+  >>> for person in db.root['Person']:
+  ...     print person.name
+  ...
+  Jane Doe
+  John Doe
+  Betty Rubble
+  Barney Rubble
+  Fred Flintstone
+  Genderless Doe
+  >>>
+
+
+Most object databases provide
+-----------------------------
+
+* Object persistence
+
+* Transactions
+
+* Memory management
+
+
+Most object databases do not provide
+------------------------------------
+
+* Relational-like infrastructure
+
+* An object model
+
+* Centrally-enforced integrity constraints
+
+* Declarative schemas
+
+
+Schevo features
+---------------
+
+* Data management infrastructure
+
+* Declarative schemas
+
+* Centrally-enforced integrity constraints
+
+* Smart fields
+
+* Transaction-centric
+
+
+Create transaction demo
+-----------------------
+
+From the command prompt::
+
+  C:\Demos>evo run mytodo -- --use-memory --no-navigator
+
+  >>> new = db.admin.create('Person')
+  >>> new.data.name = "Pat O'Brien"
+  >>> new.data.gender = db.root['Gender'].findone(code='M')
+  >>> pat = new.execute()
+  >>> pat
+  <schevo.domain.domain.Display object at 0x01684550>
+  >>> pat.data.gender.name
+  'Male'
+  >>>
+
+
+Declarative schemas
+-------------------
+
+Entity class declaration for Person::
+
+  class Person:
+      """Individual human being."""
+
+      name = f.string()
+      gender = f.entity(allow=Gender)
+
+      _key(name)
+    
+      _icon('.apps.personal')
+
+      _plural('People')
+
+      def __str__(self):
+          return self.name
+
+
+Schevo-enforced integrity constraints
+-------------------------------------
+
+* Alternate keys
+
+* Referential integrity
+
+* Field value constraints
+
+
+Schevo Resources
+----------------
+
+* Home: http://schevo.org/
+
+* Docs: http://docs.schevo.org/
+
+* Blog: http://orbtech.com/blog/schevo/
+
+* Mail: http://schevo.org/mailinglist/
+
+* Wiki: http://schevo.org/wiki/
+
+
+..
+     Local Variables:
+     mode: rst
+     End:

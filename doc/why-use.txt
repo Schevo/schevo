@@ -1,0 +1,59 @@
+===================
+ Why to Use Schevo
+===================
+
+.. role:: raw-html(raw)
+   :format: html
+
+:Last Changed: $Date: 2005-10-22T21:57:34.410155Z $
+
+
+Why use Schevo?
+===============
+
+The main problem that Schevo was designed to address is that
+Relational databases, which use Structured Query Language (SQL), do
+not match well with object-oriented programming languages, such as
+Java, Python and Ruby.  This situation has been labeled the
+"object-relational impedance mismatch" problem, and it is a
+significant barrier to the rapid development and evolution of database
+applications.
+
+Because of this mismatch, database applications tend to have three
+distinct layers of code: SQL within the database, object-oriented code
+within the application, and an object-relational mapping (ORM) layer
+to mediate between the SQL and the object language.  These extra
+layers add additional complexity and inflexibility to what are already
+complex and inflexible databases.  Schevo eliminates these extra
+layers.
+
+Schevo solves the object-relational impedance mismatch problem by
+combining relational features with the object-oriented programming
+language Python.  A database schema defined in Schevo results in a
+database that enforces the same integrity constraints supported by the
+Relational model, with the added benefit of Python objects.
+
+The benefit of this is that application developers can create their
+entire application using the full power of the Python language without
+having to introduce another language (SQL) that has its own language
+constructs, its own datatypes, and a limited set of behavior.
+Instead, a Schevo database stores Schevo objects which use native
+Python datatypes and include any behavior defined for those objects.
+In addition, Schevo objects contain a great deal of metadata that is
+available for introspection to support the development of rich user
+interfaces with a minimal amount of code.
+
+In fact, Schevo includes a GUI Navigator that can display a fully
+interactive interface into any Schevo database.  The Navigator is
+constructed on-the-fly based solely on the metadata available within
+the Schevo database file.  The Navigator allows you to display,
+create, update, and delete any object within the database, within the
+rules and constraints defined for that database.
+
+
+
+..
+     Local Variables:
+     mode: rst
+     End: 
+

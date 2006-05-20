@@ -1,0 +1,11 @@
+"""Description of schema."""
+
+# All Schevo schema modules must have these lines.
+from schevo.schema import *
+schevo.schema.prep(locals())
+
+# If this schema includes Schevo's icon support, uncomment this line:
+## _import('Schevo', 'icon', 1)
+
+# If this schema includes Schevo's identity support, uncomment this line:
+## _import('Schevo', 'identity', 1)

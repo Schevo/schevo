@@ -1,0 +1,105 @@
+3.0: (2005-09-??): r27238
+
+    * Fix bug in utility function (touch_every_reference()) added in 3.0a.
+
+    * Replace ._p_changed = 1 to ._p_note_change() in btree.py.
+
+3.0a: (2005-08-??): r27118
+
+    * Revise packed record format to write records where the instance state is 
+      compressed using zlib.  This reduces the size of stored files and the
+      number of bytes of data transmitted during load/store operations.
+
+    * Add a FileStorage2 file format.  The new format does not need or store 
+      transaction identifiers.  It also includes a pre-built index of the 
+      object records written at the time of the last pack.  This results in
+      a faster start-up.  Conversion is not automatic, though.
+      A convert_file_storage.py is included with this release to make it simple
+      to convert a file to either format.
+
+    * Add stress testing client stress.py.
+
+    * When the state of a ghost can't be loaded because it has been
+      removed by a pack (from another connection), make the error be a
+      ReadConflictError instead of a DurusKeyError.
+
+    * Implement an incremental pack.  The storage server can now serve
+      clients while packing the database.
+
+    * Add gen_every_instance() utility to durus.connection.
+
+    * Add touch_every_reference() utility function to durus.connection.
+
+    * Remove the use of tids from Connection, ClientStorage, and
+      StorageServer.  The StorageServer now sends STATUS_INVALID for
+      requests to load object records that are known to be invalid for
+      that client.  Change Storage.load() so that the return value is
+      a tid-less object-record.  The client/server protocol also
+      changes to stop transmitting tids as part of the response for
+      sync and commit requests.  Storage.sync() now returns only a
+      list of oids.  Storage.end() now returns None.
+
+2.0 (2005-4-26) r26653:
+
+    * The only change is in the license.  The new license is the GPL-compatible
+      version of the CNRI Open Source License.
+
+1.5 (2005-3-07) r26296:
+
+    * A small change makes Persistent instances pickle-able.
+
+1.4 (2005-1-14) r25851:
+
+    * Revise serialize.py to avoid using cPickle.noload(), which can't handle
+      a dict subclass.
+
+    * Add a --startup option to the durus command line tool.
+
+1.3 (2004-12-10) r25746:
+
+    * Use 'b' in file modes.  
+      
+    * Continue to rename the open packed file on POSIX systems.
+
+    * Convert tests to sancho's new utest format.
+
+    * Improve test coverage for FileStorage.
+
+    * Lower the priority of Sync logging.
+    
+    * Show host and port when client fails to connect.
+
+1.2 (2004-09-08) r25044:
+
+    * Add durus command line tool.
+
+    * Add btree module.
+
+    * Update pack() so that it works on Windows and so that it gets a lock 
+      again after the pack is completed. 
+
+1.1 (2004-08-05) r24872:
+
+    * Provide a close() method for FileStorage.  Call appropriate win32
+      unlock function.
+
+    * Remember to lock the new file created by pack().  Unlock the
+      old file.
+
+
+1.0 (2004-07-31) r24846:
+
+    * Fix obscure bug in storage_server during logging.
+
+    * Repaired example in README.txt.
+
+    * Added FAQ.
+
+    * Made ProtocolError inherit from DurusError.
+
+    * Added fsync() after writing transaction data.
+
+
+0.1 (2004-07-27) r24791:
+
+    * Initial Release 

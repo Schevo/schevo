@@ -1,0 +1,850 @@
+==============================
+ TurboGears Wiki using Schevo
+==============================
+
+.. role:: raw-html(raw)
+   :format: html
+
+:Last Changed: $Date$
+
+:Copyright: Copyright 2005 by `Kevin Dangoor`_.
+            :raw-html:`<br />`
+            With modifications by Orbtech_ LLC.
+
+.. _Kevin Dangoor: http://blueskyonmars.com/
+
+.. _Orbtech: http://orbtech.com/
+
+.. sectnum::
+
+.. contents::
+
+
+**NOTE: This document is currently outdated, due to the rapid nature
+of TurboGears development.  No schedule has yet been determined for
+bringing it up-to-date.**
+
+
+Abstract
+========
+
+The goal of this tutorial is to give an overview of putting together
+an application with TurboGears_ 0.8a3, using a Schevo 3.0 database to
+store data.  We start with nothing (other than a TurboGears and Schevo
+installation) and end up with a simple Wiki.
+
+Additionally, we add additional features to the Wiki that expose the
+benefits of using the Schevo DBMS instead of a traditional SQL-based
+DBMS.
+
+This is a modified version of `The 20 Minute Wiki`_.
+
+.. _The 20 Minute Wiki: http://turbogears.org/docs/wiki20/index.html
+
+.. _TurboGears: http://turbogears.org/
+
+
+Introduction
+============
+
+To go through this tutorial, you'll want:
+
+1. `docutils` 0.3.9, which is used for formatting.  You could get away
+   with not having docutils, but it's not as much fun.  ``easy_install
+   docutils`` should get you what you need.
+
+2. A web browser.
+
+3. Your favorite text editor.
+
+4. Two command-line windows (you only *need* one, but two is nicer).
+
+5. Schevo 3.0 installed.  See `Getting Started with Schevo`_ for
+   information on installing Schevo.
+
+.. _Getting Started with Schevo: ../../guides/getting-started.html
+
+6. TurboGears 0.6 installed.  See `Download TurboGears`_ for
+   information on installing TurboGears.
+
+.. _Download TurboGears: http://turbogears.org/download/index.html
+
+This tutorial doesn't cover Python at all.  Check the `TurboGears
+docs`_ for more coverage of Python.
+
+.. _TurboGears docs: http://turbogears.org/docs/index.html
+
+
+The Quickstart
+==============
+
+TurboGears has a command line tool with a few features that will be
+touched upon in this tutorial.  The first is "quickstart", which will
+get us up and running quickly::
+
+  tg-admin quickstart
+
+You'll be prompted for the name of the project (this is the pretty
+name that human beings would appreciate), and the name of the package
+(this is the less-pretty name that Python will like).  For this
+tutorial, we'll be using these values::
+
+  Enter project name: Schevo Wiki
+  Enter package name [schevowiki]: schevowiki
+
+This creates a few files in a directory tree just below your current
+directory.  Let's go in there and you can take a look around::
+
+  cd schevowiki
+
+
+Now Serving: Number 1
+=====================
+
+You may have spotted a file called `schevowiki-start.py`.  This is the
+startup script for the built-in web server.  Let's run it::
+
+  python schevowiki-start.py
+
+Point your browser at `<http://localhost:8080>`__, and you'll see a
+nice little welcome page with the current time.
+
+
+That was easy!
+==============
+
+Easy indeed.  And, if you take a look at the code that the quickstart
+created, you'll see that there isn't much involved in getting up and
+running.  Two interesting things to look at:
+
+* `schevowiki/controllers.py` has the code that's generating the
+  welcome page.  CherryPy makes things very easy... you just write
+  methods and expose them to the web!  TurboGears adds the automatic
+  template processing to go from a dictionary of values to HTML for
+  the browser.
+
+* `schevowiki/templates/welcome.kid` is the template you view on the
+  welcome screen.  Notice that it's standard XHTML with some simple
+  namespaced attributes?  Very designer-friendly.  You can even open
+  it directly in your browser!
+
+
+Let's make a wiki!
+==================
+
+If you're not familiar with a Wiki, you might want to check out the
+`Wikipedia entry`_. The whole idea is that it's an easily-editable web
+content system that makes it trivial to link to pages and create new
+pages.
+
+.. _Wikipedia entry: http://en.wikipedia.org/wiki/Wiki
+
+TurboGears follows the Model-View-Controller paradigm, as do most web
+frameworks these days. Kid templates are your view, your CherryPy
+classes are your controllers and basically any object can be your
+model. In practice, since we're using a Schevo database, your model
+objects will be Schevo objects.
+
+Since this is all about pages, why don't we go ahead and set up a
+place to store our pages. 
+
+Working with Schevo is different than with many databases in that
+everything that deals with keeping the database in a consistent state
+is specified in a single schema.  This includes definitions for
+"Entity" objects which store data in a structured manner, and
+"Transaction" objects that effect changes upon the database.
+
+Since this is all about pages, why don't we go ahead and set up a
+Schevo database schema, and a corresponding database file, to store
+our pages.
+
+Assuming you are already in the `schevowiki` directory, create a Python
+module directory to store the database schema::
+
+  mkdir schevowiki/schema
+  touch schevowiki/schema/__init__.py
+
+Create a new file in that directory called `schema_001.py` and place
+the following code inside it::
+
+  """Wiki schema."""
+
+  # All Schevo schema modules must have these lines.
+  from schevo.schema import *
+  schevo.schema.prep(locals())
+
+
+  class Page(E.Entity):
+
+      name = f.string()
+      data = f.memo()
+
+      _key(name)
+
+For the `name` field of the `Page` entity class, we specified
+`_key(name)`, which will guarantee that the field is unique and allow
+us to easily do searches on `name`.
+
+Once you've created the schema, make sure you are in the top-level
+directory of the project and use the `evo` tool to create a
+`schevowiki.db` database file based on your schema::
+
+  evo db create --app=schevowiki schevowiki.db
+  
+
+Pointing to a database
+======================
+
+TurboGears has a minimum of required configuration.  It *does* need to
+know where your database lives.  This can be done in code, but the
+quickstart creates a couple of simple INI-format config files for you.
+
+Since we're working in a development environment and not a deployment
+one, edit the `dev.cfg` file and add this line just below the
+`[global]` section::
+
+  schevo.dbfile="schevowiki.db"
+
+TurboGears does not implicitly have support for Schevo, so we need to
+enable such support.  Edit the `schevowiki/model.py` file so that it
+contains only the following three lines::
+
+  from schevo.gears.hub import AutoConnectHub
+  hub = AutoConnectHub()
+  db = hub.db
+
+Restart the web server by hitting Ctrl-C and running the startup
+script again::
+
+  python schevowiki-start.py
+
+
+Let's display a wiki page!
+==========================
+
+Hard to believe it, but we're already ready to start displaying
+pages.  The first step is to rename our template.  `welcome.kid` just
+won't do::
+
+  cd schevowiki/templates
+  mv welcome.kid page.kid
+  cd ../..
+
+Now, let's replace the body of the template with something more
+reasonable for a wiki page::
+
+    <div style="float:right; width: 10em">
+        Viewing <span py:replace="name">Page Name Goes Here</span>
+        <br/>
+        You can return to the <a href="/">FrontPage</a>.
+    </div>
+    
+    <div py:replace="XML(data)">Page text goes here.</div>
+
+Notice that you can open `page.kid` in your web browser, and it is
+still perfectly viewable.  That placeholder text can really help see a
+layout before it's put in action!
+
+TurboGears grealy reduces the amount of code you need to write, but it
+does not eliminate it.  Let's add a couple of imports to the top of
+`controllers.py`::
+
+  from schevowiki.model import db
+  from docutils.core import publish_parts
+
+Then, we'll replace the index method with one that does the
+following:
+
+1. Sets the template to our newly named `page` (line 1)
+2. Has the default name of `FrontPage` (line 2)
+3. Retrieves the page from the database (line 3)
+4. Formats the text as HTML (line 4)
+5. Deals with unicode properly (always a good habit, on line 5)
+6. Returns the data for the template to use (line 6)
+
+::
+
+    @turbogears.expose(html='schevowiki.templates.page')
+    def index(self, name='FrontPage'):
+        page = db.Page.findone(name=name)
+        content = publish_parts(page.data, writer_name='html')['html_body']
+        content = content.encode('utf8')
+        return dict(data=content, name=page.name)
+
+All that in six, very readable lines. The dictionary that we're
+returning at the end provides the data that populates the template and
+has other magical powers that we'll see later.
+
+
+Let's check out that first page!
+================================
+
+The code is in place.  Point your browser to
+`<http://localhost:8080>`__ and let's see what we've got.
+
+Oh, we've got an error.  Since we're in development mode, CherryPy
+gives us the whole traceback, which is very convenient.  The traceback
+is telling us that we got an SQLObjectNotFound exception. D'oh! We
+forgot to put a page in the database! Let's do that using a special
+version of the Python interactive shell.
+
+First, stop the web server.  Then, run the following command at a
+command prompt::
+
+  tg-admin shell
+
+.. Doctest setup
+
+   >>> import os
+   >>> from schevo.test import CreatesSchema
+   >>> tester = CreatesSchema()
+   >>> tester.schema = """
+   ... from schevo.schema import *
+   ... schevo.schema.prep(locals())
+   ... class Page(E.Entity):
+   ...     name = f.string()
+   ...     data = f.memo()
+   ...     _key(name)
+   ... """
+   >>> tester.setup_method(None)
+   >>> db = tester.db
+
+Next, enter the following into the interactive shell::
+
+  >>> tx = db.Page.t.create()
+  >>> tx.name = 'FrontPage'
+  >>> tx.data = 'Welcome to my front page.'
+  >>> db.execute(tx)
+  <Page entity in <Database 'Schevo Database' :: V 1> oid:1 rev:0>
+
+That's all there is to it. We just created a new page in the database.
+
+Restart the web server, reload your browser window, and you'll see our
+beautiful page.
+
+
+How do we make a better page?
+=============================
+
+One of the hallmarks of wikis is that you can edit the page just by
+clicking "Edit This Page". That and the wikispam that
+follows... hopefully, spammers won't find your Schevo Wiki before
+we're done with it!
+
+Let's start by creating a template for editing. Let's start with a
+copy of `page.kid`::
+
+  cd schevowiki/templates
+  cp page.kid edit.kid
+  cd ../..
+
+In edit.kid, change the text at the top from "Viewing" to "Editing"
+and replace the <div> for the data with::
+
+        <form action="save" method="post">
+            <input type="hidden" name="name" py:attrs="value=name"/>
+            <textarea name="data" py:content="data" rows="10" cols="60"/>
+            <input type="submit" name="submit" value="Save"/>
+        </form>
+    
+We need something to use this template now.  We'll add an `edit`
+method to our controller::
+
+    @turbogears.expose(html='schevowiki.templates.edit')
+    def edit(self, name):
+        page = db.Page.findone(name=name)
+        return dict(name=page.name, data=page.data)
+
+This method is very similar to our index method. The main difference
+is that the index method renders the wiki content as HTML, and this
+one returns the straight text.
+
+We need a way to get to our edit method, so we'll edit `page.kid` to
+add this to the bottom::
+
+  <p><a href="/edit?name=${name}">Edit this page</a></p>
+
+That should do it! Reload the page in your browser, and you'll see the
+edit link. Follow that link, and you'll get a page that lets you
+edit. Don't click that save button, yet! We still need to write that
+method.
+
+
+Saving our edits
+================
+
+The form we made in the last section had an action of `save`. So, we
+need to make a method called save in our controller. Here's what it
+looks like::
+
+    @turbogears.expose()
+    def save(self, name, data, submit):
+        page = db.Page.findone(name=name)
+        tx = page.t.update()
+        tx.data = data
+        db.execute(tx)
+        turbogears.flash('Changes saved!')
+        raise cherrypy.HTTPRedirect('/?name=%s' % name)
+
+We also need to add `cherrypy` to our imports so that we can do the
+redirect::
+
+  import cherrypy
+
+Interesting things to note about this:
+
+1. Unlike the previous methods we've made, this one is just exposed
+   without any template specified. That's because we're only
+   redirecting the user back to the viewing page.
+
+2. Once we've found the `page` in the database, `page.t.update()`
+   returns an update transaction.
+
+3. Setting the `data` field on the transaction, then executing it, is
+   all it takes to update the database.
+
+4. The `turbogears.flash()` call is setting a notification message to
+   appear in the user's browser on the next screen. You'll see a
+   reference to the `turbogearsflash` variable in the `master.kid`
+   template.
+
+5. Since an `HTTPRedirect` is raised as an exception, all other
+   processing is short circuited. Very handy!
+
+Go ahead and try it out! You can make changes and save the page we
+were editing. Pretty wiki-like, no?
+
+
+Friendlier URLs
+===============
+
+Something that may bother you about the current setup is that the URLs
+are not as nice as they could be. Rather than `/?pagename=Foo`,
+wouldn't `/Foo` be nicer? Luckily, this is really easy to do. We just
+add a `default` method that CherryPy will call whenever no other
+method matches::
+
+    @turbogears.expose(html='schevowiki.templates.page')
+    def default(self, name):
+        return self.index(name)
+
+And now, we can change the HTTPRedirect in the save method to the
+following::
+
+        raise cherrypy.HTTPRedirect('/%s' % name)
+
+
+What about WikiWords?
+=====================
+
+WikiWords have also been described as WordsSmashedTogether. A typical
+wiki will automatically create links for these words when it finds
+them. Sounds like a good idea, and this sounds like a job for a
+regular expression. Start by adding an import to our controller::
+
+  import re
+
+A WikiWord is a word that starts with an uppercase letter, has a
+collection of lowercase letters and numbers followed by another
+uppercase letter and more letters and numbers. Here's a regular
+expression that meets that requirement::
+
+  wikiwords = re.compile(r'\b([A-Z]\w+[A-Z]+\w+)')
+
+Put that line just above the `Root` controller class. Then, we need to
+use this regex. Just below the `publish_parts` line of the `index`
+method (that's the one that generates the HTML), add this::
+
+    content = wikiwords.sub(r'<a href="/\1">\1</a>', content)
+
+Go ahead and edit your front page to include a WikiWord. When the page
+is displayed, you'll see that it's now a link. You probably won't be
+surprised to find that clicking that link produces an error.
+
+
+Hey, where's the page?
+======================
+
+It's time to add a check for pages that don't exist. I'll keep the
+approach here simple: if the page doesn't exist, you get an edit page
+to use to create it. In the `index` method, we'll check to see if the
+page exists. If it doesn't, we'll redirect to a new `notfound`
+method. Replace the first line of the `index` method with this::
+
+        page = db.Page.findone(name=name)
+        if not page:
+            raise cherrypy.HTTPRedirect('/notfound?name=%s' % name)
+
+And, we'll add the `notfound` method. We'll just reuse the edit
+template::
+
+    @turbogears.expose(html='schevowiki.templates.edit')
+    def notfound(self, name):
+        return dict(name=name, data='')
+
+Note: In the original tutorial, the variable `new` was added to
+several locations.  We'll be taking advantage of the
+`create_or_update` transaction in Schevo, so we do not need to add the
+`new` variable.
+
+We need to be able to save a new item, so, we'll have to change the
+`save` method like this::
+
+    @turbogears.expose()
+    def save(self, name, data, submit):
+        tx = db.Page.t.create_or_update()
+        tx.name = name
+        tx.data = data
+        db.execute(tx)
+        turbogears.flash('Changes saved!')
+        raise cherrypy.HTTPRedirect('/%s' % name)
+
+Schevo's `create_or_update` transaction first attempts to create a
+`Page` entity with the field values you set.  If a page with the same
+`name` already exists, it will update that entity with the new
+values.
+
+Give it a try! You should be able to create new pages now.
+
+
+Adding a page list
+==================
+
+Most wikis have a feature that lets you view an index of the pages. We
+can add that to our wiki easily, so let's do it!
+
+We'll start with a new template, `pagelist.kid`. To make things easy,
+we'll start with the `page.kid` template as a starter again::
+
+  cd schevowiki/templates
+  cp page.kid pagelist.kid
+  cd ../..
+
+Change the body of the pagelist.kid template to look like this::
+
+    <body>
+        <h1>All Of Your Pages</h1>
+        <ul>
+            <li py:for="name in names"><a href="/${name}" 
+               py:content="name">Page Name Here.</a></li>
+        </ul>
+    </body>
+    
+Feel free to add "Are Belong To Us" to the heading, if you feel you
+must.
+
+Just as with the other templates, you can open `pagelist.kid` directly
+in a browser. You can see that we'll get a bulleted list of links to
+the pages. This is our first use of `py:for`, and you can see it's
+straightforward. The `li` element will be repeated for each iteration
+of the for loop, and the for loop is specified just as it is in
+Python.
+
+Let's add a link at the bottom of the `master.kid` template to get to
+the complete list of pages::
+
+  <p>View the <a href="/pagelist">complete list of pages.</a></p>
+
+Since we're referring to a `pagelist` method, we should probably
+create it::
+
+    @turbogears.expose(html='schevowiki.templates.pagelist')
+    def pagelist(self):
+        names = [page.name for page in db.Page.by('name')]
+        return dict(names=names)
+
+This is our first use of Schevo's `by` method, which returns entities
+sorted by an index.  In this case, we get all of the `Page` entities
+sorted by the `name` field.
+
+You can see your pagelist by clicking the link at the bottom of your
+pages or going directly to `<http://localhost:8080/pagelist>`__.
+
+
+You want AJAX? We got AJAX!
+===========================
+
+This part of the tutorial is not technically AJAX. The "X" in AJAX
+stands for XML. We're going to use JSON_ instead. JSON is easy and
+lightweight and efficient to use for all browsers. To see how easy it
+is to use JSON, point your browser at
+`<http://localhost:8080/pagelist?tg_format=json>`__. There's your
+pagelist in JSON format.
+
+.. _JSON: http://www.crockford.com/JSON/index.html
+
+In standard CherryPy methods, you can return a string containing the
+rendered page. You can do that with TurboGears as well. But, if you
+write your code the way we have been in this tutorial, returning dicts
+instead of strings, you'll get JSON output for free.
+
+This part of the tutorial requires *no Python code*. We'll just be
+doing JavaScript using MochiKit. To keep things simple, we're going to
+change our "view complete page list" link to pull in the pagelist and
+include it right in the page you're viewing. Our changes will all be
+in `master.kid`.
+
+The first thing we need to do is have MochiKit included in all of our
+pages. It turns out that this is easy, using Kid's `py:match`
+feature::
+
+    <head py:match="item.tag=='{http://www.w3.org/1999/xhtml}head'">
+        <meta content="text/html; charset=UTF-8" 
+          http-equiv="content-type" py:replace="''"/>
+        <title py:replace="''">Your title goes here</title>
+        <meta py:replace="item[:]"/>
+        <script src="/tg_js/MochiKit.js"></script>
+    </head>
+    
+Note that we need to add ``py:replace="''"`` to the tags that appear
+in the other templates. If we didn't do that, we'd have two title
+tags!  We also need to add some tag (any tag) that will get replaced
+by the contents of the head of the child page. The net result of this
+new head element is that the script tag that loads MochiKit will find
+its way onto every page.
+
+Next up, we'll replace our page list link with one that will invoke a
+JavaScript function. We'll also add an empty container for our
+pagelist::
+
+    <p>View the <a href="#" onclick="requestPageList()">complete
+      list of pages.</a></p>
+    <div id="pagelist"></div>
+
+Now, we use MochiKit to retrieve the page list in `requestPageList`,
+which we'll define in a script tag in the head of the page::
+
+    <script type="text/javascript"><![CDATA[
+        function requestPageList() {
+        var d = loadJSONDoc("/pagelist?tg_format=json");
+        d.addCallback(showPageList);
+        }
+
+MochiKit includes a function for doing an asynchronous
+`XMLHttpRequest` and converting the result from JSON into a JavaScript
+object. Handy!
+
+`loadJSONDoc` returns a `Deferred` object. The idea with a `Deferred`
+is that we know that our request for the pagelist will happen some
+time in the future, but we don't know when. A `Deferred` is a
+placeholder that allows us to specify what happens when the result
+comes in. We have a very simple requirement here: call a function
+called `showPageList`, which we'll write now::
+
+    function showPageList(result) {
+        var currentpagelist = UL(null, map(row_display, result["names"]));
+        replaceChildNodes("pagelist", currentpagelist);
+    }
+    
+When `loadJSONDoc` gets its result, it will pass it along to
+`showPageList`. What we end up with in JavaScript is the same
+dictionary our pagelist method returned in Python!
+
+MochiKit.DOM allows you to create new document elements by nesting
+tags in your JavaScript. We're creating a UL element, just like we had
+in our freestanding pagelist page. The first parameter is a mapping of
+attributes for the element, which is null in this case. The other
+parameters will all become child nodes. MochiKit's `map` function
+works just like Python's. For each element in `result["names"]`, we're
+going to call a function called `row_display`, which I'll come to
+momentarily. The last part is to replace the contents of our <div>
+with the id of pagelist with the new DOM elements we've just created.
+
+Let's create our row_display function::
+
+    function row_display(name) {
+        return LI(null, A({"href" : "/" + name}, name))
+    }
+    
+Each `name` from the pages list will get passed into `row_display`. We
+create an LI element (no attributes), and an A element with an `href`
+attribute. The A element also has the `name` as its contents.
+
+Finally, close the `CDATA` and `script` blocks::
+
+  ]]></script>
+
+Voila! If you go to your `front page <http://localhost:8080>`__ and
+click on the page list link, you'll see the page list right there in
+the page.
+
+
+Which pages link to the current one?
+====================================
+
+One feature of Schevo that sets it apart from other DBMSs is its
+automatic management of bidirectional links between entities.  We'll
+use this feature to implement a "pages linking to this one" list
+similar to the "complete list of pages" we just created.
+
+First, open the `schema_001.py` file that defines the database
+schema, and change its contents to the following::
+
+    """Wiki schema."""
+
+    # All Schevo schema modules must have these lines.
+    from schevo.schema import *
+    schevo.schema.prep(locals())
+
+    import re
+    wikiwords = re.compile(r'\b([A-Z]\w+[A-Z]+\w+)')
+
+
+    class Page(E.Entity):
+
+        name = f.string()
+        data = f.memo(allow_empty=True)
+
+        _key(name)
+
+        class _Create(T.Create):
+
+            def _after_execute(self, db, entity):
+                # Create references to other pages from this one.
+                tx = E.Page._UpdateReferences(entity)
+                db.execute(tx)
+
+        class _Update(T.Update):
+
+            def _after_execute(self, db, entity):
+                # Create references to other pages from this one.
+                tx = E.Page._UpdateReferences(page)
+                db.execute(tx)
+
+        class _UpdateReferences(T.Transaction):
+
+            def __init__(self, page):
+                T.Transaction.__init__(self)
+                self.x.page = page
+
+            def _execute(self, db):
+                page = self.x.page
+                # First, remove the current references that this page
+                # makes to other pages.
+                for reference in page.sys.links('Reference', 'page'):
+                    db.execute(reference.t.delete())
+                # Find all wikiwords in the page data.
+                names = wikiwords.findall(page.data)
+                # For each name, create a reference if the other page
+                # exists.
+                for name in names:
+                    try:
+                        other_page = db.Page.findone(name=name)
+                    except schevo.error.FindoneFoundNone:
+                        # Create an empty page.
+                        tx = db.Page.t.create()
+                        tx.name = name
+                        tx.data = ''
+                        other_page = db.execute(tx)
+                    tx = db.Reference.t.create()
+                    tx.page = page
+                    tx.refers_to = other_page
+                    db.execute(tx)
+
+
+    class Reference(E.Entity):
+
+        page = f.entity('Page')
+        refers_to = f.entity('Page')
+
+        _key(page, refers_to)
+
+
+A Schevo database file keeps a copy of the schema that it uses inside
+the file itself so that the original schema is not needed.  Therefore,
+we must update the database to use the new schema using the `evo`
+tool.  First, stop the web server, then run this command, then restart
+the web server::
+
+  evo db create --app=schevowiki schevowiki.db
+
+We need a page to show references for a given page.  Make a copy of
+the `pagelist.kid` template and call it `referencelist.kid`::
+
+  cd schevowiki/templates
+  cp pagelist.kid referencelist.kid
+  cd ../..
+
+Edit the `referencelist.kid` file and replace the body with the
+following::
+
+        <h1>Pages that reference 
+          <span py:replace="name">Page Name</span></h1>
+        <ul>
+            <li py:for="referrer in referrers"><a href="/${referrer}" 
+               py:content="referrer">Page Name Here.</a></li>
+        </ul>
+
+Create a corresponding `referencelist` method in your controller using
+the following code::
+
+    @turbogears.expose(html='schevowiki.templates.referencelist')
+    def referencelist(self, name):
+        page = db.Page.findone(name=name)
+        references = page.sys.links('Reference', 'refers_to')
+        referrers = [r.page.name for r in references]
+        print referrers
+        return dict(name=name, referrers=referrers)
+
+The `_UpdateReferences` transaction that we added to the schema has a
+side-effect of creating an empty page.  This means that clicking on
+the link to that page results in viewing that page, rather than the
+old behavior of editing the page.  To bring this behavior back, edit
+the `index` method in your controller and change the ``if not page``
+block to be the following::
+
+        if not page or not page.data:
+            raise cherrypy.HTTPRedirect('/notfound?name=%s' % name)
+
+We don't want empty pages to show up in the "complete list of pages",
+so edit the first line of the `pagelist` method to test for empty
+pages::
+
+        names = [page.name for page in db.Page.by('name') if page.data]
+
+Because we had an existing database, references between pages do not
+yet exist.  Browse through your wiki and update some pages to trigger
+the new transaction code that the database now uses.
+
+Then, assuming that another page makes a reference to `FrontPage`,
+visit `<http://localhost:8080/referencelist?name=FrontPage>`__ to see a
+list of the pages that refer to it.
+
+
+But what about AJAX?
+====================
+
+We can add this handy list of referring pages to the bottom of each
+page much as we did with the list of all pages.  To do this, we need
+the list to show up only when viewing pages, not on every page.
+
+Edit the `page.kid` template and add this script block to the `head`
+element::
+
+    <script type="text/javascript"><![CDATA[
+        function requestReferenceList() {
+        var d = loadJSONDoc("/referencelist?name=${name}&tg_format=json");
+        d.addCallback(showReferenceList);
+        }
+        function showReferenceList(result) {
+        var currentreflist = UL(null, map(row_display, result["referrers"]));
+        replaceChildNodes("referencelist", currentreflist);
+        }
+    ]]></script>
+
+In the same file, add the following to the bottom of the `body`.  It
+triggers the reference list request when the link is clicked::
+
+    <p>View the <a href="#" onclick="requestReferenceList()">list of
+      pages that reference this one.</a></p>
+    <div id="referencelist"></div>
+
+Now you can browse your wiki, and on any page see a list of other
+pages that refer to it.  How cool is that?
+
+
+..
+     Local Variables:
+     mode: rst
+     End: 
+

@@ -1,0 +1,247 @@
+==========================================
+ A Brief Exploration of a Schevo Database
+==========================================
+
+.. role:: raw-html(raw)
+   :format: html
+
+:Last Changed: $Date$
+
+.. sectnum::
+
+.. contents::
+
+
+.. Doctest setup
+
+   >>> import os
+   >>> from schevo.test import CreatesSchema
+   >>> tester = CreatesSchema()
+   >>> from schevo.example.todo import schema
+   >>> schema_filename = os.path.join(os.path.dirname(schema.__file__),
+   ...                                'schema_001.py')
+   >>> tester.schema = file(schema_filename, 'U').read()
+   >>> tester.setUp()
+   >>> db = tester.db
+   >>> db.label = 'todo.db'
+   >>> class App(object): pass
+   >>> app = App()
+   >>> app.db = db
+
+
+Abstract
+========
+
+This tutorial covers creating and exploring a Schevo database based on
+a To-do list example.
+
+To make the most of the tutorial, you must have already installed
+Schevo, as well as PyQt (to use the database navigator) and wxPython
+(to use PyCrust alongside the database navigator).
+
+Note: This document is still in draft stages and does not provide as
+much of a comprehensive view of Schevo as it will at a later time.
+
+
+Creating and opening a Database
+===============================
+
+Create a project folder of your choice.
+
+Within the folder, create a database based on an existent template::
+
+  evo db create --app=schevo.example.todo todo.db
+
+Next, use the `evo nav` tool to open a database navigator alongside a
+PyCrust interactive session::
+
+  evo nav --pycrust todo.db
+
+A database object is exposed in the PyCrust shell using the `db`
+variable::
+
+  >>> app.db
+  <Database 'todo.db' :: V 1>
+
+
+Inspecting initial values
+=========================
+
+Some initial values were created when the database was created.
+Specifically, there are three `entity instances` in the `Gender
+extent`.
+
+If you double-click `Gender` in the main navigator window, you will
+see the three values.  You can in turn double-click on the entity
+instances to see further details.
+
+To get to the `Gender` extent in PyCrust, use the `Gender` attribute
+of the database, which was automatically assigned upon opening the
+database::
+
+  >>> app.db.Gender
+  <Extent 'Gender' in <Database 'todo.db' :: V 1>>
+
+Here's one way to see representations of the `Gender` entity instances
+in PyCrust::
+
+  >>> for gender in app.db.Gender.find():
+  ...     print repr(gender)
+  ...     
+  <Gender entity oid:1 rev:0>
+  <Gender entity oid:2 rev:0>
+  <Gender entity oid:3 rev:0>
+
+You can also see labels for both the `Gender` extent and its instances
+using the `label` and `plural` functions::
+
+  >>> from schevo.label import label, plural
+  >>> label(db.Gender)
+  u'Gender'
+  >>> plural(db.Gender)
+  u'Genders'
+  >>> for gender in app.db.Gender.find():
+  ...     print label(gender)
+  ...     
+  Female
+  Male
+  Unknown
+
+
+Creating new instances using the Navigator
+==========================================
+
+To create a new person using the database navigator, double-click on
+the `Person` extent in the main window to see the list of entity
+instances in that extent.  Then right-click in the `People` window
+that just appeared and click `Create`.
+
+A form will appear for you to fill out.  Enter a name such as "Jane
+Doe", choose a gender from the combo box, then click `Execute`.
+
+A new window will appear showing the field values for the `Person`
+instance you just created.  The `People` window will also be updated
+to reflect the fact that you created a new entity instance.
+
+The detail window for the new entity shows the gender as a hyperlink.
+Click on the gender to see information about that gender.
+
+.. Simulate creation of Jane Doe in navigator.
+
+   >>> app.db.execute(db.Person.t.create(
+   ... name=u'Jane Doe', gender=db.Gender.findone(code=u'F')))
+   <Person entity oid:1 rev:0>
+
+
+Creating new instances using PyCrust
+====================================
+
+To create a transaction based on the `Person` extent, use its `t`
+namespace to call a `transaction method`.  You can get a list of them
+by iterating over the namespace.  In this case, there is one
+transaction method, `create`::
+
+  >>> list(db.Person.t)
+  ['create']
+
+Create a new transaction by calling the `create` transaction method::
+
+  >>> tx = app.db.Person.t.create()
+
+Set the attributes of `tx` to prepare the transaction for execution.
+The attributes of a standard Create transaction are the same as those
+of the entity instance it will be creating::
+
+  >>> tx.name = u'John Doe'
+
+In order to assign the `gender` attribute, we must find the
+appropriate entity that represents John Doe's gender.  Use the
+`findone` method of an extent to find one and only one matching value
+based on a set of criteria::
+
+  >>> male = app.db.Gender.findone(code=u'M')
+
+Now set the `gender` attribute of the transaction::
+
+  >>> tx.gender = male
+
+For now, let's leave the `gender` attribute unassigned, and execute
+the transaction::
+
+  >>> john_doe = app.db.execute(tx)
+
+The result is a newly-created entity.  You can verify that it was
+created using the database navigator.  You can also inspect it using
+Python.  The fields have the values we expect them to.  In the case of
+the `gender` attribute, we can also drill down into the fields of the
+gender that was assigned to the `Person` entity, or use the `label`
+function to get its label::
+
+  >>> john_doe.name
+  u'John Doe'
+  >>> john_doe.gender.name
+  u'Male'
+  >>> label(john_doe.gender)
+  u'Male'
+
+Note that `Entity` instances are wrappers around the data stored in
+the database, and more than one instance can exist for the same piece
+of data.  Therefore, to compare them, use the equality operator::
+
+  >>> john_doe.gender is male
+  False
+  >>> john_doe.gender == male
+  True
+
+
+Updating and deleting an instance using PyCrust
+===============================================
+
+Just as extents have a `t` namespace, so do entity instances.  In this
+case, the `john_doe` instance has two available transactions, the
+standard `update` and `delete` transactions::
+
+  >>> sorted(john_doe.t)
+  ['delete', 'update']
+
+Create a new transaction to update the entity, set one of its
+attributes, and execute it::
+
+  >>> tx = john_doe.t.update()
+  >>> tx.name = u'John Q. Doe'
+  >>> app.db.execute(tx)
+  <Person entity oid:2 rev:1>
+
+The existing entity instance automatically grabs the new values from
+the database::
+
+  >>> john_doe.name
+  u'John Q. Doe'
+
+The entity also has a new revision.  Revisions start at 0 and
+increment by 1 for each update::
+
+  >>> john_doe.sys.rev
+  1
+
+To delete the entity, use the `delete` transaction method::
+
+  >>> tx = john_doe.t.delete()
+  >>> app.db.execute(tx)
+
+The `john_doe` object still exists, but its data is no longer
+available::
+
+  >>> john_doe
+  <Person entity oid:2 rev:DELETED>
+  >>> john_doe.name
+  Traceback (most recent call last):
+    ...
+  EntityDoesNotExist: "OID 2 does not exist in 'Person'"
+
+
+..
+     Local Variables:
+     mode: rst
+     End: 
+

@@ -1,0 +1,76 @@
+===================
+ Origins of Schevo
+===================
+
+.. role:: raw-html(raw)
+   :format: html
+
+:Last Changed: $Date: 2005-10-22T21:57:34.410155Z $
+
+.. sectnum::
+
+.. contents::
+
+
+From time to time, the authors of Schevo have posted summaries of the
+origins of Schevo.  This document aims to collect those summaries.
+
+
+golden spud's webrog - Pypersyst and Schevo redux:
+
+  Schevo evolved from Patrick K. O'Brien's "BDOZ" code from 2001,
+  which later became "Pyorama" when it was modified for use with
+  Pypersyst, which later still was folded into Pypersyst itself, only
+  to be separated again into its newest incarnation which is Schevo :)
+
+  Schevo also has some inspiration from my 'Syst-o-matic experiment
+  from late 2003 and early 2004, in which I grafted dynamic web user
+  interface support onto Pypersyst via the use of Nevow and
+  Twisted. Schevo currently has code for building dynamic PyQt-based
+  user interfaces, and will soon have Nevow support included as well.
+
+`Newbie questions
+<http://lists.orbtech.com/pipermail/schevo-devel/2005-October/000294.html>`__:
+
+  > Why not using ZODB instead of Durus?
+
+  It's kind of ironic you should ask about ZODB.  My first attempt at
+  getting the object database that I wanted was a layer over ZODB called
+  Bulldozer (BDOZ, get it?).  I registered that project on SourceForge
+  almost exactly four years ago.  It never went anywhere.  I got
+  frustrated with ZODB and found the source code for it to be impenetrable
+  and scary in its magic.  And the basic way most people were using ZODB
+  was not how I wanted to use it.
+
+  In my search for something simpler I came across Prevayler and was able
+  to port it to Python in what became Pypersyst.  But Pypersyst was too
+  simple so I kept building on it.  Eventually those extra bits were
+  separated out to become Schevo.  Pypersyst was also constraining in that
+  it must reside entirely in RAM, and we had applications in production
+  that were getting rather large.  Right before the split we actually had
+  Pypersyst/Schevo partially working with ZODB and Durus as backends.
+
+  When Schevo became its own project, we broke a lot of things and had to
+  put them back together.  At that time we decided to focus on support for
+  Durus first, as it was smaller, simpler and just felt right as the place
+  to start.  So what we now call the second version of Schevo began with
+  support for Durus and the intention of supporting Pypersyst and ZODB.
+  But then we realized that Schevo had turned into a Frankenstein monster
+  and needed to be rebuilt from scratch.  That rebuilding from the ground
+  up took place in the "rebel" branch, which eventually became the trunk,
+  and is what we are calling Schevo 3.0 and will be releasing soon.
+
+  Now, when we rebuilt Schevo from the ground up around Durus we took a
+  rather radical approach in that what we store in Durus are not class
+  instances but rather basic Python datatypes that can be retrieved and
+  used to create class instances on demand.  This is sort of like what
+  Python does with its calls to __getstate__ and __setstate__ during
+  pickling and unpickling, but substantially different.  And it works
+  quite well.
+
+
+..
+     Local Variables:
+     mode: rst
+     End: 
+

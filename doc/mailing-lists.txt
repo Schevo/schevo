@@ -1,0 +1,46 @@
+===============
+ Mailing Lists
+===============
+
+.. role:: raw-html(raw)
+   :format: html
+
+:Last Changed: $Date$
+
+
+* `Schevo Development`_, for discussing development of the core Schevo
+  product.
+
+  This list has the highest traffic level.  We recommend you subscribe
+  to the `Schevo Development`_ list due to the rapid development pace
+  of Schevo.
+
+* `Schevo Users`_, for discussing the use of Schevo in the context of
+  other applications.
+
+  This does not yet have much traffic.
+
+* `Schevo Announcements`_, containing only release announcements
+  regarding Schevo and applications that use Schevo.
+
+* `Schevo Commits`_, for Schevo's Subversion repository commit
+  messages.
+
+
+.. _Schevo Announcements: 
+   http://lists.orbtech.com/mailman/listinfo/schevo-announce
+
+.. _Schevo Commits:
+   http://lists.orbtech.com/mailman/listinfo/schevo-commit
+
+.. _Schevo Development: 
+   http://lists.orbtech.com/mailman/listinfo/schevo-devel
+
+.. _Schevo Users: 
+   http://lists.orbtech.com/mailman/listinfo/schevo-users
+
+..
+     Local Variables:
+     mode: rst
+     End: 
+

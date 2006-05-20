@@ -1,0 +1,274 @@
+========================================
+ Getting Started with Schevo on Windows
+========================================
+
+.. role:: raw-html(raw)
+   :format: html
+
+:Last Changed: $Date: 2005-12-06 20:30:29 +0200 (Tue, 06 Dec 2005) $
+
+.. sectnum::
+
+.. contents::
+
+
+Abstract
+========
+
+This document describes in detail how to install Schevo for the
+following operating systems:
+
+* Microsoft Windows 2000 SP4 or higher.
+
+
+Install Python 2.4
+==================
+
+**Required** 
+
+1. Visit the `Python download page <http://python.org/download/>`__
+   and download the `Python 2.4.2 Windows installer (Windows binary)`
+   file.
+
+2. Open the `python-2.4.2.msi` file you downloaded in step 1 to start
+   the installation process.
+
+3. Step through the Python installer, accepting the default values for
+   each step.
+
+4. Add the following directories to your `PATH` environment variable:
+
+   * ``c:\python24``
+
+   * ``c:\python24\scripts``
+
+5. Test your Python installation by clicking `Start`, `Run...`, and
+   entering `cmd` to start a command prompt.  When the command prompt
+   window appears, enter `python`.  You should the be greeted with the
+   Python interactive shell, which will look similar to this::
+
+     Python 2.4.2 (#65, Mar 30 2005, 09:13:57) ...
+     Type "help", "copyright", "credits", or "license" ...
+     >>> 
+
+   To exit the Python shell, press Ctrl-Z and press Enter.
+
+
+Install `pywin32` extensions
+============================
+
+**Required** 
+
+1. Visit the `pywin32 download page
+   <http://sourceforge.net/project/showfiles.php?group_id=78018&package_id=79063>`__
+   and download the most recent package that ends with `py2.4.exe`.
+   For example, at the time of this writing that file would be
+   `pywin32-204.win32-py2.4.exe`.
+
+2. Open the file you downloaded in step 1 to start the installation
+   process.
+
+3. Step through the installer, accepting default values for each step.
+
+
+Install `MinGW` compiler
+========================
+
+**Recommended**
+
+This section is optional for those who already have a compiler
+installed on their computer that is supported by Python 2.4, and who
+have already installed Qt and PyQt using that compiler.
+
+If you do not fall under that category, you must install MinGW.
+
+1. Visit the `MinGW download page
+   <http://prdownloads.sourceforge.net/mingw/MinGW-4.1.1.exe>`__ and
+   download the installer.
+
+2. Open the file you downloaded in step 1 to start the installation
+   process.
+
+3. Step through the installer, keeping all values at their defaults.
+   When you get to the **Select Components** page, do the following:
+
+   * Choose `Full installation`.
+
+   * You may uncheck items at the `Select Additional Tasks` section,
+     except for the following:
+
+     * Current/runtime
+     
+     * Current/w32api
+
+     * Current/binutils
+
+     * Current/gcc-core
+
+     * Current/gcc-g++
+
+     * Current/mingw32-make
+
+4. Add the following directory to your `PATH` environment variable:
+
+   * ``c:\mingw\bin``
+
+5. Create or edit the ``c:\python24\lib\distutils\distutils.cfg`` file
+   using Notepad or your favorite text editor.  Add the following to
+   the file and save it::
+
+     [build]
+     compiler=mingw32
+
+
+Install `Qt` and `PyQt`
+=======================
+
+**Recommended**
+
+If you have a commercial license for Qt and PyQt, install those
+products as directed by their official documentation and skip this
+section.
+
+
+Install `Qt/Win Free Edition`
+=============================
+
+1. Donwload and install `setup-qt-win-free-mingw-3.3.4-3.exe
+   <http://prdownloads.sourceforge.net/qtwin/setup-qt-win-free-mingw-3.3.4-3.exe>`__
+
+2. Step through the installer, keeping all values at their defaults,
+   **except for** the following section:
+
+   * **Select Destination Location**: Change the value to
+     ``C:\qt-win-free-mingw-3.3.4`` (in other words, remove the
+     ``Program Files`` segment).
+
+3. Add the following directory to your `PATH` environment variable:
+
+   * ``c:\qt-win-free-mingw-3.3.4\bin``
+
+
+Install `PyQt/Win Free Edition`
+===============================
+
+1. Download and install `pyqt-free-3.14.1-setup.exe
+   <http://orbtech.com/static/gpl-qt/pyqt-free-3.14.1-setup.exe>`__ .
+
+
+Install `wxPython`
+==================
+
+**Optional** 
+
+By installing wxPython, you gain the ability to run the popular
+`PyCrust` Python shell alongside the Schevo Navigator.  Doing so
+allows you to programmatically inspect, and execute transactions upon,
+the database that you are navigating.
+
+1. Visit the `wxPython download page
+   <http://wxpython.org/download.php#binaries>`__ and download the
+   latest `win32-ansi` version of wxPython for Windows and Python 2.4.
+
+2. Open the file you just downloaded in step 1 to start the
+   installation process.
+
+3. Step through the installer, keeping all values at their defaults.
+
+
+
+Installing Schevo
+=================
+
+
+1. If you don't have setuptools, download the `ez_setup.py`_ script.
+
+2. From the command line, within the folder containing that file, type::
+
+     python ez_setup.py -U setuptools
+
+.. _ez_setup.py: http://schevo.org/dist/ez_setup
+
+3. Install Schevo from the command line::
+
+     easy_install -f http://schevo.org/split.html Schevo==dev \
+       SchevoQt==dev SchevoXml==dev SchevoSql==dev
+
+Sidenote: That will check out source code from Subversion, and install each package as an egg.
+
+If you prefere to install manually from the SVN, see `Install on Windows from SVN <getting-started-win-svn.html>`__.
+
+
+What to do after Schevo is installed
+====================================
+
+Newcomers can create their own database within minutes, following the `Getting Started <getting-started.html>`__.
+
+Experienced developers can use the PyCrust shell as described within the `Exploration <exploration.html>`__.
+
+Testing Example Database
+========================
+
+1. Open a shell / command prompt.
+
+   * Microsoft Windows: Click `Start`, `Run...`, and enter `cmd` to
+     start a command prompt.
+
+2. Enter the following command to create a new database using an
+   example schema and icon set::
+
+     evo db create --app=schevo.example.todo todo.db
+
+3. Enter the following command to browse the resulting database::
+
+     evo nav todo.db
+
+   A window should appear titled `Navigator :: todo.db`, containing
+   a three-paned database navigator.
+
+
+Setting Environment Variables
+=============================
+
+When following the instructions below, you will often be asked to set
+environment variables.
+
+This is how you do so using Microsoft XP:
+
+1. Right-click your `My Computer` icon.
+
+2. Choose `Properties`.
+
+3. Click the `Advanced` tab.
+
+4. Click the `Environment Variables` button.
+
+5. Alter environment variables as needed in the `User variables`
+   section.
+
+   * To create a new variable, click the `New` button, enter the name
+     and value of the variable, then click `OK`.
+
+   * To edit an existing variable, click on it, click the `Edit`
+     button, alter the name and/or value of the variable, then click
+     `OK`.
+
+   * If a variable contains paths, each path must be separated by a
+     semicolon ";" character.
+
+   * If you are creating the `PATH` variable for the first time, be
+     sure to place the special value ``%PATH%`` as the first value.
+     For instance, if adding the ``c:\python24`` directory to a
+     newly-created `PATH` variable, enter ``%PATH%;c:\python24`` as
+     the value.
+
+6. Click `OK`.
+
+7. Click `OK`.
+
+
+..
+     Local Variables:
+     mode: rst
+     End: 
+

@@ -1,0 +1,92 @@
+=============================
+ Getting Started with Schevo
+=============================
+
+.. role:: raw-html(raw)
+   :format: html
+
+:Last Changed: $Date: 2005-12-06 20:30:29 +0200 (Tue, 06 Dec 2005) $
+
+.. sectnum::
+
+.. contents::
+
+
+Abstract
+========
+
+Checkout and install Schevo using Subversion
+============================================
+
+This installation is suitable for power users and Schevo core
+developers who must stay up-to-date with the very latest Schevo
+revisions.
+
+1. Using Windows Explorer, navigate to the directory that you will use
+   to store your Schevo code.  For example, ``C:\code`` is a typically
+   used directory.
+
+2. Right-click in the directory and choose `SVN Checkout`.
+
+3. In the `Checkout` dialog that appears, enter the following values:
+
+   * **URL of repository:** ``svn://svn.orbtech.com/schevo/trunk``
+
+   * **Checkout directory:** A directory underneath the directory that
+     you navigated to in step 1.  For example, ``C:\code\schevo`` is a
+     typically used directory.
+
+4. Click `OK`.  A dialog will appear presenting progress information
+   about the checkout process.
+
+5. When the checkout finishes, click `Start`, `Run...`, and enter
+   `cmd` to start a command prompt.
+
+6. At the command prompt, change to the directory in which you checked
+   out the Schevo code.  For the example paths given above, you would
+   type::
+
+     c:
+     cd \code\schevo
+
+7. Enter the following command to install Schevo, along with the
+   dependencies used by Schevo's auxiliary packages::
+
+     python ez_setup.py .
+
+   Note: The period at the end is important, as it tells `ez_setup` to
+   install the software in the current directory.
+
+8. Enter the following command to cause your Schevo checkout to be the
+   location from which Schevo packages are imported::
+
+     python setup.py develop
+
+
+Install `TortoiseSVN`
+=====================
+
+**Recommended** for **Subversion** installs.
+
+If you have a Subversion client you are already familiar with, skip to
+the next section, using that client as needed.
+
+If you do not have a Subversion client, TortoiseSVN is an excellent
+tool for managing Subversion checkouts.
+
+1. Visit the `TortoiseSVN download page
+   <http://sourceforge.net/project/showfiles.php?group_id=138498&package_id=151948>`__
+   and download the most recent installer.
+
+2. Open the file you downloaded in step 1 to start the installation
+   process.
+
+3. Step through the installer, keeping all values at their defaults.
+
+
+
+..
+     Local Variables:
+     mode: rst
+     End: 
+

@@ -1,0 +1,531 @@
+===============
+ API Reference
+===============
+
+.. role:: raw-html(raw)
+   :format: html
+
+:Last Changed: $Date: 2005-10-22T21:57:34.410155Z $
+
+
+(Note: This document is far from complete and is regularly updated and
+reorganized.  This notice will be removed when the document has
+matured and stabilized.)
+
+Document Status: draft, in development
+
+.. sectnum::
+
+.. contents::
+
+
+.. Doctest setup
+
+   >>> import os
+   >>> from schevo.test import CreatesSchema
+   >>> tester = CreatesSchema()
+   >>> db = None
+   >>> def new_db(schema_source):
+   ...     global db
+   ...     if db is not None:
+   ...         tester.tearDown()
+   ...     tester.schema = schema_source
+   ...     tester.setUp()
+   ...     db = tester.db
+
+
+Overview
+========
+
+A Schevo database is the combination of a schema definition, stored
+data, and an engine that exposes the two.  This document describes in
+detail the public API exposed by the Schevo engine.
+
+Schema definitions are pure-Python modules that make use of Schevo's
+syntax extensions.  Schema definitions can be directly imported
+anywhere, but typically the import process is managed by the Schevo
+database engine in order to tie a schema to an open database.
+
+Stored data is managed by the `schevo.store` package, based on Durus_.
+The data is kept in a general structure used by all Schevo databases,
+described in the `internal database structures`_ reference.
+
+The database engine is defined in the `schevo.database` module, and
+provides read/write access to stored data using the higher-level
+structures defined by the database's schema definition.
+
+.. _Durus: http://www.mems-exchange.org/software/durus/
+
+.. _internal database structures: reference-database.html
+
+
+sys Namespaces
+==============
+
+``sys`` (short for *system*) is a namespace that contains the public
+methods and properties of a Schevo object that are not fields, query
+methods, transaction methods, or view methods.  These are kept in a
+separate namespace in order to reduce the amount of `reserved words`_.
+
+``sys`` namespaces are accessed by getting the ``sys`` attribute from
+a Schevo object.
+
+The following types of Schevo objects have a ``sys`` namespace:
+
+* `Entity instances`_
+
+* `Find query instances`_
+
+* `Param query instances`_
+
+* `Transaction instances`_
+
+* `View instances`_
+
+
+Database instances
+==================
+
+
+Extent instances
+================
+
+
+Entity instances
+================
+
+
+Entity sys namespace
+--------------------
+
+
+links: Return entities that link to this entity
+...............................................
+
+Use ``links`` to find other entities that point to the calling entity.
+
+To find all entities that link to the calling entity, use the form
+``links()``.  The return value will be a dictionary of keys in the
+form ``(other_extent_name, other_field_name)``, each mapping to a list
+of Entity instances in that extent where that field's value is the
+calling entity::
+
+  # Doctest to go here.
+
+To find all entities in a specific extent that link to the calling
+entity, use the form ``links(other_extent_name)``.  The return value
+will be the same as that returned by a call to ``links()``::
+
+  # Doctest to go here.
+
+To find all the entities in a specific extent where a specific field
+value links to the calling entity, use the form
+``links(other_extent_name, other_field_name)``.  The return value will
+be a list of Entity instances in that extent where that field's value
+is the calling entity::
+
+  # Doctest to go here.
+
+
+Field classes
+=============
+
+
+Field instances
+===============
+
+
+Query methods and objects
+=========================
+
+At their highest level, `schevo.query.Query` objects use criteria you
+specify to create sequences of results.
+
+There are several types of queries, and some queries' criteria consist
+of subqueries, from which it obtains results during its execution.
+
+For the purposes of example, let us assume that we are working with
+the following schema for this section::
+
+  >>> new_db("""
+  ... from schevo.schema import *
+  ... schevo.schema.prep(locals())
+  ...
+  ... class Person(E.Entity):
+  ... 
+  ...     name = f.unicode()
+  ...     birthdate = f.date()
+  ... 
+  ...     _key(name)
+  ...
+  ...     _plural = u'People'
+  ...
+  ...     def __unicode__(self):
+  ...         return u'%s, born on %s' % (self.name, self.birthdate)      
+  ...
+  ...     _sample = [
+  ...         ('Robert Jones', '1965-02-03'),
+  ...         ('Roberto Gonzales', '1976-04-05'),
+  ...         ('Roberta Smith', '1987-06-07'),
+  ...         ('Rance Thomas', '1954-12-01'),
+  ...         ]
+  ...     
+  ... class Location(E.Entity):
+  ... 
+  ...     name = f.unicode()
+  ...     
+  ...     _key(name)
+  ... 
+  ...     _sample = [
+  ...         ('Bank',),
+  ...         ('Grocery Store',),
+  ...         ('Library',),
+  ...         ]
+  ...
+  ... class Sighting(E.Entity):
+  ... 
+  ...     person = f.entity('Person')
+  ...     location = f.entity('Location')
+  ...     when = f.date()
+  ...     
+  ...     def __unicode__(self):
+  ...         return u'%s at %s on %s' % (
+  ...             self.person.name,
+  ...             self.location,
+  ...             self.when,
+  ...             )
+  ...
+  ...     _sample = [
+  ...         (('Robert Jones',), ('Library',), '2004-01-01'),
+  ...         (('Roberto Gonzales',), ('Library',), '2004-01-04'),
+  ...         (('Robert Jones',), ('Grocery Store',), '2004-01-02'),
+  ...         (('Roberto Gonzales',), ('Bank',), '2004-01-05'),
+  ...         (('Robert Jones',), ('Bank',), '2004-01-03'),
+  ...         (('Roberto Gonzales',), ('Grocery Store',), '2004-01-06'),
+  ...         (('Roberta Smith',), ('Grocery Store',), '2004-01-07'),
+  ...         (('Rance Thomas',), ('Grocery Store',), '2004-01-08'),
+  ...         ]
+  ... """)
+
+Both schema modules and database engines expose all available Query
+classes in its ``Q`` namespace.  For brevity, we will use an alias::
+
+  >>> Q = db.Q
+
+
+Match queries
+-------------
+
+The simplest query is a match on a field.  Use the
+``schevo.query.Match`` class::
+
+  >>> person_name = Q.Match(db.Person, 'name', 'startswith')
+
+To set the value of the match query, set the query's value::
+
+  >>> person_name.value = u'Robert'
+
+If you already have a search in mind, you can specify it in the query
+constructor::
+
+  >>> person_name = Q.Match(db.Person, 'name', 'startswith', u'Robert')
+
+It is worth noting that at any point, you can get a human language
+version of the query by converting it to a string or unicode::
+
+  >>> print person_name
+  People where Name starts with Robert
+
+
+Retrieving results
+------------------
+
+To retrieve the results of a query, call the Query instance to get an
+iterator over the results.  For example, if we are using the
+``person_name`` query defined above::
+
+  >>> results = person_name()
+  >>> for person in results:
+  ...     print person
+  Robert Jones, born on 1965-02-03
+  Roberto Gonzales, born on 1976-04-05
+  Roberta Smith, born on 1987-06-07
+
+Query results, at the minimum, must support iteration::
+
+  >>> results = person_name()
+  >>> i = iter(results)
+  >>> i #doctest: +ELLIPSIS
+  <generator object at ...>
+
+To cache the query results, use whatever tools you like.  For example,
+you can get a list of results in order to retrieve the length or
+perform slices::
+
+  >>> results = list(person_name())
+  >>> len(results)
+  3
+  >>> r0 = results[0]
+  >>> r0
+  <Person entity oid:1 rev:0>
+  >>> results[1:3]
+  [<Person entity oid:2 rev:0>, <Person entity oid:3 rev:0>]
+  >>> results.index(r0)
+  0
+
+
+Compound queries
+----------------
+
+Continuing the example, let us also search for persons who have a
+birthdate before 1980-01-01, and who were most recently sighted at the
+grocery store.
+
+Create the birthdate query::
+
+  >>> person_birthdate = Q.Match(db.Person, 'birthdate', '<', '1980-01-01')
+  >>> print person_birthdate
+  People where Birthdate < 1980-01-01
+  >>> for person in sorted(person_birthdate()): #doctest: +NORMALIZE_WHITESPACE
+  ...     print person
+  Robert Jones, born on 1965-02-03
+  Roberto Gonzales, born on 1976-04-05
+  Rance Thomas, born on 1954-12-01  
+
+Combine the results of these queries using an intersection, so that
+we get the Person entities that match both queries::
+
+  >>> persons = Q.Intersection(person_name, person_birthdate)
+  >>> print persons #doctest: +NORMALIZE_WHITESPACE
+  the intersection of (People where Name starts with Robert,
+  People where Birthdate < 1980-01-01)
+  >>> for person in sorted(persons()): #doctest: +NORMALIZE_WHITESPACE
+  ...     print person
+  Robert Jones, born on 1965-02-03
+  Roberto Gonzales, born on 1976-04-05
+
+Get all the sightings for each person::
+
+  >>> person_sightings = Q.Match(db.Sighting, 'person', 'in', persons)
+  >>> print person_sightings #doctest: +NORMALIZE_WHITESPACE
+  Sightings where Person in the intersection of (People where Name
+  starts with Robert, People where Birthdate < 1980-01-01)
+  >>> for sighting in sorted(person_sightings()):
+  ...     print sighting #doctest: +NORMALIZE_WHITESPACE
+  Robert Jones at Library on 2004-01-01
+  Roberto Gonzales at Library on 2004-01-04
+  Robert Jones at Grocery Store on 2004-01-02
+  Roberto Gonzales at Bank on 2004-01-05
+  Robert Jones at Bank on 2004-01-03
+  Roberto Gonzales at Grocery Store on 2004-01-06
+
+Group the sightings by person.  Since we are grouping the results of a
+query, which may be heterogeneous, we also specify a field class::
+
+  >>> by_person = Q.Group(person_sightings, 'person', db.Sighting.f.person)
+  >>> print by_person #doctest: +NORMALIZE_WHITESPACE
+  Sightings where Person in the intersection of (People where Name
+  starts with Robert, People where Birthdate < 1980-01-01), grouped
+  by Person
+  >>> for group in sorted(by_person()): #doctest: +NORMALIZE_WHITESPACE
+  ...     print '----' 
+  ...     for result in group:
+  ...         print result
+  ----
+  Robert Jones at Library on 2004-01-01
+  Robert Jones at Grocery Store on 2004-01-02
+  Robert Jones at Bank on 2004-01-03
+  ----
+  Roberto Gonzales at Library on 2004-01-04
+  Roberto Gonzales at Bank on 2004-01-05
+  Roberto Gonzales at Grocery Store on 2004-01-06
+
+The results of a Group query is a list of results.  Reduce each group
+to the result that has the maximum value for the ``when`` field.
+Again, we specify a field class since the query source may be
+heterogeneous::
+
+  >>> most_recent = Q.Max(by_person, 'when', db.Sighting.f.when)
+  >>> print most_recent #doctest: +NORMALIZE_WHITESPACE
+  results that have the maximum When in each (Sightings where Person
+  in the intersection of (People where Name starts with Robert, People
+  where Birthdate < 1980-01-01), grouped by Person)
+  >>> for sighting in sorted(most_recent()): #doctest: +NORMALIZE_WHITESPACE
+  ...     print sighting
+  Robert Jones at Bank on 2004-01-03
+  Roberto Gonzales at Grocery Store on 2004-01-06
+
+Finally, filter ``most_recent`` by the grocery store Location::
+
+  >>> grocery_store = db.Location.findone(name=u'Grocery Store')
+  >>> last_seen_shopping = Q.Match(
+  ...     most_recent, 'location', '==', grocery_store, db.Sighting.f.location)
+  >>> print last_seen_shopping #doctest: +NORMALIZE_WHITESPACE
+  results that have the maximum When in each (Sightings where Person
+  in the intersection of (People where Name starts with Robert, People
+  where Birthdate < 1980-01-01), grouped by Person) where Location ==
+  Grocery Store
+  >>> for sighting in sorted(last_seen_shopping()):
+  ...     print sighting #doctest: +NORMALIZE_WHITESPACE
+  Roberto Gonzales at Grocery Store on 2004-01-06
+  
+
+Default queries
+---------------
+
+The default query for an extent is an Intersection of Match queries
+against all non-calculated fields of an extent, with a default
+operator of ``any`` (which means "is any value"), and a default value
+of ``UNASSIGNED`` (which is ignored when using the ``any`` operator).
+
+This query is the same as would be returned when calling
+``db.Sighting.q.default()``::
+
+  >>> query = Q.Intersection(
+  ...     Q.Match(db.Sighting, 'person', 'any'),
+  ...     Q.Match(db.Sighting, 'location', 'any'),
+  ...     Q.Match(db.Sighting, 'when', 'any'),
+  ...     )
+  >>> print query
+  all Sightings
+
+Without changing any of the operators, iterating over the results of
+the default query for an extent yields the same thing as iterating
+over the extent itself.
+
+The Intersection query optimizes its execution plan to use the
+extent's ``find`` method when all of the ``Match`` queries match on
+the same extent, when there is only one of any given field name, when
+the only operators used are either ``any`` or ``==``, and when all
+values are not queries.
+
+As seen above, it also optimizes its label for brevity if all values
+have the ``any`` operator.
+
+
+.. _field container:
+
+Field Containers
+================
+
+The following types of objects are field containers:
+
+* `Entity instances`_
+
+* `Param query instances`_
+
+* `Transaction instances`_
+
+* `View instances`_
+
+A field container ``obj`` implements the following:
+
+* They have a namespace, ``obj.f``, that contains field objects.
+
+  - The value of ``obj.f.field_name`` is a `Field instance` associated
+    with ``obj``, with the name ``field_name``.
+
+  - The value of ``obj.f['field_name']`` is the same as
+    ``obj.f.field_name``.
+
+  - Iterating over ``obj.f`` yields the names of the fields, in the
+    order they were defined.
+
+  - If allowed by the field container, you can remove a field named
+    ``field_name`` from ``obj`` using the following::
+
+      del obj.f.field_name
+
+  - If allowed by the field container, you can add a new field named
+    ``field_name`` and of type ``FieldClass`` to ``obj`` using either
+    of the following::
+
+      obj.f.field_name = existing_field_instance
+      obj.f.field_name = f.field_class(...)
+
+    The field is added to the end of the definition order.  To
+    re-order fields, you can get them from ``obj.f``, delete them from
+    ``obj.f``, then reassign them to ``obj.f``, as in this example::
+
+      # Assume original declaration order was:
+      #    foo = f.unicode()
+      #    bar = f.unicode()
+      #    baz = f.unicode()
+
+      bar, baz = obj.f.bar, obj.f.baz
+      del obj.f.bar, obj.f.baz
+      obj.f.baz = baz
+      obj.f.bar = bar
+
+      # Now the order is the following:
+      #    foo = f.unicode()
+      #    baz = f.unicode()
+      #    bar = f.unicode()
+
+* They have a method, ``obj.sys.fields()``, that returns a
+  `schevo.fieldspec.FieldMap` ordered dictionary for the fields in
+  ``obj``.
+
+  - Certain types of field decorators accept additional arguments to
+    the call to ``obj.sys.fields()``.
+
+
+Iterators
+=========
+
+Many objects in a Schevo database provide iterators.
+
+
+Extents
+-------
+
+Iterating over an extent results in a sequence of all entities in the
+extent, ordered by OID.
+
+
+Query, view, and transaction namespaces
+---------------------------------------
+
+Iterating over a ``f``, ``q``, ``t``, or ``v`` namespace results in a
+sequence of the names in that namespace, in no defined order.
+
+Example::
+
+  >>> tuple(sorted(db.Person.q))
+  ('default',)
+  >>> tuple(sorted(db.Person[1].t))
+  ('delete', 'update')
+
+
+Entity sys namespaces
+---------------------
+
+Iterating over an entity's ``sys`` namespace has no defined result.
+It may become part of the `Objects without iterators`_.
+
+
+Objects without iterators
+-------------------------
+
+- Database instances.
+
+- Entity instances.
+
+- Query instances.
+
+- Transaction instances.
+
+- View instances.
+
+- ``sys`` namespaces.
+
+
+Icon plugin
+===========
+
+
+..
+     Local Variables:
+     mode: rst
+     End: 
+
