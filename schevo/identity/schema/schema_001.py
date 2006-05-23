@@ -1,4 +1,4 @@
-"""Schevo identity schemata, primarily for use with schevo.gears.
+"""Schevo identity schemata, primarily for use with schevogears.
 
 Usage inside a schema::
 

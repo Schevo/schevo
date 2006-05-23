@@ -209,7 +209,7 @@ TurboGears does not implicitly have support for Schevo, so we need to
 enable such support.  Edit the `schevowiki/model.py` file so that it
 contains only the following three lines::
 
-  from schevo.gears.hub import AutoConnectHub
+  from schevogears.hub import AutoConnectHub
   hub = AutoConnectHub()
   db = hub.db
 

@@ -27,7 +27,7 @@ def parser(usage):
 import os
 
 def default_db_filename():
-    filename = os.path.basename( os.getcwd() ) +  '.evo'
+    filename = os.path.basename( os.getcwd() ) +  '.schevo'
     # add further default possibilities
     return filename
 

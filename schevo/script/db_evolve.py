@@ -14,7 +14,7 @@ from schevo.script import opt
 from schevo.script import db_create
 
 usage = """\
-evo db evolve [options] DBFILE
+schevo db evolve [options] DBFILE
 
 DBFILE: The database file to be evolved (default: <current-dir-name>.db)
 
@@ -121,7 +121,7 @@ class Evolve(Command):
 #                             % options.import_from)
 #            db = schevo.database.open(
 #                db_filename, schema_source, initialize=False)
-#            from schevo.xml import ImporterTransaction
+#            from schevoxml import ImporterTransaction
 #            tx = ImporterTransaction(import_file)
 #            db.execute(tx)
 #            import_file.close()

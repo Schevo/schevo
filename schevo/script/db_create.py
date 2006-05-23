@@ -12,7 +12,7 @@ from schevo.script.command import Command
 from schevo.script import opt
 
 usage = """\
-evo db create [options] DBFILE
+schevo db create [options] DBFILE
 
 DBFILE: The database file to create.
 
@@ -127,7 +127,7 @@ class Create(Command):
                              % options.import_from)
             db = schevo.database.open(
                 db_filename, schema_source, initialize=False)
-            from schevo.xml import ImporterTransaction
+            from schevoxml import ImporterTransaction
             tx = ImporterTransaction(import_file)
             db.execute(tx)
             import_file.close()

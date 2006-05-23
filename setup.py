@@ -54,8 +54,7 @@ setup(
       version to the next.
 
     The latest development version is available in a `Subversion
-    repository
-    <svn://orbtech.com/schevo/Schevo/trunk#egg=Schevo-dev>`__.
+    repository <http://schevo.org/svn/trunk/>`__.
     """),
     
     classifiers=[
@@ -72,9 +71,9 @@ setup(
     keywords='database dbms',
     
     author='Orbtech, L.L.C. and contributors',
-    author_email='schevo-devel@lists.orbtech.com',
+    author_email='schevo-devel@lists.schevo.org',
 
-    url='http://schevo.org/Schevo/',
+    url='http://schevo.org/',
     
     license='LGPL',
     
@@ -83,8 +82,6 @@ setup(
     packages=find_packages(exclude=['doc']),
 
     package_data=finddata.find_package_data(),
-
-    namespace_packages=['schevo'],
 
     zip_safe=False,
     
@@ -106,15 +103,13 @@ setup(
 
     entry_points = """
     [console_scripts]
-    evo = schevo.script.main:start
-    evo_hotshot = schevo.script.main:start_hotshot
     schevo = schevo.script.main:start
     schevo_hotshot = schevo.script.main:start_hotshot
 
     [paste.paster_create_template]
     schevo = schevo.paste:SchevoTemplate
 
-    [schevo.evo_command]
+    [schevo.schevo_command]
     db = schevo.script.db:start
     shell = schevo.script.shell:start
 

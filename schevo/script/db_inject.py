@@ -12,7 +12,7 @@ from schevo.script.command import Command
 from schevo.script import opt
 
 usage = """\
-evo db inject [options] DBFILE
+schevo db inject [options] DBFILE
 
 DBFILE: The database file to inject a schema into.
 

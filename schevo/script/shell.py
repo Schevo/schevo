@@ -11,7 +11,7 @@ from schevo.script.command import Command
 from schevo.script import opt
 
 usage = """\
-evo shell [options] DBFILE
+schevo shell [options] DBFILE
 
 DBFILE: The database file to open.  The database will be present as
 the 'db' variable in the shell.
@@ -43,7 +43,7 @@ class Shell(Command):
         db = schevo.database.open(db_filename)
         # Set up environment.
         locals = dict(
-            __name__='evo-shell',
+            __name__='schevo-shell',
             db=db,
             )
         # sys.argv can clobber the shell if we're not careful.

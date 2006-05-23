@@ -16,7 +16,7 @@ class Main(CommandSet):
 
     def __init__(self):
         commands = self.commands = {}
-        for p in pkg_resources.iter_entry_points('schevo.evo_command'):
+        for p in pkg_resources.iter_entry_points('schevo.schevo_command'):
             name = p.name
             command = p.load()
             commands[name] = command

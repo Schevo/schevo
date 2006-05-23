@@ -13,7 +13,7 @@ from schevo.script.command import Command
 from schevo.script import opt
 
 usage = """\
-evo db schema [options] DIRECTORY
+schevo db schema [options] DIRECTORY
 
 DIRECTORY: The directory name which will contain the schema.
 

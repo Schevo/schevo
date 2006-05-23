@@ -108,7 +108,7 @@ class Charlie(E.Entity):
     beta = f.string(default='foo')      # Non-callable default value.
     gamma = f.integer(default=lambda : 42) # Callable default value.
 
-    _sample = [
+    _sample_unittest = [
         ('bar', 12),                    # No defaults are used.
         (DEFAULT, 12),                  # Default is used for beta.
         ('bar', DEFAULT),               # Default is used for gamma.
@@ -164,7 +164,7 @@ class EchoAlpha(E.Entity):
     integer = f.integer(required=False)
     float = f.float(required=False)
 
-    _sample = [
+    _sample_unittest = [
         (u'unicode', 5, 2.2),
         (u'yoonicode', 6, 3.3),
         ]
@@ -177,7 +177,7 @@ class EchoBravo(E.Entity):
 
     _hide('v_default')
 
-    _sample = [
+    _sample_unittest = [
         (u'string', ),
         (u'strang', ),
         ]
@@ -215,7 +215,7 @@ class EchoCharlie(E.Entity):
             # is for.
             self.double = self.single * 2
 
-    _sample = [
+    _sample_unittest = [
         (1, ),
         (2, ),
         ]
@@ -231,7 +231,7 @@ class FoxtrotAlpha(E.Entity):
 
     _key(beta)
 
-    _sample = [
+    _sample_unittest = [
         (1, DEFAULT, DEFAULT),
         (2, DEFAULT, ('FoxtrotAlpha', (1, ))),
         (3, (1, ), DEFAULT),
@@ -247,7 +247,7 @@ class FoxtrotBravo(E.Entity):
 
     _key(gamma)
 
-    _sample = [
+    _sample_unittest = [
         (1, DEFAULT),
         (2, (1, )),
         (3, DEFAULT),
@@ -262,7 +262,7 @@ class FoxtrotCharlie(E.Entity):
 
     _key(epsilon)
 
-    _sample = [
+    _sample_unittest = [
         (1, ),
         (2, ),
         (3, ),
@@ -278,7 +278,7 @@ class FoxtrotDelta(E.Entity):
 
     _key(zeta)
 
-    _sample = [
+    _sample_unittest = [
         (1, (1, )),
         (2, DEFAULT),
         (3, DEFAULT),
@@ -641,7 +641,7 @@ class Account(E.Entity):
         tx._label = 'Transfer Funds From %s' % self
         return tx
 
-    _sample = [
+    _sample_unittest = [
         (('Fred Flintstone', ), 'Personal', 204.52, False, False),
         (('Fred Flintstone', ), 'Business', 29142.75, True, False),
         (('Betty Rubble', ), 'Family', 291.00, False, True),
@@ -672,7 +672,7 @@ class Person(E.Entity):
 
     _plural = 'People'
 
-    _sample = [
+    _sample_unittest = [
         ('Fred Flintstone', UNASSIGNED),
         ('Betty Rubble', UNASSIGNED),
         ]
