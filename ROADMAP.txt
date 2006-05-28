@@ -1,1 +1,1 @@
-See doc/roadmap.txt or http://schevo.org/roadmap.html
+For information and progress on future Schevo changes and features, please see http://schevo.org/trac/report/1

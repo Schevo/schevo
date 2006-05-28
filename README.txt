@@ -1,1 +1,1 @@
-See doc/index.txt or http://schevo.org/
+For documentation, please see http://schevo.org/
