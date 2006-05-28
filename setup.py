@@ -54,7 +54,7 @@ setup(
       version to the next.
 
     The latest development version is available in a `Subversion
-    repository <http://schevo.org/svn/trunk/>`__.
+    repository <http://schevo.org/svn/trunk/Schevo#egg=Schevo-dev>`__.
     """),
     
     classifiers=[
