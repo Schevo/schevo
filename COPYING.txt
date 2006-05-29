@@ -1,4 +1,4 @@
-Schevo is licensed for use under the terms of the GNU LGPL, the text of which is presented below:
+Schevo is licensed for use under the terms of version 2.1 of the GNU Lesser general Public License (LGPL).
 
 		  GNU LESSER GENERAL PUBLIC LICENSE
 		       Version 2.1, February 1999
