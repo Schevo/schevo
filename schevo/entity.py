@@ -16,10 +16,22 @@ from schevo.label import (
     LabelMixin, label_from_name, plural_from_name, with_label)
 import schevo.namespace
 from schevo.namespace import NamespaceExtension
-from schevo.schema import extentmethod
 from schevo import query
 from schevo import transaction
 from schevo import view
+
+
+# extentmethod provides support for decorating methods of entity
+# classes as belonging to the extent, not the entity.
+def extentmethod(fn):
+    def outer_fn(cls, *args, **kw):
+        return fn(cls._extent, *args, **kw)
+    if hasattr(fn, '_label'):
+        _plural = getattr(fn, '_plural', None)
+        decorator = with_label(fn._label, _plural)
+        outer_fn = decorator(outer_fn)
+    outer_fn = classmethod(outer_fn)
+    return outer_fn
 
 
 class EntityMeta(type):

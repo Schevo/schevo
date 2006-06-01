@@ -54,24 +54,12 @@ import schevo.query
 import schevo.transaction
 import schevo.view
 
+from schevo.entity import extentmethod
 from schevo.lib import optimize
 
 import inspect
 import threading
 from types import FunctionType, TypeType
-
-
-# extentmethod provides support for decorating methods of entity
-# classes as belonging to the extent, not the entity.
-def extentmethod(fn):
-    def outer_fn(cls, *args, **kw):
-        return fn(cls._extent, *args, **kw)
-    if hasattr(fn, '_label'):
-        _plural = getattr(fn, '_plural', None)
-        decorator = schevo.label.with_label(fn._label, _plural)
-        outer_fn = decorator(outer_fn)
-    outer_fn = classmethod(outer_fn)
-    return outer_fn
 
 
 # _hide provides support for hiding actions from user interfaces.
