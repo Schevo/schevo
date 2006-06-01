@@ -2,7 +2,15 @@
 from schevo.schema import *
 schevo.schema.prep(locals())
 
-_import('Schevo', 'icon', 1)
+
+class SchevoIcon(E.Entity):
+
+    _hidden = True
+
+    name = f.unicode()
+    data = f.image()
+
+    _key(name)
 
 
 class Gender(E.Entity):

@@ -4,8 +4,14 @@
 from schevo.schema import *
 schevo.schema.prep(locals())
 
-# If this schema includes Schevo's icon support, uncomment this line:
-## _import('Schevo', 'icon', 1)
-
-# If this schema includes Schevo's identity support, uncomment this line:
-## _import('Schevo', 'identity', 1)
+# If this schema includes Schevo's icon support, uncomment this entity
+# class definition:
+#
+## class SchevoIcon(E.Entity):
+## 
+##     _hidden = True
+## 
+##     name = f.unicode()
+##     data = f.image()
+## 
+##     _key(name)

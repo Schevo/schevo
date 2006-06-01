@@ -245,7 +245,8 @@ class Delete(Transaction):
         self.sys._set('count', entity.sys.count)
         self.sys._set('links', entity.sys.links)
         self.sys._set('old', entity)
-        fields = entity.sys.fields(include_readonly_fget=False)
+        fields = entity.sys.fields(
+            include_hidden=True, include_readonly_fget=False)
         self._update(fields)
         self._update_all_fields('readonly', True)
         self._setup()
@@ -342,7 +343,8 @@ class Update(Transaction):
         self.sys._set('links', entity.sys.links)
         self.sys._set('old', entity)
         self._oid = entity._oid
-        fields = entity.sys.fields(include_readonly_fget=False)
+        fields = entity.sys.fields(
+            include_hidden=True, include_readonly_fget=False)
         self._update(fields)
         for name, value in kw.iteritems():
             setattr(self, name, value)
