@@ -285,6 +285,37 @@ class _NullDatabase(object):
 _null_db = _NullDatabase()
 
 
+# ----------------------------------------------------------------------------
+# Functions useful for dealing with schema files:
+
+def name(version):
+    """Return canonical name for schema version."""
+    return 'schema_%03i' % version
+
+def path(location):
+    """If location is a module or package, return its path; otherwise,
+    return location."""
+    from_list = location.split('.')[:1]
+    try:
+        pkg = __import__(location, {}, {}, from_list)
+    except ImportError:
+        return location
+    return os.path.dirname(pkg.__file__)
+
+def read(location, version):
+    """Return text contents of the schema file version at location."""
+    schema_path = path(location)
+    schema_filename = name(version) + '.py'
+    schema_filepath = os.path.join(schema_path, schema_filename)
+    try:
+        schema_file = file(schema_filepath, 'rU')
+    except IOError:
+        raise RuntimeError('Could not open schema file %r' % schema_filepath)
+    schema_source = schema_file.read()
+    schema_file.close()
+    return schema_source
+
+
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
 #
 # Schevo

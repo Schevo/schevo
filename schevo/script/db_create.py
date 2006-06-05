@@ -7,6 +7,7 @@ import os
 
 import schevo.database
 import schevo.icon
+import schevo.schema
 
 from schevo.script.command import Command
 from schevo.script import opt
@@ -97,16 +98,7 @@ class Create(Command):
             icon_path = path(options.icon_path)
         if options.schema_path:
             schema_path = path(options.schema_path)
-        # Read the schema.  Allow for slashes and backslashes since those
-        # are sometime easier to supplier on the commandline.
-        schema_filename = os.path.join(schema_path, 'schema_001.py')
-        try:
-            schema_file = file(schema_filename, 'rU')
-        except IOError:
-            parser.error('Could not open schema file %r' % schema_filename)
-        # Read the schema source.
-        schema_source = schema_file.read()
-        schema_file.close()
+        schema_source = schevo.schema.read(schema_path, version=1)
         # Delete the database file if one exists.
         if options.delete_existing_database:
             if os.path.isfile(db_filename):

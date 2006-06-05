@@ -111,10 +111,12 @@ class CreatesDatabase(BaseTest):
         setattr(self, 'fp' + suffix, fp)
         setattr(self, 'connection' + suffix, db.connection)
         self.suffixes.add(suffix)
-        # Also set the global 'db...' variable in our class's module.
+        # Also set the global 'db...' and 'ex' variables in our
+        # class's module namespace for convenience.
         modname = self.__class__.__module__
         mod = sys.modules[modname]
         setattr(mod, db_name, db)
+        setattr(mod, 'ex', db.execute)
         return db
 
     def _open(self, suffix='', schema_source=None):
@@ -168,6 +170,7 @@ class CreatesSchema(CreatesDatabase):
             modname = self.__class__.__module__
             mod = sys.modules[modname]
             setattr(mod, db_name, db)
+            setattr(mod, 'ex', db.execute)
             self.suffixes.add(suffix)
         else:
             # Forget existing modules.

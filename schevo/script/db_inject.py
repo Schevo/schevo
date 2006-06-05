@@ -7,6 +7,7 @@ import os
 
 import schevo.database
 import schevo.icon
+import schevo.schema
 
 from schevo.script.command import Command
 from schevo.script import opt
@@ -77,17 +78,8 @@ class Inject(Command):
             schema_path = os.path.join(app_path, 'schema')
         if options.schema_path:
             schema_path = path(options.schema_path)
-        # Read the schema.  Allow for slashes and backslashes since those
-        # are sometime easier to supplier on the commandline.
-        schema_filename = os.path.join(schema_path, 'schema_001.py')
-        try:
-            schema_file = file(schema_filename, 'rU')
-        except IOError:
-            parser.error('Could not open schema file %r' % schema_filename)
-        # Read the schema source.
-        schema_source = schema_file.read()
+        schema_source = schevo.schema.read(schema_path, version=1)
         schema_version = 1
-        schema_file.close()
         # Inject the schema.
         if not os.path.isfile(db_filename):
             parser.error('Please specify a DBFILE that exists.')
