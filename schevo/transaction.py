@@ -314,7 +314,9 @@ class Delete(Transaction):
             other = EntityClass(oid)
             # Must update fields to UNASSIGNED first to prevent
             # DeleteRestrict from being raised by the database itself.
-            tx = other.t.update()
+            # Use generic update() here to avoid a customized Update
+            # that wouldn't expect to be called in this context.
+            tx = other.t.generic_update()
             for field_name in field_names:
                 tx.f[field_name].readonly = False
                 setattr(tx, field_name, UNASSIGNED)

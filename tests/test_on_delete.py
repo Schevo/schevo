@@ -33,6 +33,11 @@ class TestOnDelete(CreatesSchema):
 
         alpha_alpha = f.entity('AlphaAlpha', on_delete=CASCADE)
 
+        class _Update(T.Update):
+
+            def _before_execute(self, db, entity):
+                raise RuntimeError("Generic Update should be used internally.")
+
 
     class AlphaCharlie(E.Entity):
         """Has a reference to an AlphaAlpha, such that when that
@@ -47,7 +52,8 @@ class TestOnDelete(CreatesSchema):
         AlphaAlpha is deleted, this field on this AlphaDelta will be set
         to UNASSIGNED."""
 
-        alpha_alpha = f.entity('AlphaAlpha', on_delete=UNASSIGN, required=False)
+        alpha_alpha = f.entity('AlphaAlpha', on_delete=UNASSIGN,
+                               required=False)
 
 
     class AlphaEcho(E.Entity):
@@ -58,6 +64,20 @@ class TestOnDelete(CreatesSchema):
 
         alpha_or_bravo = f.entity(('AlphaAlpha', UNASSIGN),
                                   ('AlphaBravo', CASCADE), required=False)
+
+
+    class AlphaFoxtrot(E.Entity):
+        """Has a reference to an AlphaAlpha, such that when that
+        AlphaAlpha is deleted, this field on this AlphaDelta will be set
+        to UNASSIGNED."""
+
+        alpha_alpha = f.entity('AlphaAlpha', on_delete=UNASSIGN,
+                               required=False)
+
+        class _Update(T.Update):
+
+            def _before_execute(self, db, entity):
+                raise RuntimeError("We expect this to get called and fail.")
     '''
 
     def _alpha_alpha(self):
@@ -102,6 +122,13 @@ class TestOnDelete(CreatesSchema):
         tx = alpha_alpha.t.delete()
         db.execute(tx)
         assert alpha_delta.alpha_alpha is UNASSIGNED
+
+    def test_unassign_with_customized_update(self):
+        alpha_alpha = self._alpha_alpha()
+        tx = db.AlphaFoxtrot.t.create(alpha_alpha=alpha_alpha)
+        alpha_foxtrot = db.execute(tx)
+        tx = alpha_alpha.t.delete()
+        self.assertRaises(RuntimeError, db.execute, tx)
 
     def test_unassign_or_cascade(self):
         alpha_alpha = self._alpha_alpha()

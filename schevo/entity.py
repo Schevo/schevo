@@ -142,6 +142,11 @@ class EntityMeta(type):
                 _Delete._init_class()
             cls._Delete = _Delete
         cls._Delete._fget_fields = cls._fget_fields
+        # Generic Update (for use by cascading delete)
+        class _GenericUpdate(transaction.Update):
+            pass
+        cls._GenericUpdate = _GenericUpdate
+        cls._GenericUpdate._fget_fields = cls._fget_fields
         # Update
         if not hasattr(cls, '_Update'):
             class _Update(transaction.Update):
@@ -186,10 +191,12 @@ class EntityMeta(type):
         cls._Create._extent_name = class_name
         cls._DefaultView._extent_name = class_name
         cls._Delete._extent_name = class_name
+        cls._GenericUpdate._extent_name = class_name
         cls._Update._extent_name = class_name
         cls._Create._EntityClass = cls
         cls._DefaultView._EntityClass = cls
         cls._Delete._EntityClass = cls
+        cls._GenericUpdate._EntityClass = cls
         cls._Update._EntityClass = cls
         # Create the hide spec.
         cls._hidden_actions = set(cls._hidden_actions)
@@ -312,7 +319,8 @@ class Entity(base.Entity, LabelMixin):
     #
     # XXX: _hidden_* defaults in schevo.schema.hide function are used
     # XXX: if _hide is called during Entity subclass creation.
-    _hidden_actions = set(['create_if_necessary', 'create_or_update'])
+    _hidden_actions = set(['create_if_necessary', 'create_or_update',
+                           'generic_update'])
     _hidden_queries = set([])
     _hidden_views = set()
 
@@ -445,6 +453,12 @@ class Entity(base.Entity, LabelMixin):
     def t_delete(self):
         """Return a Delete transaction."""
         tx = self._Delete(self)
+        return tx
+
+    @with_label(u'Generic Update')
+    def t_generic_update(self, **kw):
+        """Return a Generic Update transaction."""
+        tx = self._GenericUpdate(self, **kw)
         return tx
 
     @with_label(u'Update')

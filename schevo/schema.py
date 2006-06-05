@@ -68,7 +68,8 @@ def _hide(*args):
     clsLocals = inspect.currentframe(1).f_locals
     # XXX: see schevo.entity.Entity._hidden_*
     hidden_actions = clsLocals.setdefault(
-        '_hidden_actions', set(['create_if_necessary', 'create_or_update']))
+        '_hidden_actions', set(['create_if_necessary', 'create_or_update',
+                                'generic_update']))
     hidden_queries = clsLocals.setdefault('_hidden_queries', set([]))
     hidden_views = clsLocals.setdefault('_hidden_views', set())
     for name in args:

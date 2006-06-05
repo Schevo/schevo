@@ -440,7 +440,7 @@ class TestDecoration(test.CreatesSchema):
         # First check the extent.
         assert sorted(list(db.LoopSegment.t)) == [
             'create_loop', 'dirty_create_loop']
-        # Create is still available though even though it's hidden.
+        # Create is still available, even though it's hidden.
         assert isinstance(db.LoopSegment.t.create(), transaction.Create)
         # Create a loop of one segment and verify that 'update' is
         # hidden.
