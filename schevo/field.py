@@ -52,6 +52,8 @@ class Field(base.Field):
 
     assigned: True if a value was assigned after field was created.
 
+    changed: True if a value was changed by a transaction.
+
     data_type: Python data type of the value.
 
     default: Default value, stored as a tuple of (value,).  If value
@@ -132,7 +134,9 @@ class Field(base.Field):
     subdued_values = None
     valid_values = None
 
-    def __init__(self, instance, attribute, value=None):
+    _changed = False
+
+    def __init__(self, instance, attribute, value=None, rev=None):
         """Create a Field instance assigned to an instance with a given value.
 
         instance: usually an Entity (or Entity subclass) instance, or
@@ -160,6 +164,12 @@ class Field(base.Field):
         else:
             # Otherwise a field is created with an initial value of UNASSIGNED.
             self._value = UNASSIGNED
+        # Initial rev for the field, usually supplied for existing fields.
+        if rev is not None:
+            self._rev = rev
+        else:
+            # Otherwise a field is created with an initial rev of -1.
+            self._rev = -1
         # Capture the initial value so we can tell if this field was changed.
         self._initialValue = self._value
         # Become readonly if an fget is defined.
@@ -204,8 +214,16 @@ class Field(base.Field):
             return unicode(v)
 
     @property
+    def changed(self):
+        return self._changed
+
+    @property
     def name(self):
         return self._attribute
+
+    @property
+    def rev(self):
+        return self._rev
 
     def reversible(self, value=None):
         """Return a reversible string representation of the field value, or
@@ -297,9 +315,9 @@ class Field(base.Field):
         # Change the value.
         self._value = value
 
-    def was_changed(self):
-        """Return True if value was changed.  For use by Suppliers."""
-        return self._value != self._initialValue
+##     def was_changed(self):
+##         """Return True if value was changed.  For use by Suppliers."""
+##         return self._value != self._initialValue
 
     def _prepare(self, value):
         """Prepare the field value."""

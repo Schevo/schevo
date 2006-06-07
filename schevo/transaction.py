@@ -326,8 +326,6 @@ class Delete(Transaction):
         # Attempt to delete the entity itself.
         extent_name = self._extent_name
         oid = entity._oid
-        self._old_rev = db._entity_rev(extent_name, oid)
-        self._old_fields = db._entity_fields(extent_name, oid)
         db._delete_entity(extent_name, oid)
         self._after_execute(db)
         return None
@@ -365,13 +363,12 @@ class Update(Transaction):
         pass
 
     def _execute(self, db):
-        self._before_execute(db, self._entity)
         extent_name = self._extent_name
         oid = self._oid
-        self._old_rev = db._entity_rev(extent_name, oid)
-        self._old_fields = db._entity_fields(extent_name, oid)
-        fields = self._fields.value_map()
+        old_fields = db._entity_fields(extent_name, oid)
+        self._before_execute(db, self._entity)
         # Strip out unwanted fields.
+        fields = self._fields.value_map()
         fget_fields = self._fget_fields
         field_spec = self._EntityClass._field_spec
         for name in fields.keys():
@@ -379,6 +376,12 @@ class Update(Transaction):
                 del fields[name]
         db._update_entity(extent_name, oid, fields)
         entity = db._entity(extent_name, oid)
+        # Flag fields that actually changed.
+        for name in old_fields:
+            if name in fields and name not in fget_fields:
+                field = entity.f[name]
+                if field._value != old_fields[name]:
+                    field._changed = True
         self._after_execute(db, entity)
         return entity
 

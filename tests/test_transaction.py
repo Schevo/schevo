@@ -539,6 +539,9 @@ class TestTransaction(test.CreatesSchema):
         # Change 'name' and execute.
         tx.name = 'bar'
         result2 = db.execute(tx)
+        # Make sure the fields that changed were flagged as such.
+        assert result2.f.name.changed
+        assert not result2.f.age.changed
         # The result should be the same User entity, except have a new
         # rev and a new name.
         assert isinstance(result2, db.User._EntityClass)

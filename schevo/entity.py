@@ -65,15 +65,24 @@ class EntityMeta(type):
             fget = FieldClass.fget
             if fget is not None:
                 fget_fields.append(field_name)
-                def get_field(self, fget=fget[0]):
+                def get_field_value(self, fget=fget[0]):
+                    db = self._db
+                    cache = self._cache
+                    extent_name = self._extent.name
+                    oid = self._oid
+                    if not db._extent_contains_oid(extent_name, oid):
+                        raise schevo.error.EntityDoesNotExist
+                    if field_name not in cache:
+                        field = FieldClass(self, field_name)
+                        cache[field_name] = field
                     return fget(self)
                 # Transactions and the default query don't need
                 # calculated fields.
                 del q_spec[field_name]
                 del tx_spec[field_name]
             else:
-                def get_field(self, field_name=field_name,
-                              FieldClass=FieldClass):
+                def get_field_value(self, field_name=field_name,
+                                    FieldClass=FieldClass):
                     """Get the field value from the database or cache."""
                     db = self._db
                     cache = self._cache
@@ -82,25 +91,23 @@ class EntityMeta(type):
                     if not db._extent_contains_oid(extent_name, oid):
                         raise schevo.error.EntityDoesNotExist
                     if field_name in cache:
-                        value, rev = cache[field_name]
+                        field = cache[field_name]
                     else:
-                        value, rev = None, None
-                    if (value is None or
-                        rev != db._entity_rev(extent_name, oid)):
+                        field = FieldClass(self, field_name)
+                        cache[field_name] = field
+                    current_rev = db._entity_rev(extent_name, oid)
+                    if field.rev != current_rev:
                         try:
                             value, rev = db._entity_field_rev(
                                 extent_name, oid, field_name)
                         except KeyError:
-                            value = UNASSIGNED
+                            value, rev = UNASSIGNED, current_rev
                         except schevo.error.EntityDoesNotExist:
                             raise
-                        else:
-                            field = FieldClass(None, None)
-                            field._value = value
-                            value = field.get()
-                            cache[field_name] = (value, rev)
-                    return value
-            setattr(cls, field_name, property(fget=get_field))
+                        field._rev = rev
+                        field._value = value
+                    return field.get()
+            setattr(cls, field_name, property(fget=get_field_value))
         cls._fget_fields = tuple(fget_fields)
         #
         # Create standard transaction classes.  Transaction fields
@@ -363,7 +370,7 @@ class Entity(base.Entity, LabelMixin):
 
     def __init__(self, oid):
         self._oid = oid
-        self._cache = {}  # Cache of field values.
+        self._cache = {}  # Cache of fields.
         self.sys = EntitySys(self)
         self.f = EntityFields(self)
         self.q = EntityQueries(self)
@@ -489,14 +496,24 @@ class EntityExtenders(NamespaceExtension):
 
 class EntityFields(object):
 
+    __slots__ = ['_entity']
+
     def __init__(self, entity):
-        d = self.__dict__
-        d['_entity'] = entity
+        self._entity = entity
 
     def __getattr__(self, name):
         e = self._entity
-        FieldClass = e._field_spec[name]
-        field = FieldClass(e, name, getattr(e, name))
+        cache = e._cache
+        if name not in cache:
+            FieldClass = e._field_spec[name]
+            value = None
+            rev = None
+            if FieldClass.fget is None:
+                value, rev = e._db._entity_field_rev(e._extent.name,
+                                                     e._oid, name)
+            field = FieldClass(e, name, value, rev)
+            cache[name] = field
+        field = cache[name]
         return field
 
     def __getitem__(self, name):
@@ -505,8 +522,9 @@ class EntityFields(object):
     def __iter__(self):
         return iter(self._entity._field_spec)
 
-    def __setattr__(self, name, value):
-        raise AttributeError('EntityFields attributes are readonly.')
+    def _getAttributeNames(self):
+        """Return list of hidden attributes to extend introspection."""
+        return sorted(iter(self))
 
 
 class EntityQueries(NamespaceExtension):
