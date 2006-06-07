@@ -60,6 +60,10 @@ class TransactionNotExecuted(RuntimeError):
     """A transaction was not yet executed."""
 
 
+class TransactionRuleViolation(RuntimeError):
+    """A transaction rule was violated."""
+
+
 class SchemaError(SyntaxError):
     """An error was found in the schema."""
 
