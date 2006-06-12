@@ -745,6 +745,19 @@ class Datetime(Field):
             value = (dt.year, dt.month, dt.day, dt.hour, dt.minute,
                      dt.second, dt.microsecond)
         elif isinstance(value, basestring):
+            # Get microseconds first if available.
+            parts = value.split('.', 2)
+            if len(parts) == 2:
+                value, microsecond = parts
+                if len(microsecond) > 6:
+                    # Chop.
+                    microsecond = microsecond[:6]
+                elif len(microsecond) < 6:
+                    # Pad.
+                    microsecond = microsecond + ('0' * (6 - len(microsecond)))
+                microsecond = int(microsecond)
+            else:
+                microsecond = 0
             # Try our format, then some default formats.
             formats = [
                 self.format,
@@ -766,7 +779,7 @@ class Datetime(Field):
             ts = time.mktime(tt)
             dt = datetime.datetime.fromtimestamp(ts)
             value = (dt.year, dt.month, dt.day, dt.hour, dt.minute,
-                     dt.second, dt.microsecond)
+                     dt.second, microsecond)
         else:
             # If the value is not represented as a timestamp, assume
             # that it has the same attributes as a datetime object
