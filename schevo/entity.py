@@ -6,6 +6,8 @@ For copyright, license, and warranty, see bottom of file.
 import sys
 from schevo.lib import optimize
 
+from string import digits, letters
+
 from schevo import base
 from schevo.constant import UNASSIGNED
 from schevo.error import (
@@ -310,7 +312,7 @@ class Entity(base.Entity, LabelMixin):
     __metaclass__ = EntityMeta
 
     __slots__ = LabelMixin.__slots__ + ['_oid', '_cache', 'sys',
-                                        'f', 'q', 't', 'v', 'x']
+                                        'f', 'm', 'q', 't', 'v', 'x']
 
     # The first _key() specification defined.
     _default_key = None
@@ -371,12 +373,6 @@ class Entity(base.Entity, LabelMixin):
     def __init__(self, oid):
         self._oid = oid
         self._cache = {}  # Cache of fields.
-        self.sys = EntitySys(self)
-        self.f = EntityFields(self)
-        self.q = EntityQueries(self)
-        self.t = EntityTransactions(self)
-        self.v = EntityViews(self)
-        self.x = EntityExtenders(self)
 
     def __cmp__(self, other):
         if other.__class__ is self.__class__:
@@ -394,8 +390,24 @@ class Entity(base.Entity, LabelMixin):
         return not (self == other)
 
     def __getattr__(self, name):
-        msg = 'Field %r does not exist on %r.' % (name, self._extent.name)
-        raise AttributeError(msg)
+        if name == 'sys':
+            self.sys = attr = EntitySys(self)
+        elif name == 'f':
+            self.f = attr = EntityFields(self)
+        elif name == 'm':
+            self.m = attr = EntityOneToMany(self)
+        elif name == 'q':
+            self.q = attr = EntityQueries(self)
+        elif name == 't':
+            self.t = attr = EntityTransactions(self)
+        elif name == 'v':
+            self.v = attr = EntityViews(self)
+        elif name == 'x':
+            self.x = attr = EntityExtenders(self)
+        else:
+            msg = 'Field %r does not exist on %r.' % (name, self._extent.name)
+            raise AttributeError(msg)
+        return attr
 
     def __hash__(self):
         return hash((self._extent, self._oid))
@@ -525,6 +537,47 @@ class EntityFields(object):
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
         return sorted(iter(self))
+
+
+class EntityOneToMany(NamespaceExtension):
+    """A namespace of entity-level methods."""
+
+    def __init__(self, entity):
+        NamespaceExtension.__init__(self)
+        d = self._d
+        e = entity
+        db = e._db
+        extent_name = e._extent.name
+        oid = e._oid
+        last_extent_name = ''
+        for other_extent_name, other_field_name in e._extent.relationships:
+            # The first field for an other_extent becomes the default.
+            if other_extent_name == last_extent_name:
+                continue
+            last_extent_name = other_extent_name
+            many_name = _many_name(db.extent(other_extent_name)._plural)
+            many_func = _many_func(db, extent_name, oid,
+                                   other_extent_name, other_field_name)
+            d[many_name] = many_func
+
+def _many_func(db, extent_name, oid, other_extent_name, other_field_name):
+    """Return a many function."""
+    links = db._entity_links
+    def many(other_field_name=other_field_name):
+        return links(extent_name, oid, other_extent_name, other_field_name)
+    return many
+
+
+_ALLOWED = digits + letters + ' '
+def _many_name(name):
+    """Return a canonical many name."""
+    # Strip all but alphanumeric and spaces.
+    name = ''.join(c for c in name if c in _ALLOWED)
+    # Convert to lowercase 8-bit string.
+    name = str(name).lower()
+    # Replace spaces with underscores.
+    name = name.replace(' ', '_')
+    return name
 
 
 class EntityQueries(NamespaceExtension):

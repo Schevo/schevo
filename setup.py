@@ -75,7 +75,7 @@ setup(
     
     platforms=['UNIX', 'Windows'],
 
-    packages=find_packages(exclude=['doc']),
+    packages=find_packages(exclude=['doc', 'tests']),
 
     package_data=finddata.find_package_data(),
 

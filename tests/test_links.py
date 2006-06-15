@@ -5,6 +5,7 @@ For copyright, license, and warranty, see bottom of file.
 
 from schevo.constant import UNASSIGNED
 from schevo import error
+from schevo.label import label, plural
 from schevo.test import CreatesSchema
 
 
@@ -12,7 +13,7 @@ class TestLinks(CreatesSchema):
 
     # XXX: Todo: test_links
 
-    body = '''
+    body = r'''
 
     class FoxtrotAlpha(E.Entity):
         """Used for testing ``links`` and ``count``."""
@@ -78,7 +79,59 @@ class TestLinks(CreatesSchema):
             (4, DEFAULT),
             (5, DEFAULT),
             ]
+        
+            
+    class Goauld(E.Entity):
+        """Fictional characters from a TV series, to test plural usage
+        on entity m namespace."""
+    
+        something = f.entity('Something')
+        
+        _label = u"Goa\u2032uld"
+        _plural = u"Goa\u2032ulds"
+    
+    
+    class Something(E.Entity):
+        pass
+        
     '''
+
+    def test_many(self):
+        charlie = db.FoxtrotCharlie.findone(epsilon=1)
+        bravos = charlie.m.foxtrot_bravos('foxtrot_charlie')
+        assert len(bravos) == 1
+        assert db.FoxtrotBravo[2] in bravos
+        bravos = charlie.m.foxtrot_bravos()
+        assert len(bravos) == 1
+        assert db.FoxtrotBravo[2] in bravos
+        charlie = db.FoxtrotCharlie.findone(epsilon=2)
+        bravos = charlie.m.foxtrot_bravos()
+        assert len(bravos) == 2
+        assert db.FoxtrotBravo[4] in bravos
+        assert db.FoxtrotBravo[5] in bravos
+        bravo = db.FoxtrotBravo[1]
+        deltas = bravo.m.foxtrot_deltas()
+        assert len(deltas) == 1
+        assert db.FoxtrotDelta[1] in deltas
+        alphas = bravo.m.foxtrot_alphas()
+        assert len(alphas) == 2
+        assert db.FoxtrotAlpha[3] in alphas
+        assert db.FoxtrotAlpha[4] in alphas
+        alphas = bravo.m.foxtrot_alphas('foxtrot_any')
+        assert len(alphas) == 1
+        assert db.FoxtrotAlpha[4] in alphas
+        
+    def test_many_pluralization(self):
+        assert label(db.Goauld) == u"Goa\u2032uld"
+        assert plural(db.Goauld) == u"Goa\u2032ulds"
+        ex = db.execute
+        something = ex(db.Something.t.create())
+        goauld1 = ex(db.Goauld.t.create(something=something))
+        goauld2 = ex(db.Goauld.t.create(something=something))
+        goaulds = something.m.goaulds()
+        assert len(goaulds) == 2
+        assert goauld1 in goaulds
+        assert goauld2 in goaulds
 
     def test_count(self):
         # Shortcuts for Foxtrot* extents.
