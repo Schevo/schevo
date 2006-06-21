@@ -6,7 +6,7 @@ For copyright, license, and warranty, see bottom of file.
 import sys
 from schevo.lib import optimize
 
-from string import digits, letters
+from string import digits, ascii_letters
 
 from schevo import base
 from schevo.constant import UNASSIGNED
@@ -568,7 +568,7 @@ def _many_func(db, extent_name, oid, other_extent_name, other_field_name):
     return many
 
 
-_ALLOWED = digits + letters + ' '
+_ALLOWED = digits + ascii_letters + ' '
 def _many_name(name):
     """Return a canonical many name."""
     # Strip all but alphanumeric and spaces.
