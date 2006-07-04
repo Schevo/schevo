@@ -371,6 +371,21 @@ class Field(base.Field):
             msg = custom
         raise exctype(msg)
 
+    def _validate_min_max_value(self, value):
+        """Validate `value` against minimum and maximum value of this
+        field."""
+        if not self.required and value is UNASSIGNED:
+            return
+        min_value = self.min_value
+        convert = self.convert
+        if min_value is not None and value < convert(min_value):
+            msg = '%s value must be >= %r' % (self._attribute, min_value)
+            self._raise(ValueError, msg)
+        max_value = self.max_value
+        if max_value is not None and value > convert(max_value):
+            msg = '%s value must be <= %r' % (self._attribute, max_value)
+            self._raise(ValueError, msg)
+
 
 # --------------------------------------------------------------------
 
@@ -582,8 +597,6 @@ class Integer(Field):
     """Integer field class."""
 
     data_type = int
-    max_value = sys.maxint
-    min_value = -sys.maxint - 1
 
     def convert(self, value, db=None):
         """Convert the value to an integer."""
@@ -596,12 +609,7 @@ class Integer(Field):
     def validate(self, value):
         """Validate the value, raising an error on failure."""
         Field.validate(self, value)
-        if not self.required and value is UNASSIGNED:
-            return
-        if not self.min_value <= value <= self.max_value:
-            msg = ('%s value must be >= %r and <= %r' %
-                   (self._attribute, self.min_value, self.max_value))
-            self._raise(ValueError, msg)
+        self._validate_min_max_value(value)
 
 
 class Float(Field):
@@ -616,6 +624,11 @@ class Float(Field):
         if value is UNASSIGNED:
             return value
         return float(value)
+
+    def validate(self, value):
+        """Validate the value, raising an error on failure."""
+        Field.validate(self, value)
+        self._validate_min_max_value(value)
 
 
 class Money(Field):
@@ -666,6 +679,11 @@ class Money(Field):
         format = '%.' + str(self.fract_digits) + 'f'
         return float(format % float(value))
 
+    def validate(self, value):
+        """Validate the value, raising an error on failure."""
+        Field.validate(self, value)
+        self._validate_min_max_value(value)
+
 
 # --------------------------------------------------------------------
 
@@ -711,6 +729,11 @@ class Date(Field):
             year, month, day = v
             v = datetime.date(year, month, day)
         return v
+
+    def validate(self, value):
+        """Validate the value, raising an error on failure."""
+        Field.validate(self, value)
+        self._validate_min_max_value(value)
 
 
 class Datetime(Field):
@@ -795,6 +818,11 @@ class Datetime(Field):
             v = datetime.datetime(year, month, day, hour, minute,
                                   second, microsecond)
         return v
+
+    def validate(self, value):
+        """Validate the value, raising an error on failure."""
+        Field.validate(self, value)
+        self._validate_min_max_value(value)
 
 
 # --------------------------------------------------------------------

@@ -11,7 +11,7 @@ import sys
 from schevo.constant import UNASSIGNED
 from schevo import field
 from schevo import fieldspec
-from schevo.test import BaseTest, CreatesSchema
+from schevo.test import BaseTest, CreatesSchema, raises
 
 
 class TestField(BaseTest):
@@ -64,6 +64,7 @@ class Base:
     FieldClass = None 
     good_values_default = []
     str_values_default = []
+    min_max_values = []
     error_message = 'Custom error message.'
 
     def empty_field(self):
@@ -72,8 +73,8 @@ class Base:
 
     def test_never_allow_none(self):
         f = self.empty_field()
-        self.assertRaises(ValueError, f.assign, None)
-        self.assertRaises(ValueError, f.set, None)
+        raises(ValueError, f.assign, None)
+        raises(ValueError, f.set, None)
 
     def test_requiredIsFalse(self):
         f = self.empty_field()
@@ -121,6 +122,21 @@ class Base:
             f = self.empty_field()
             f.assign(value)
             assert str(f) == strValue
+
+    def test_min_max_values(self):
+        for value, min_value, max_value, is_valid in self.min_max_values:
+            f = self.empty_field()
+            if min_value:
+                f.min_value = min_value
+            if max_value:
+                f.max_value = max_value
+            if is_valid:
+                # No exception is expected.
+                f.set(value)
+                assert f.get() == value
+            else:
+                # Exception is expected.
+                raises(ValueError, f.set, value)
 
 
 class TestString(Base, BaseTest):
@@ -178,7 +194,20 @@ class TestInteger(Base, BaseTest):
                           (-555, '-555'),
                           (-555555, '-555555'),
                           ]
-
+    min_max_values = [
+        # (value, min, max, is_valid),
+        (-sys.maxint - 10000, None, None, True),
+        (sys.maxint + 10000, None, None, True),
+        (-100, -200, None, True),
+        (-300, -200, None, False),
+        (100, None, 200, True),
+        (300, None, 200, False),
+        (-100, -200, 200, True),
+        (-300, -200, 200, False),
+        (100, -200, 200, True),
+        (300, -200, 200, False),
+        ]
+                          
 
 class TestFloat(Base, BaseTest):
 
@@ -211,6 +240,19 @@ class TestFloat(Base, BaseTest):
                           (-555.555, '-555.555'),
                           (-55555.5, '-55555.5'),
                           ]
+    min_max_values = [
+      # (value, min, max, is_valid),
+      (-10000., None, None, True),
+      (10000., None, None, True),
+      (-100., -200., None, True),
+      (-300., -200., None, False),
+      (100., None, 200., True),
+      (300., None, 200., False),
+      (-100., -200., 200., True),
+      (-300., -200., 200., False),
+      (100., -200., 200., True),
+      (300., -200., 200., False),
+      ]
 
 
 ## class TestMoney(Base, BaseTest):
@@ -241,6 +283,8 @@ class TestFloat(Base, BaseTest):
 ##                           (-555678.90, '-555678.90'),
 ##                           (55.551, '55.55'),
 ##                           ]
+##     # XXX: Be sure to add min_max_values to this test
+##     # when it is reactivated.
 
 
 class TestDate(Base, BaseTest):
@@ -260,6 +304,23 @@ class TestDate(Base, BaseTest):
         ('04/03/1765', (1765, 4, 3)),
         ('4/3/1765', (1765, 4, 3)),
         ]
+    min_max_values = [
+        # (value, min, max, is_valid),
+        (datetime.date(2004, 5, 5), None, None, True),
+        (datetime.date(2004, 3, 3), datetime.date(2004, 2, 2), None, True),
+        (datetime.date(2004, 1, 1), datetime.date(2004, 2, 2), None, False),
+        (datetime.date(2004, 1, 1), None, datetime.date(2004, 2, 2), True),
+        (datetime.date(2004, 3, 3), None, datetime.date(2004, 2, 2), False),
+        (datetime.date(2004, 3, 3), 
+         datetime.date(2004, 2, 2), datetime.date(2004, 4, 4), 
+         True),
+        (datetime.date(2004, 1, 1), 
+         datetime.date(2004, 2, 2), datetime.date(2004, 4, 4), 
+         False),
+        (datetime.date(2004, 5, 5), 
+         datetime.date(2004, 2, 2), datetime.date(2004, 4, 4), 
+         False),
+        ]
 
 
 class TestDatetime(Base, BaseTest):
@@ -277,6 +338,32 @@ class TestDatetime(Base, BaseTest):
         ('5/5/2004 22:32:05.8700', (2004, 5, 5, 22, 32, 5, 870000)),
         ('2004-05-05T22:32:05', (2004, 5, 5, 22, 32, 5, 0)),
         ('2004-05-05T22:32:05.1', (2004, 5, 5, 22, 32, 5, 100000)),
+        ]
+    min_max_values = [
+        # (value, min, max, is_valid),
+        (datetime.datetime(2004, 5, 5), None, None, 
+         True),
+        (datetime.datetime(2004, 3, 3), 
+         datetime.datetime(2004, 2, 2), None, 
+         True),
+        (datetime.datetime(2004, 1, 1), 
+         datetime.datetime(2004, 2, 2), None, 
+         False),
+        (datetime.datetime(2004, 1, 1), None, 
+         datetime.datetime(2004, 2, 2), 
+         True),
+        (datetime.datetime(2004, 3, 3), None, 
+         datetime.datetime(2004, 2, 2), 
+         False),
+        (datetime.datetime(2004, 3, 3), 
+         datetime.datetime(2004, 2, 2), datetime.datetime(2004, 4, 4), 
+         True),
+        (datetime.datetime(2004, 1, 1), 
+         datetime.datetime(2004, 2, 2), datetime.datetime(2004, 4, 4), 
+         False),
+        (datetime.datetime(2004, 5, 5), 
+         datetime.datetime(2004, 2, 2), datetime.datetime(2004, 4, 4), 
+         False),
         ]
 
 
