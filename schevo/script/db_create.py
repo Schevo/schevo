@@ -17,7 +17,7 @@ schevo db create [options] DBFILE
 
 DBFILE: The database file to create.
 
-Either --app or --schema must be given at a minimum.
+At a minimum, either the --app or the --schema option must be specified.
 
 Note: Currently, only the schema_001.py file will be loaded from the
 schema package."""
@@ -28,12 +28,12 @@ def _parser():
     p.add_option('-a', '--app', dest='app_path',
                  help='Use application in PATH.',
                  metavar='PATH',
-                 default=None
+                 default=None,
                  )
     p.add_option('-c', '--icons', dest='icon_path',
                  help='Use icons from PATH.',
                  metavar='PATH',
-                 default=None
+                 default=None,
                  )
     p.add_option('-i', '--import', dest='import_from',
                  help='Import XML data previously exported to FILE.',

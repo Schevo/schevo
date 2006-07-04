@@ -21,17 +21,6 @@ def parser(usage):
                  action='callback', callback=set_trace, type=int)
     return p
 
-# abusing module opt to make default_db_filename() available to other
-# packages. TODO: can be moved to dedicated file
-
-import os
-
-def default_db_filename():
-    filename = os.path.basename( os.getcwd() ) +  '.schevo'
-    # add further default possibilities
-    return filename
-
-
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
 #

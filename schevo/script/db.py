@@ -5,9 +5,7 @@ For copyright, license, and warranty, see bottom of file.
 
 from schevo.script.command import Command, CommandSet
 from schevo.script import (
-    db_schema,
     db_create,
-    db_evolve,
     db_inject,
 ##     db_evolve,
 ##     db_update,
@@ -21,9 +19,7 @@ class Database(CommandSet):
 
     def __init__(self):
         self.commands = {
-            'schema': db_schema.start,
             'create': db_create.start,
-            'evolve': db_evolve.start,            
             'inject': db_inject.start,
 ##             'evolve': db_evolve.start,
 ##             'update': db_update.start,
