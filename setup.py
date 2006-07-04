@@ -69,7 +69,7 @@ setup(
     author='Orbtech, L.L.C. and contributors',
     author_email='schevo-devel@lists.schevo.org',
 
-    url='http://schevo.org/',
+    url='http://schevo.org/trac/wiki/Schevo',
     
     license='LGPL',
     
@@ -86,7 +86,7 @@ setup(
     ],
     
     tests_require=[
-    'nose >= 0.9.0b1',
+    'nose >= 0.9.0',
     ],
     test_suite='nose.collector',
     

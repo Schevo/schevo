@@ -5,14 +5,19 @@ For copyright, license, and warranty, see bottom of file.
 
 import pkg_resources
 
-from schevo import version
 from schevo.script.command import CommandSet
 from schevo.script import db, shell
 
 
+# Get version information from installed package.
+dist = pkg_resources.get_distribution('Schevo')
+NAME = dist.project_name
+VERSION = dist.version
+
+
 class Main(CommandSet):
 
-    name = '%s %s' % (version.NAME, version.VERSION)
+    name = '%s %s' % (NAME, VERSION)
 
     def __init__(self):
         commands = self.commands = {}
