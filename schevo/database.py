@@ -1420,7 +1420,7 @@ schevo.schema.prep(locals())
                 _create_index(extent_map, i_spec, True)
                 for oid in entities:
                     fields_by_id = entities[oid]['fields']
-                    field_values = tuple(fields_by_id[field_id]
+                    field_values = tuple(fields_by_id.get(field_id, UNASSIGNED)
                                          for field_id in i_spec)
                     _index_add(extent_map, i_spec, None, oid, field_values)
         # Create new non-unique indices for those that don't exist.
@@ -1430,7 +1430,7 @@ schevo.schema.prep(locals())
                 _create_index(extent_map, i_spec, False)
                 for oid in entities:
                     fields_by_id = entities[oid]['fields']
-                    field_values = tuple(fields_by_id[field_id]
+                    field_values = tuple(fields_by_id.get(field_id, UNASSIGNED)
                                          for field_id in i_spec)
                     _index_add(extent_map, i_spec, None, oid, field_values)
         # Remove key indices that no longer exist.
