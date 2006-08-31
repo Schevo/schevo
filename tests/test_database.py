@@ -22,8 +22,7 @@ class TestDatabase(test.CreatesDatabase):
     def test_empty(self):
         """A database should start out with very little."""
         assert self.db.version == 0
-        self.assertRaises(AttributeError,
-                          setattr, self.db, 'version', 2)
+        self.assertRaises(AttributeError, setattr, self.db, 'version', 2)
         assert len(self.db.extent_names()) == 0
 
     def test_create_extent(self):
@@ -45,8 +44,8 @@ class TestDatabase(test.CreatesDatabase):
         """You cannot create an extent twice."""
         db = self.db
         db._create_extent('Some_Extent', ['name', 'age'], [])
-        self.assertRaises(error.ExtentExists,
-                          db._create_extent, 'Some_Extent', ['name', 'age'], [])
+        self.assertRaises(error.ExtentExists, db._create_extent,
+                          'Some_Extent', ['name', 'age'], [])
 
     def test_delete_extent(self):
         """An extent can be removed."""
@@ -60,8 +59,7 @@ class TestDatabase(test.CreatesDatabase):
     def test_delete_nonexistent_extent(self):
         """A non-existent extent cannot be removed."""
         db = self.db
-        self.assertRaises(error.ExtentDoesNotExist,
-                          db._delete_extent, 'An_Extent')
+        self.assertRaises(error.ExtentDoesNotExist, db._delete_extent, 'Foo')
 
     def test_extent_begins_empty(self):
         db = self.db
@@ -72,10 +70,7 @@ class TestDatabase(test.CreatesDatabase):
     def test_create_entity(self):
         db = self.db
         db._create_extent('Some_Extent', ['name', 'age'], [])
-        fields = dict(
-            name='Foo',
-            age=33,
-            )
+        fields = dict(name='Foo', age=33)
         oid = db._create_entity('Some_Extent', fields)
         db._commit()
         # OID starts out at 1 and rev starts out as 0.
@@ -91,10 +86,7 @@ class TestDatabase(test.CreatesDatabase):
     def test_update_entity(self):
         db = self.db
         db._create_extent('Some_Extent', ['name', 'age'], [])
-        fields = dict(
-            name='Foo',
-            age=33,
-            )
+        fields = dict(name='Foo', age=33)
         oid = db._create_entity('Some_Extent', fields)
         db._commit()
         fields = dict(name='Bar')
@@ -111,10 +103,7 @@ class TestDatabase(test.CreatesDatabase):
     def test_delete_entity(self):
         db = self.db
         db._create_extent('Some_Extent', ['name', 'age'], [])
-        fields = dict(
-            name='Foo',
-            age=33,
-            )
+        fields = dict(name='Foo', age=33)
         oid = db._create_entity('Some_Extent', fields)
         db._commit()
         db._delete_entity('Some_Extent', oid)
@@ -125,10 +114,7 @@ class TestDatabase(test.CreatesDatabase):
         # Extent's length decrements
         assert db._extent_len('Some_Extent') == 0
         # Creating a new entity never uses a deleted oid.
-        fields = dict(
-            name='Foo',
-            age=33,
-            )
+        fields = dict(name='Foo', age=33)
         oid2 = db._create_entity('Some_Extent', fields)
         db._commit()
         assert oid2 == oid + 1

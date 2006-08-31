@@ -44,6 +44,12 @@ class Extent(base.Extent):
         self._plural = EntityClass._plural
         self._relax = db._relax_index
 
+    def __cmp__(self, other):
+        if other.__class__ is self.__class__:
+            return cmp(self.name, other.name)
+        else:
+            return cmp(hash(self), hash(other))
+
     def __contains__(self, entity):
         if isinstance(entity, Entity):
             if entity._extent is not self:
@@ -170,17 +176,24 @@ class ExtentExtenders(NamespaceExtension):
 
 class ExtentFieldClasses(object):
 
+    __slots__ = ['_extent']
+
     def __init__(self, extent):
-        d = self.__dict__
-        d['_extent'] = extent
+        self._extent = extent
 
     def __getattr__(self, name):
-        e = self._extent
-        FieldClass = e._field_spec[name]
+        FieldClass = self._extent._field_spec[name]
         return FieldClass
 
-    def __setattr__(self, name, value):
-        raise AttributeError('ExtentFieldClasses attributes are readonly.')
+    def __getitem__(self, name):
+        return self.__getattr__(name)
+
+    def __iter__(self):
+        return iter(self._extent._field_spec)
+
+    def _getAttributeNames(self):
+        """Return list of hidden attributes to extend introspection."""
+        return sorted(iter(self))
 
 
 class ExtentQueries(NamespaceExtension):

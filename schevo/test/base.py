@@ -155,6 +155,7 @@ class CreatesSchema(CreatesDatabase):
             schema = self.schema
         use_db_cache = self._use_db_cache
         db_name = 'db' + suffix
+        ex_name = 'ex' + suffix
         fpv_name = 'fpv' + suffix
         if (use_db_cache
             and (schema, suffix) in _db_cache
@@ -170,7 +171,7 @@ class CreatesSchema(CreatesDatabase):
             modname = self.__class__.__module__
             mod = sys.modules[modname]
             setattr(mod, db_name, db)
-            setattr(mod, 'ex', db.execute)
+            setattr(mod, ex_name, db.execute)
             self.suffixes.add(suffix)
         else:
             # Forget existing modules.

@@ -67,12 +67,12 @@ class Param(Query):
     """Parameterized query that has field definitions, and an optional
     object on which to operate."""
 
-    __slots__ = ['_on', '_fields', 'f', 'sys', '_label']
+    __slots__ = ['_on', '_field_map', 'f', 'sys', '_label']
 
     _field_spec = FieldSpecMap()
 
     def __init__(self, *args, **kw):
-        f = self._fields = self._field_spec.field_map(instance=self)
+        f = self._field_map = self._field_spec.field_map(instance=self)
         self.f = schevo.namespace.Fields(self)
         self.sys = ParamSys(self)
         if args:
@@ -83,13 +83,13 @@ class Param(Query):
             setattr(self, name, value)
 
     def __getattr__(self, name):
-        return self._fields[name].get()
+        return self._field_map[name].get()
 
     def __setattr__(self, name, value):
         if name == 'sys' or name.startswith('_') or len(name) == 1:
             return super(Param, self).__setattr__(name, value)
         else:
-            self._fields[name].assign(value)
+            self._field_map[name].set(value)
 
     def __repr__(self):
         if self._on:
@@ -99,7 +99,7 @@ class Param(Query):
 
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
-        return sorted(self._fields.keys())
+        return sorted(self._field_map.keys())
 
 
 class ParamSys(NamespaceExtension):
@@ -110,8 +110,8 @@ class ParamSys(NamespaceExtension):
         NamespaceExtension.__init__(self)
         self._query = query
 
-    def fields(self):
-        return self._query._fields
+    def field_map(self):
+        return self._query._field_map
 
 
 class Exact(Param):
@@ -125,27 +125,28 @@ class Exact(Param):
         self._on = extent
         # First, use the fields defined in a subclass, if any.
         field_spec = FieldSpecMap(self._field_spec)
-        f = self._fields = field_spec.field_map(instance=self)
+        field_map = self._field_map = field_spec.field_map(instance=self)
         # Next, update field_spec and fields based on extent.
         for name, FieldClass in extent.field_spec.iteritems():
-            if name not in f:
-                if FieldClass.fget:
-                    # Convert fget fields to non-fget, so we can query
-                    # against them.
-                    class _FieldClass(FieldClass):
-                        fget = None
-                    _FieldClass.__name__ = FieldClass.__name__
-                    FieldClass = _FieldClass
+            if name not in field_map:
+                # Subclass all fields so they won't be constrained by
+                # having __slots__ defined.  Convert fget fields to
+                # non-fget, so we can query against them.
+                class NoSlotsField(FieldClass):
+                    fget = None
+                    readonly = False
+                    required = False
+                NoSlotsField.__name__ = FieldClass.__name__
+                FieldClass = NoSlotsField
                 field_spec[name] = FieldClass
-                field = f[name] = FieldClass(self, name)
-                field.required = False
+                field = field_map[name] = FieldClass(self, name)
         self.f = schevo.namespace.Fields(self)
         self.sys = ParamSys(self)
-        for field in f.itervalues():
+        for field in field_map.itervalues():
             field.assigned = False
         for name, value in kw.iteritems():
             setattr(self, name, value)
-            field = f[name]
+            field = field_map[name]
             field.assigned = True
 
     def __call__(self):
@@ -154,7 +155,7 @@ class Exact(Param):
     @property
     def _criteria(self):
         criteria = odict()
-        for name, field in self.sys.fields().iteritems():
+        for name, field in self.sys.field_map().iteritems():
             if field.assigned:
                 criteria[name] = field.get()
         return criteria
@@ -306,7 +307,7 @@ class Match(Query):
                         if getattr(obj, field_name) is UNASSIGNED)
             if value is not None:
                 field = self.FieldClass(self, field_name)
-                field.assign(value)
+                field.set(value)
                 value = field.get()
             if isinstance(on, base.Extent) and operator is o_eq:
                 kw = {field_name: value}
@@ -379,7 +380,7 @@ class Match(Query):
             if isinstance(value, Query):
                 s += u' %s' % value
             else:
-                field.assign(value)
+                field.set(value)
                 s += u' %s' % field
         return s
 
@@ -459,11 +460,12 @@ class ByExample(Intersection):
         for name, FieldClass in extent.field_spec.iteritems():
             # Make sure calculated fields are -not- calculated in the
             # match query.
-            if FieldClass.fget is not None:
-                _FieldClass = FieldClass
-                class FieldClass(_FieldClass):
-                    fget = None
-            match = Match(extent, name, 'any', FieldClass=FieldClass)
+            class NoSlotsField(FieldClass):
+                fget = None
+                readonly = False
+                required = False
+            NoSlotsField.__name__ = FieldClass.__name__
+            match = Match(extent, name, 'any', FieldClass=NoSlotsField)
             if name in kw:
                 match.value = kw[name]
                 match.operator = '=='

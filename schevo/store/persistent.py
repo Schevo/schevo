@@ -1,7 +1,9 @@
-"""$URL: svn+ssh://svn.mems-exchange.org/repos/trunk/durus/persistent.py $
+"""
+$URL: svn+ssh://svn/repos/trunk/durus/persistent.py $
 $Id$
 """
 
+import sys
 from schevo.lib import optimize
 
 from schevo.store.utils import format_oid
@@ -12,8 +14,20 @@ SAVED = 0
 GHOST = -1
 
 try:
-    from _persistent import PersistentBase
+    from _persistent import PersistentBase, ConnectionBase
+    [ConnectionBase] # to silence the unused import checker
 except ImportError:
+
+    class ConnectionBase(object):
+
+        __slots__ = ['sync_count']
+
+        def __new__(klass, *args, **kwargs):
+            instance = object.__new__(klass, *args, **kwargs)
+            instance.sync_count = 0
+            return instance
+
+
     _GHOST_SAFE_ATTRIBUTES = {
         '__repr__': 1,
         '__class__': 1,
@@ -49,20 +63,34 @@ except ImportError:
             GHOST   -> UNSAVED
               this happens when you want to make changes to self.__dict__.
               The stored state is loaded during this state transition.
-            
-          _p_touched: 0 | 1
-            _p_touched is set to 1 on every access to an attribute in
-            self.__dict__.  This allows the cache manager to identify SAVED
-            instances that have not been recently used.
+          _p_touched: int
+            set on every access to _p_connection.sync_count
+            (if _p_connection is not None).
+          _p_connection: durus.connection.Connection | None
+            The Connection to the Storage that stores this instance.
+            The _p_connection is None when this instance has never been stored.
+          _p_oid: str | None
+            The identifier assigned when the instance was first stored.
+            The _p_oid is None when this instance has never been stored.
         """
 
-        __slots__ = ['_p_status', '_p_touched']
+        __slots__ = ['_p_status', '_p_touched', '_p_connection', '_p_oid']
+
+        def __new__(klass, *args, **kwargs):
+            instance = object.__new__(klass, *args, **kwargs)
+            instance._p_status = UNSAVED
+            instance._p_touched = 0
+            instance._p_connection = None
+            instance._p_oid = None
+            return instance
 
         def __getattribute__(self, name):
             if name[:3] != '_p_' and name not in _GHOST_SAFE_ATTRIBUTES:
                 if self._p_status == GHOST:
                     self._p_load_state()
-                self._p_touched = 1
+                connection = self._p_connection
+                if connection is not None:
+                    self._p_touched = connection.sync_count
             return object.__getattribute__(self, name)
 
         def __setattr__(self, name, value):
@@ -75,28 +103,9 @@ except ImportError:
 class Persistent(PersistentBase):
     """
     All Durus persistent objects should inherit from this class.
-
-    Instance attributes:
-      _p_connection: schevo.store.connection.Connection | None
-        The Connection to the Storage that stores this instance.
-        The _p_connection is None when this instance has never been stored.
-      _p_oid: str | None
-        The identifier assigned when the instance was first stored.
-        The _p_oid is None when this instance has never been stored.
     """
 
-    __slots__ = ['_p_connection',
-                 '_p_oid',
-                 '__dict__',    # Provides for a normal instance __dict__.
-                 '__weakref__'] # The cache uses weak references.
-
-    def __new__(klass, *args, **kwargs):
-        instance = PersistentBase.__new__(klass, *args, **kwargs)
-        instance._p_status = UNSAVED
-        instance._p_touched = 1
-        instance._p_connection = None
-        instance._p_oid = None
-        return instance
+    __slots__ = []
 
     def __getstate__(self):
         return self.__dict__
@@ -142,7 +151,6 @@ class Persistent(PersistentBase):
         self._p_status = GHOST
 
     def _p_set_status_saved(self):
-        self._p_connection.note_saved(self)
         self._p_status = SAVED
 
     def _p_set_status_unsaved(self):
@@ -158,6 +166,30 @@ class Persistent(PersistentBase):
 
     def _p_is_saved(self):
         return self._p_status == SAVED
+
+
+class PersistentData(Persistent):
+
+    __slots__ = ['data', '__weakref__']
+
+    def __getstate__(self):
+        return dict(data=self.data)
+
+    def __setstate__(self, state):
+        self.data = state['data']
+
+    __delattr__ = object.__delattr__
+
+    __setattr__ = object.__setattr__
+
+    def _p_set_status_ghost(self):
+        del self.data
+        self._p_status = GHOST
+
+
+class PersistentTester(Persistent):
+
+    __slots__ = ['__dict__', '__weakref__']
 
 
 _Marker = object()
@@ -207,5 +239,4 @@ class ComputedAttribute(Persistent):
         return value
 
 
-import sys
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

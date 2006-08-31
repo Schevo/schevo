@@ -231,17 +231,17 @@ def finish(db, schema_module=None):
         # Make sure spec is sorted in field definition order.
         other_map = {}
         for other_extent_name, other_field_name in spec:
-            other_extent_fields = other_map.setdefault(
+            other_extent_field_set = other_map.setdefault(
                 other_extent_name, set())
-            other_extent_fields.add(other_field_name)
+            other_extent_field_set.add(other_field_name)
         spec = []
-        for other_extent_name, other_extent_fields in other_map.items():
+        for other_extent_name, other_extent_field_set in other_map.items():
             other_class = getattr(E, other_extent_name)
             spec.extend(
                 (other_extent_name, other_field_name)
                 for other_field_name
                 in other_class._field_spec
-                if other_field_name in other_extent_fields
+                if other_field_name in other_extent_field_set
                 )
         # Record final spec.
         parentClass._relationships = spec

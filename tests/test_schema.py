@@ -8,16 +8,10 @@ import unittest
 from schevo.lib import module
 import schevo.database
 import schevo.schema
-from schevo.test import BaseTest
+from schevo import test
 
 
-# XXX: This schema may not be a candidate for schevo.test.schema as it
-# does some very specific things to test schema loading magic.
-
-SCHEMA = """
-from schevo.schema import *
-schevo.schema.prep(locals())
-
+BODY = """
 
 class CustomString(F.String):
     pass
@@ -82,42 +76,20 @@ def t_tx_with_fields():
 """
 
 
-class TestSchema(BaseTest):
+class TestSchema(test.CreatesSchema):
 
-    def setUp(self):
-        # Forget existing modules.
-        for m in module.MODULES:
-            module.forget(m)
-        # Import schema.
-        schema_module = None
-        schevo.schema.start()
-        try:
-            schema_module = self.schema_module = module.from_string(
-                SCHEMA, 'TestSchema-schema')
-            module.remember(schema_module)
-        finally:
-            self.schema_definition = schevo.schema.finish(None, schema_module)
-
-    def tearDown(self):
-        del self.schema_definition
-        del self.schema_module
+    body = BODY
 
     def test_entity_dict(self):
-        d = self.schema_definition
-        m = self.schema_module
-        E = d.E
+        E = db.schema.E
         assert len(E) == 4
-        assert E.Animal == m.Animal
-        assert E.Person == m.Person
-        assert E.Derived == m.Derived
-        assert E._Base == m._Base
         
     def test_entity_entity(self):
-        E = self.schema_definition.E
+        E = db.schema.E
         assert 'Entity' not in E
 
     def test_entity_definition(self):
-        d = self.schema_definition
+        d = db.schema
         Person = d.E.Person
         assert Person._field_spec.keys() == [
             'first_name',
@@ -153,7 +125,7 @@ class TestSchema(BaseTest):
         assert d.E.Animal._relationships == [('Person', 'favorite')]
 
     def test_subclassing(self):
-        d = self.schema_definition
+        d = db.schema
         _Base = d.E._Base
         assert _Base._field_spec.keys() == [
             'name',
@@ -165,7 +137,7 @@ class TestSchema(BaseTest):
             ]
 
     def test_field_definition(self):
-        d = self.schema_definition
+        d = db.schema
         Animal = d.E['Animal']
         assert Animal._field_spec.keys() == ['name', 'wild']
         name = Animal._field_spec['name']
@@ -179,17 +151,17 @@ class TestSchema(BaseTest):
         assert Animal._key_spec == ()
 
     def test_tx_with_fields(self):
-        d = self.schema_definition
+        d = db.schema
         tx = d.T.TxWithFields()
         assert 'foo' in tx._field_spec
         assert 'bar' in tx._field_spec
-        assert 'foo' in tx.sys.fields()
-        assert 'bar' in tx.sys.fields()
-        assert type(tx.sys.fields()['foo']) is type(tx.f.foo)
-        assert type(tx.sys.fields()['bar']) is type(tx.f.bar)
+        assert 'foo' in tx.sys.field_map()
+        assert 'bar' in tx.sys.field_map()
+        assert type(tx.sys.field_map()['foo']) is type(tx.f.foo)
+        assert type(tx.sys.field_map()['bar']) is type(tx.f.bar)
 
     def test_database_level_t_namespace(self):
-        d = self.schema_definition
+        d = db.schema
         assert hasattr(d.t, 'tx_with_fields')
         tx = d.t.tx_with_fields()
         assert isinstance(tx, d.T.TxWithFields)

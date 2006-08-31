@@ -33,10 +33,7 @@ class TestHiddenBases(test.CreatesSchema):
     def test_subclass(self):
         assert '_GolfAlphaBase' not in db.extent_names()
         GolfAlpha = db.GolfAlpha
-        assert GolfAlpha.field_spec.keys() == [
-            'beta',
-            'gamma',
-            ]
+        assert GolfAlpha.field_spec.keys() == ['beta', 'gamma']
         assert ('beta', ) in GolfAlpha.key_spec
         assert ('gamma', 'beta') in GolfAlpha.key_spec
 
@@ -63,10 +60,7 @@ class TestSameNameSubclasses(test.CreatesSchema):
 
     def test_subclass_fields(self):
         assert db.extent_names() == ['Something']
-        assert db.Something.field_spec.keys() == [
-            'field1',
-            'field2',
-            ]
+        assert db.Something.field_spec.keys() == ['field1', 'field2']
         assert ('field1', ) in db.Something.key_spec
         assert ('field2', 'field1', ) in db.Something.key_spec
 

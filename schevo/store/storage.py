@@ -2,10 +2,14 @@
 $Id$
 """
 
+import sys
 from schevo.lib import optimize
+
 
 from schevo.store.serialize import (
     unpack_record, split_oids, extract_class_name)
+from schevo.store.utils import p64
+
 
 class Storage(object):
     """
@@ -29,7 +33,7 @@ class Storage(object):
         """Include this record in the commit underway."""
         raise NotImplementedError
 
-    def end(self):
+    def end(self, handle_invalidations=None):
         """Conclude a commit."""
         raise NotImplementedError
 
@@ -43,6 +47,31 @@ class Storage(object):
         """() -> sequence([oid:str, record:str])
         """
         raise NotImplementedError
+
+    def new_oid(self):
+        """() -> oid:str
+        Return an unused oid.  Used by Connection for serializing new persistent
+        instances.
+        """
+        raise NotImplementedError
+
+    def get_packer(self):
+        """
+        Return an incremental packer (a generator).
+        Used by StorageServer.
+        """
+        raise NotImplementedError
+
+    def pack(self):
+        """Remove obsolete records from the storage."""
+        raise NotImplementedError
+
+    def get_size(self):
+        """() -> int | None
+        Return the number of objects available, or None if the number is not known.
+        """
+        return None
+
 
 
 def gen_referring_oid_record(storage, referred_oid):
@@ -85,5 +114,39 @@ def get_reference_index(storage):
     return result
 
 
-import sys
+class MemoryStorage (Storage):
+    """
+    A concrete Storage that keeps everything in memory.
+    This may be useful for testing purposes.
+    """
+    def __init__(self):
+        self.records = {}
+        self.transaction = None
+        self.oid = 0
+
+    def new_oid(self):
+        self.oid += 1
+        return p64(self.oid)
+
+    def load(self, oid):
+        return self.records[oid]
+
+    def begin(self):
+        self.transaction = {}
+
+    def store(self, oid, record):
+        self.transaction[oid] = record
+
+    def end(self, handle_invalidations=None):
+        self.records.update(self.transaction)
+        self.transaction = None
+
+    def sync(self):
+        return []
+
+    def gen_oid_record(self):
+        for oid, record in self.records.iteritems():
+            yield oid, record
+
+
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

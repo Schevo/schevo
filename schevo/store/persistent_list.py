@@ -1,11 +1,14 @@
-"""$URL: svn+ssh://svn.mems-exchange.org/repos/trunk/durus/persistent_list.py $
+"""$URL: svn+ssh://svn/repos/trunk/durus/persistent_list.py $
 $Id$
 """
+
+import sys
 from schevo.lib import optimize
 
-from schevo.store.persistent import Persistent
+from schevo.store.persistent import PersistentData
 
-class PersistentList(Persistent):
+
+class PersistentList(PersistentData):
 
     """
     Instance attributes:
@@ -13,8 +16,11 @@ class PersistentList(Persistent):
     """
     data_is = list
 
+    __slots__ = []
+
     def __init__(self, *args, **kwargs):
         self.data = list(*args, **kwargs)
+        self._p_note_change()
 
     def __cast(self, other):
         if isinstance(other, PersistentList): return other.data
@@ -149,5 +155,4 @@ class PersistentList(Persistent):
             self.data.extend(other)
 
 
-import sys
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

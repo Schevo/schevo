@@ -56,6 +56,10 @@ class TransactionAlreadyExecuted(RuntimeError):
     """A transaction was already executed and cannot be re-executed."""
 
 
+class TransactionFieldsNotChanged(RuntimeError):
+    """No transaction field values were changed."""
+
+
 class TransactionNotExecuted(RuntimeError):
     """A transaction was not yet executed."""
 

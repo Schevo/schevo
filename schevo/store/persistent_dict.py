@@ -1,13 +1,15 @@
-"""$URL: svn+ssh://svn.mems-exchange.org/repos/trunk/durus/persistent_dict.py $
+"""$URL: svn+ssh://svn/repos/trunk/durus/persistent_dict.py $
 $Id$
 """
 
+import sys
 from schevo.lib import optimize
 
 from copy import copy
-from schevo.store.persistent import Persistent
+from schevo.store.persistent import PersistentData
 
-class PersistentDict(Persistent):
+
+class PersistentDict(PersistentData):
 
     """
     Instance attributes:
@@ -15,8 +17,11 @@ class PersistentDict(Persistent):
     """
     data_is = dict
 
+    __slots__ = []
+
     def __init__(self, *args, **kwargs):
         self.data = dict(*args, **kwargs)
+        self._p_note_change()
 
     def __cmp__(self, dict):
         if isinstance(dict, PersistentDict):
@@ -121,5 +126,4 @@ class PersistentDict(Persistent):
         return iter(self.data)
 
 
-import sys
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

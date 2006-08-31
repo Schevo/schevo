@@ -23,35 +23,54 @@ class View(base.View):
 
     __metaclass__ = schema_metaclass('V')
 
-    __slots__ = ['_entity', '_fields', 'f', 'q', 'sys', 't', 'v', 'x']
+    __slots__ = ['_entity', '_extent', '_field_map', '_oid',
+                 'f', 'm', 'q', 'sys', 't', 'v', 'x']
 
     _field_spec = FieldSpecMap()
 
+    _hidden_actions = set()
+    _hidden_queries = set()
+
     def __init__(self, entity):
         self._entity = entity
-        f = self._fields = self._field_spec.field_map(instance=self)
-        f.update_values(entity.sys.fields())
+        self._extent = entity._extent
+        self._oid = entity._oid
+        f = self._field_map = self._field_spec.field_map(instance=self)
+        f.update_values(entity.sys.field_map(include_readonly_fget=False))
         # All fields should be readonly by default.
         for field in f.itervalues():
             field.readonly = True
-        self.f = schevo.namespace.Fields(self)
-        self.sys = ViewSys(self)
-        # XXX: This should be looked at more closely.
-        if entity is not None:
-            self.q = entity.q
-            self.t = entity.t
-            self.v = entity.v
-        # /XXX
-        self.x = ViewExtenders()
 
     def __getattr__(self, name):
-        return self._fields[name].get()
+        if name == 'sys':
+            self.sys = attr = ViewSys(self)
+        elif name == 'f':
+            self.f = attr = schevo.namespace.Fields(self)
+        elif name == 'm' and self._entity is not None:
+            self.m = attr = self._entity.m
+        elif name == 'q' and self._entity is not None:
+            self.q = attr = self._entity.q
+        elif name == 't' and self._entity is not None:
+            self.t = attr = ViewTransactions(self._entity, self)
+        elif name == 'v' and self._entity is not None:
+            self.v = attr = self._entity.v
+        elif name == 'x':
+            self.x = attr = ViewExtenders(self)
+        elif name in self._field_map:
+            attr = self._field_map[name].get()
+        else:
+            msg = 'Field %r does not exist on %r.' % (name, self)
+            raise AttributeError(msg)
+        return attr
 
     def __setattr__(self, name, value):
         if name == 'sys' or name.startswith('_') or len(name) == 1:
             return base.View.__setattr__(self, name, value)
+        elif name in self._field_map:
+            self._field_map[name].assign(value)
         else:
-            self._fields[name].assign(value)
+            msg = 'Field %r does not exist on %r.' % (name, self)
+            raise AttributeError(msg)
 
     def __str__(self):
         return str(self._entity)
@@ -67,6 +86,22 @@ class ViewExtenders(NamespaceExtension):
 
     _readonly = False
 
+    def __init__(self, view):
+        NamespaceExtension.__init__(self)
+        d = self._d
+        cls = view.__class__
+        x_names = []
+        for attr in dir(cls):
+            if attr.startswith('x_'):
+                x_name = attr
+                func = getattr(cls, x_name)
+                if func.im_self is None:
+                    x_names.append(x_name)
+        for x_name in x_names:
+            name = x_name[2:]
+            func = getattr(view, x_name)
+            d[name] = func
+
 
 class ViewSys(NamespaceExtension):
 
@@ -80,8 +115,32 @@ class ViewSys(NamespaceExtension):
     def entity(self):
         return self._view._entity
 
-    def fields(self):
-        return self._view._fields
+    def field_map(self, include_expensive=True, include_hidden=False,
+                  include_readonly_fget=True):
+        """Return field_map for the view.
+
+        - `include_expensive`: Set to `True` to include fields with
+          `expensive` attribute set to `True`.
+          
+        - `include_hidden`: Set to `True` to include fields with
+          `hidden` attribute set to `True`.
+
+        - `include_readonly_fget`: Set to `True` to include fields
+          with `fget` attribute set to something other than `None`.
+        """
+        view_field_map = self._view._field_map
+        # Remove fields that should not be included.
+        to_remove = []
+        for name, field in view_field_map.iteritems():
+            if field.hidden and not include_hidden:
+                to_remove.append(name)
+            elif field.expensive and not include_expensive:
+                to_remove.append(name)
+            elif field.fget is not None and not include_readonly_fget:
+                to_remove.append(name)
+        for name in to_remove:
+            del view_field_map[name]
+        return view_field_map
 
     @property
     def extent(self):
@@ -102,6 +161,45 @@ class ViewSys(NamespaceExtension):
     @property
     def oid(self):
         return self._view._entity.sys.oid
+
+
+class ViewTransactions(NamespaceExtension):
+    """A namespace of view-level transactions."""
+
+    __slots__ = NamespaceExtension.__slots__ + ['_v']
+
+    def __init__(self, entity, view):
+        NamespaceExtension.__init__(self)
+        d = self._d
+        self._v = view
+        # Start with the actions defined on the entity.
+        for t_name in entity._t_names:
+            func = getattr(entity, t_name)
+            name = t_name[2:]
+            d[name] = func
+        # The add or override with actions defined on the view.
+        cls = view.__class__
+        t_names = []
+        for attr in dir(cls):
+            if attr.startswith('t_'):
+                t_name = attr
+                func = getattr(cls, t_name)
+                if func.im_self is None:
+                    t_names.append(t_name)
+        for t_name in t_names:
+            name = t_name[2:]
+            func = getattr(view, t_name)
+            # Assign a label if none exists.
+            new_label = None
+            if getattr(func, '_label', None) is None:
+                new_label = label_from_name(name)
+                if new_label is not None:
+                    cls.__dict__[t_name]._label = new_label
+            d[name] = func
+
+    def __iter__(self):
+        return (k for k in self._d.iterkeys()
+                if k not in self._v._hidden_actions)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

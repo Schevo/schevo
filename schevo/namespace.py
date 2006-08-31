@@ -38,38 +38,39 @@ class Fields(object):
         self.__dict__['_obj'] = obj
 
     def __delattr__(self, name):
-        f = self._obj._fields
+        f = self._obj._field_map
         if name not in f:
             raise AttributeError(name)
         del f[name]
 
     def __getattr__(self, name):
-        return self._obj._fields[name]
+        return self._obj._field_map[name]
 
     def __getitem__(self, name):
         return self.__getattr__(name)
 
     def __iter__(self):
-        return iter(self._obj._fields)
+        return iter(self._obj._field_map)
 
     def __setattr__(self, name, value):
-        f = self._obj._fields
-        if name in f:
+        field_map = self._obj._field_map
+        if name in field_map:
             raise AttributeError('%r already exists.' % name)
         if isinstance(value, FieldDefinition):
-            value = value.field()
-        elif not isinstance(value, base.Field):
-            raise ValueError('%r is not a Field instance.' % value)
-        value._instance = self._obj
-        value._attribute = name
-        f[name] = value
-        # Assign a label to the field based on the name.
-        if not value.label:
-            value.label = label_from_name(name)
+            value = value.field(name=name, instance=self._obj)
+        elif isinstance(value, base.Field):
+            value._instance = self._obj
+            if not value.label:
+                # Assign a label to the field based on the name.
+                value.label = label_from_name(name)
+        else:
+            msg = '%r is not a Field or FieldDefinition instance.' % value
+            raise ValueError(msg)
+        field_map[name] = value
 
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
-        return sorted(self._obj._fields.keys())
+        return sorted(self._obj._field_map.keys())
 
 
 class NamespaceExtension(object):

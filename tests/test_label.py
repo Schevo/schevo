@@ -218,6 +218,12 @@ class TestDecoration(test.CreatesSchema):
         _hide('t_create', 't_update')
         _hide('t_update')                   # Dupes are ignored.
 
+        @extentmethod
+        def t_create(extent):
+            tx = E.LoopSegment._Create()
+            tx.f.next.required = False
+            return tx
+
         class _CreateLoop(T.Transaction):
             """Create a loop of multiple segments.  Result of execution is
             the first segment made."""

@@ -42,9 +42,8 @@ class EntityMeta(type):
 
     def __new__(cls, class_name, bases, class_dict):
         # Only do something if creating an Entity subclass.
-        if class_name == 'Entity':
-            return type.__new__(cls, class_name, bases, class_dict)
-        class_dict['__slots__'] = bases[0].__slots__
+        if class_name != 'Entity':
+            class_dict['__slots__'] = bases[0].__slots__
         return type.__new__(cls, class_name, bases, class_dict)
 
     def __init__(cls, class_name, bases, class_dict):
@@ -57,7 +56,8 @@ class EntityMeta(type):
             class_name = cls._actual_name
             cls.__name__ = class_name
         # Create the field spec odict.
-        spec = cls._field_spec = field_spec_from_class(cls, class_dict)
+        cls._field_spec = field_spec_from_class(cls, class_dict, slots=True)
+        spec = field_spec_from_class(cls, class_dict)
         q_spec = spec.copy()
         tx_spec = spec.copy()
         v_spec = spec.copy()
@@ -68,46 +68,25 @@ class EntityMeta(type):
             if fget is not None:
                 fget_fields.append(field_name)
                 def get_field_value(self, fget=fget[0]):
-                    db = self._db
-                    cache = self._cache
-                    extent_name = self._extent.name
-                    oid = self._oid
-                    if not db._extent_contains_oid(extent_name, oid):
-                        raise schevo.error.EntityDoesNotExist
-                    if field_name not in cache:
-                        field = FieldClass(self, field_name)
-                        cache[field_name] = field
                     return fget(self)
                 # Transactions and the default query don't need
                 # calculated fields.
                 del q_spec[field_name]
                 del tx_spec[field_name]
             else:
-                def get_field_value(self, field_name=field_name,
-                                    FieldClass=FieldClass):
-                    """Get the field value from the database or cache."""
+                field = FieldClass(instance=None)
+                def get_field_value(self, field_name=field_name, field=field):
+                    """Get the field value from the database."""
                     db = self._db
-                    cache = self._cache
                     extent_name = self._extent.name
                     oid = self._oid
-                    if not db._extent_contains_oid(extent_name, oid):
-                        raise schevo.error.EntityDoesNotExist
-                    if field_name in cache:
-                        field = cache[field_name]
-                    else:
-                        field = FieldClass(self, field_name)
-                        cache[field_name] = field
-                    current_rev = db._entity_rev(extent_name, oid)
-                    if field.rev != current_rev:
-                        try:
-                            value, rev = db._entity_field_rev(
-                                extent_name, oid, field_name)
-                        except KeyError:
-                            value, rev = UNASSIGNED, current_rev
-                        except schevo.error.EntityDoesNotExist:
-                            raise
-                        field._rev = rev
-                        field._value = value
+                    try:
+                        value = db._entity_field(extent_name, oid, field_name)
+                    except schevo.error.EntityDoesNotExist:
+                        raise
+                    except KeyError:  # XXX This needs to be more specific.
+                        value = UNASSIGNED
+                    field._value = value
                     return field.get()
             setattr(cls, field_name, property(fget=get_field_value))
         cls._fget_fields = tuple(fget_fields)
@@ -121,7 +100,6 @@ class EntityMeta(type):
             class _Create(transaction.Create):
                 pass
             _Create._field_spec = tx_spec.copy()
-            cls._Create = _Create
         else:
             # Always create a transaction subclass, in case the entity class
             # inherits from something other than E.Entity
@@ -132,13 +110,13 @@ class EntityMeta(type):
             _Create._field_spec.update(subclass_spec, reorder=True)
             if hasattr(_Create, '_init_class'):
                 _Create._init_class()
-            cls._Create = _Create
-        cls._Create._fget_fields = cls._fget_fields
+        _Create._fget_fields = cls._fget_fields
+        cls._Create = _Create
         # Delete
         if not hasattr(cls, '_Delete'):
             class _Delete(transaction.Delete):
                 pass
-            cls._Delete = _Delete
+            _Delete._field_spec = tx_spec.copy()
         else:
             # Always create a transaction subclass, in case the entity class
             # inherits from something other than E.Entity
@@ -149,18 +127,19 @@ class EntityMeta(type):
             _Delete._field_spec.update(subclass_spec, reorder=True)
             if hasattr(_Delete, '_init_class'):
                 _Delete._init_class()
-            cls._Delete = _Delete
-        cls._Delete._fget_fields = cls._fget_fields
+        _Delete._fget_fields = cls._fget_fields
+        cls._Delete = _Delete
         # Generic Update (for use by cascading delete)
         class _GenericUpdate(transaction.Update):
             pass
+        _GenericUpdate._field_spec = tx_spec.copy()
+        _GenericUpdate._fget_fields = cls._fget_fields
         cls._GenericUpdate = _GenericUpdate
-        cls._GenericUpdate._fget_fields = cls._fget_fields
         # Update
         if not hasattr(cls, '_Update'):
             class _Update(transaction.Update):
                 pass
-            cls._Update = _Update
+            _Update._field_spec = tx_spec.copy()
         else:
             # Always create a transaction subclass, in case the entity class
             # inherits from something other than E.Entity
@@ -171,8 +150,8 @@ class EntityMeta(type):
             _Update._field_spec.update(subclass_spec, reorder=True)
             if hasattr(_Update, '_init_class'):
                 _Update._init_class()
-            cls._Update = _Update
-        cls._Update._fget_fields = cls._fget_fields
+        _Update._fget_fields = cls._fget_fields
+        cls._Update = _Update
         #
         # Create standard view classes.  View fields included in a
         # view class defined in the schema appear below the fields
@@ -183,7 +162,6 @@ class EntityMeta(type):
             class _DefaultView(view.View):
                 _label = u'View'
             _DefaultView._field_spec = v_spec.copy()
-            cls._DefaultView = _DefaultView
         else:
             # Always create a view subclass, in case the entity class
             # inherits from something other than E.Entity
@@ -194,8 +172,10 @@ class EntityMeta(type):
             _DefaultView._field_spec.update(subclass_spec, reorder=True)
             if hasattr(_DefaultView, '_init_class'):
                 _DefaultView._init_class()
-            cls._DefaultView = _DefaultView
-        cls._DefaultView._fget_fields = cls._fget_fields
+        _DefaultView._fget_fields = cls._fget_fields
+        _DefaultView._hidden_actions = set(cls._hidden_actions)
+        _DefaultView._hidden_queries = set(cls._hidden_queries)
+        cls._DefaultView = _DefaultView
         # Set the entity class and extent name on all of them.
         cls._Create._extent_name = class_name
         cls._DefaultView._extent_name = class_name
@@ -215,6 +195,7 @@ class EntityMeta(type):
         key_set = set(cls._key_spec)
         for s in cls._key_spec_additions:
             # Get just the names from field definitions.
+            # Note that field_def could be a string.
             names = tuple(getattr(field_def, 'name', field_def)
                           for field_def in s)
             key_set.add(names)
@@ -227,6 +208,7 @@ class EntityMeta(type):
         index_set = set(cls._index_spec)
         for s in cls._index_spec_additions:
             # Get just the names from field definitions.
+            # Note that field_def could be a string.
             names = tuple(getattr(field_def, 'name', field_def)
                           for field_def in s)
             index_set.add(names)
@@ -311,11 +293,20 @@ class Entity(base.Entity, LabelMixin):
 
     __metaclass__ = EntityMeta
 
-    __slots__ = LabelMixin.__slots__ + ['_oid', '_cache', 'sys',
+    __slots__ = LabelMixin.__slots__ + ['_oid', 'sys',
                                         'f', 'm', 'q', 't', 'v', 'x']
+
+    # The actual class/extent name to use for this Entity type.
+    _actual_name = None
+    
+    # The database instance associated with this Entity type.
+    _db = None
 
     # The first _key() specification defined.
     _default_key = None
+
+    # The extent associated with this Entity type.
+    _extent = None
 
     # Field specification for this type of Entity.
     _field_spec = FieldSpecMap()
@@ -337,13 +328,6 @@ class Entity(base.Entity, LabelMixin):
     _index_spec = ()
     _index_spec_additions = ()          # Used during subclassing.
 
-    # Key specifications for the related extent.
-    _key_spec = ()
-    _key_spec_additions = ()            # Used during subclassing.
-
-    # Relationships between this Entity type and other Entity types.
-    _relationships = []
-
     # Initial entity instances to create in a new database.
     _initial = []
 
@@ -351,18 +335,16 @@ class Entity(base.Entity, LabelMixin):
     # higher priority indicates earlier execution.
     _initial_priority = 0
 
+    # Key specifications for the related extent.
+    _key_spec = ()
+    _key_spec_additions = ()            # Used during subclassing.
+
+    # Relationships between this Entity type and other Entity types.
+    _relationships = []
+
     # Sample entity instances to optionally create in a new database.
     _sample = []
 
-    # The database instance associated with this Entity type.
-    _db = None
-
-    # The extent associated with this Entity type.
-    _extent = None
-
-    # The actual class/extent name to use for this Entity type.
-    _actual_name = None
-    
     # Names of query, transaction, view, and extender methods
     # applicable to entity instances.
     _q_names = []
@@ -372,7 +354,6 @@ class Entity(base.Entity, LabelMixin):
 
     def __init__(self, oid):
         self._oid = oid
-        self._cache = {}  # Cache of fields.
 
     def __cmp__(self, other):
         if other.__class__ is self.__class__:
@@ -491,6 +472,11 @@ class Entity(base.Entity, LabelMixin):
         """Return the Default view."""
         return self._DefaultView(self)
 
+    @property
+    def _rev(self):
+        """Return the revision number of the entity."""
+        return self._db._entity_rev(self._extent.name, self._oid)
+
 
 class EntityExtenders(NamespaceExtension):
     """A namespace of entity-level methods."""
@@ -515,17 +501,8 @@ class EntityFields(object):
 
     def __getattr__(self, name):
         e = self._entity
-        cache = e._cache
-        if name not in cache:
-            FieldClass = e._field_spec[name]
-            value = None
-            rev = None
-            if FieldClass.fget is None:
-                value, rev = e._db._entity_field_rev(e._extent.name,
-                                                     e._oid, name)
-            field = FieldClass(e, name, value, rev)
-            cache[name] = field
-        field = cache[name]
+        FieldClass = e._field_spec[name]
+        field = FieldClass(e, getattr(e, name))
         return field
 
     def __getitem__(self, name):
@@ -629,7 +606,7 @@ class EntitySys(NamespaceExtension):
         e = self._entity
         for f_name in e.f:
             f = e.f[f_name]
-            if f.readonly or f.hidden:
+            if f.fget is not None or f.hidden:
                 pass
             else:
                 value = resolve(e, f_name)
@@ -666,9 +643,9 @@ class EntitySys(NamespaceExtension):
         """Return the name of the extent to which this entity belongs."""
         return self._entity._extent.name
 
-    def fields(self, include_expensive=True, include_hidden=False,
-               include_readonly_fget=True):
-        """Return fields for the entity.
+    def field_map(self, include_expensive=True, include_hidden=False,
+                  include_readonly_fget=True):
+        """Return field_map for the entity.
 
         - `include_expensive`: Set to `True` to include fields with
           `expensive` attribute set to `True`.
@@ -681,10 +658,10 @@ class EntitySys(NamespaceExtension):
         """
         e = self._entity
         stored_values = e._db._entity_fields(e._extent.name, e._oid)
-        entity_fields = e._field_spec.field_map(e, stored_values)
+        entity_field_map = e._field_spec.field_map(e, stored_values)
         # Remove fields that should not be included.
         to_remove = []
-        for name, field in entity_fields.iteritems():
+        for name, field in entity_field_map.iteritems():
             if field.hidden and not include_hidden:
                 to_remove.append(name)
             elif field.expensive and not include_expensive:
@@ -692,15 +669,15 @@ class EntitySys(NamespaceExtension):
             elif field.fget is not None and not include_readonly_fget:
                 to_remove.append(name)
         for name in to_remove:
-            del entity_fields[name]
+            del entity_field_map[name]
         # Update fields that have fget callables.
-        for field in entity_fields.itervalues():
+        for field in entity_field_map.itervalues():
             if field.fget is not None:
                 value = field.fget[0](e)
             else:
                 value = field._value
             field._value = field.convert(value)
-        return entity_fields
+        return entity_field_map
 
     def links(self, other_extent_name=None, other_field_name=None):
         """Return dictionary of (extent_name, field_name): entity_list
@@ -733,8 +710,7 @@ class EntitySys(NamespaceExtension):
     @property
     def rev(self):
         """Return the revision number of the entity."""
-        e = self._entity
-        return e._db._entity_rev(e._extent.name, e._oid)
+        return self._entity._rev
 
 
 class EntityTransactions(NamespaceExtension):

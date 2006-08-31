@@ -23,7 +23,7 @@ class FieldMap(odict):
                 f = self[name]
                 if f.fget is None and not f.readonly:
                     # Only assign to non-readonly fields.
-                    f.assign(field.get())
+                    f.set(field.get())
 
     def value_map(self):
         d = odict()
@@ -43,13 +43,13 @@ class FieldSpecMap(odict):
 
     def field_map(self, instance=None, values={}):
         """Return a FieldMap based on field specifications."""
-        pairs = [(name, FieldClass(instance, name,
-                                   values.get(name, UNASSIGNED)))
+        pairs = [(name, FieldClass(instance=instance,
+                                   value=values.get(name, UNASSIGNED)))
                  for name, FieldClass in self.iteritems()]
         return FieldMap(pairs)
     
 
-def field_spec_from_class(cls, dct):
+def field_spec_from_class(cls, class_dict, slots=False):
     orig_spec = FieldSpecMap()
     if cls._field_spec:
         # Pass-through if it already has a field spec.  XXX: This
@@ -57,16 +57,29 @@ def field_spec_from_class(cls, dct):
         # append/modify it based on the class's spec.
         orig_spec = cls._field_spec.copy()
     spec = []
-    for name, field_def in dct.items():
+    for name, field_def in class_dict.items():
         if isinstance(field_def, FieldDefinition):
             field_def.name = name
-            FieldClass = field_def.FieldClass
-            if not FieldClass.label:
+            BaseFieldClass = field_def.FieldClass
+            if slots:
+                class NewClass(BaseFieldClass):
+                    readonly = True
+            else:
+                class NoSlotsField(BaseFieldClass):
+                    # No __slots__ defined in order to give
+                    # flexibility to other users of this field, like
+                    # transactions and queries.
+                    pass
+                NoSlotsField.__name__ = BaseFieldClass.__name__
+                NewClass = NoSlotsField
+            NewClass._name = name
+            if not NewClass.label:
                 # A label was not provided; determine one from the
                 # field name.
-                FieldClass.label = label_from_name(name)
-            spec.append((field_def.counter, name, FieldClass))
-            delattr(cls, name)
+                NewClass.label = label_from_name(name)
+            spec.append((field_def.counter, name, NewClass))
+            if hasattr(cls, name):
+                delattr(cls, name)
     spec.sort()
     spec = [s[1:] for s in spec]
     orig_spec.update(FieldSpecMap(spec))
@@ -86,7 +99,7 @@ class FieldDefinition(object):
     _counter = 0
 
     def __init__(self, *args, **kw):
-        self.name = None
+        self.name = None  # Set by field_spec_from_class().
         BaseFieldClass = self.BaseFieldClass
         class _Field(BaseFieldClass):
             pass
@@ -104,10 +117,19 @@ class FieldDefinition(object):
         self.FieldClass.fget = (fn, )
         return self
 
-    def field(self, instance=None, attribute=None, value=UNASSIGNED):
-        FieldClass = self.FieldClass
-        f = self.FieldClass(instance, attribute)
-        f._value = value
+    def field(self, name, instance=None, value=None):
+        class NoSlotsField(self.FieldClass):
+            # No __slots__ defined in order to give
+            # flexibility to other users of this field, like
+            # transactions and queries.
+            pass
+        NoSlotsField.__name__ = self.FieldClass.__name__
+        NewClass = NoSlotsField
+        NewClass._name = name
+        if not NewClass.label:
+            # Assign a label to the field based on the name.
+            NewClass.label = label_from_name(name)
+        f = NewClass(instance, value)
         return f
 
 

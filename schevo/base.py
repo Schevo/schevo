@@ -17,7 +17,7 @@ class Extent(object):
 
 
 class Field(object):
-    pass
+    __slots__ = []
 
 
 class Query(object):

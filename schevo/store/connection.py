@@ -1,11 +1,15 @@
 """$URL: svn+ssh://svn.mems-exchange.org/repos/trunk/durus/connection.py $
 $Id$
 """
+
+import sys
 from schevo.lib import optimize
 
 from cPickle import loads
+from heapq import heappush, heappop
 from schevo.store.error import ConflictError, ReadConflictError, DurusKeyError
 from schevo.store.logger import log
+from schevo.store.persistent import ConnectionBase
 from schevo.store.persistent_dict import PersistentDict
 from schevo.store.serialize import ObjectReader, ObjectWriter
 from schevo.store.serialize import unpack_record, pack_record
@@ -19,7 +23,8 @@ from weakref import ref
 
 ROOT_OID = p64(0)
 
-class Connection(object):
+
+class Connection(ConnectionBase):
     """
     The Connection manages movement of objects in and out of storage.
 
@@ -30,13 +35,12 @@ class Connection(object):
       changed: {oid:str : Persistent}
       invalid_oids: Set([str])
          Set of oids of objects known to have obsolete state. 
-      loaded_oids : Set([str])
-         Set of oids of objects that were in the SAVED state at some time
-         during the current transaction.
+      sync_count: int
+        Number of calls to commit() or abort() since this instance was created.
     """
 
-    def __init__(self, storage, cache_size=8000):
-        """(storage:Storage, cache_size:int=8000)
+    def __init__(self, storage, cache_size=100000):
+        """(storage:Storage, cache_size:int=100000)
         Make a connection to `storage`.
         Set the target number of non-ghosted persistent objects to keep in
         the cache at `cache_size`.
@@ -46,7 +50,7 @@ class Connection(object):
         self.reader = ObjectReader(self)
         self.changed = {}
         self.invalid_oids = Set()
-        self.loaded_oids = Set()
+        self.sync_count = 0
         try:
             storage.load(ROOT_OID)
         except KeyError:
@@ -56,9 +60,9 @@ class Connection(object):
             writer.close()
             self.storage.store(ROOT_OID, pack_record(ROOT_OID, data, refs))
             self.storage.end(self._handle_invalidations)
+            self.sync_count += 1
         self.new_oid = storage.new_oid # needed by serialize
         self.cache = Cache(cache_size)
-        self.cache.hold(self.get_root())
 
     def get_storage(self):
         """() -> Storage"""
@@ -81,6 +85,12 @@ class Connection(object):
         Set the target size for the cache.        
         """
         self.cache.set_size(size)
+
+    def get_sync_count(self):
+        """() -> int
+        Return the number of calls to commit() or abort() on this instance.
+        """
+        return self.sync_count
 
     def get_root(self):
         """() -> Persistent
@@ -163,9 +173,6 @@ class Connection(object):
         # assert obj._p_connection is self
         self.changed[obj._p_oid] = obj
 
-    def note_saved(self, obj):
-        self.loaded_oids.add(obj._p_oid)
-
     def shrink_cache(self):
         """
         If the number of saved and unsaved objects is more than
@@ -173,7 +180,7 @@ class Connection(object):
         try to ghostify enough of the saved objects to achieve
         the target cache size.
         """
-        self.cache.shrink(self.loaded_oids)
+        self.cache.shrink()
 
     def _sync(self):
         """
@@ -185,7 +192,6 @@ class Connection(object):
             obj = self.cache.get(oid)
             if obj is not None:
                 obj._p_set_status_ghost()
-                self.loaded_oids.discard(oid)
         self.invalid_oids.clear()
 
     def abort(self):
@@ -194,10 +200,10 @@ class Connection(object):
         """
         for oid, obj in self.changed.iteritems():
             obj._p_set_status_ghost()
-            self.loaded_oids.discard(oid)
         self.changed.clear()
         self._sync()
         self.shrink_cache()
+        self.sync_count += 1
 
     def commit(self):
         """
@@ -233,24 +239,31 @@ class Connection(object):
             except ConflictError, exc:
                 for oid, obj in new_objects.iteritems():
                     del self.cache[oid]
-                    self.loaded_oids.discard(oid)
                     obj._p_set_status_unsaved()
                     obj._p_oid = None
                     obj._p_connection = None
                 raise
             self.changed.clear()
         self.shrink_cache()
+        self.sync_count += 1
 
     def _handle_invalidations(self, oids, read_oid=None):
         """(oids:[str], read_oid:str=None)
-        Check if any of the oids are for objects that were loaded during
+        Check if any of the oids are for objects that were accessed during
         this transaction.  If so, raise the appropriate conflict exception.
         """
-        invalid_oids = self.loaded_oids.intersection(Set(oids))
-        if invalid_oids:
-            self.invalid_oids.update(invalid_oids)
+        conflicts = []
+        for oid in oids:
+            obj = self.cache.get(oid)
+            if obj is None:
+                continue
+            if not obj._p_is_ghost():
+                self.invalid_oids.add(oid)
+            if obj._p_touched == self.sync_count:
+                conflicts.append(oid)
+        if conflicts:
             if read_oid is None:
-                raise ConflictError(list(invalid_oids))
+                raise ConflictError(conflicts)
             else:
                 raise ReadConflictError([read_oid])
 
@@ -260,20 +273,43 @@ class Connection(object):
         self.storage.pack()
 
 
+class _Ref(ref):
+
+    __slots__ = ['_obj']
+
+    def make_strong(self):
+        self._obj = self()
+
+    def make_weak(self):
+        self._obj = None
+
+
+class _HeapItem(object):
+
+    __slots__ = ['object']
+
+    def __init__(self, obj):
+        self.object = obj
+
+    def get_object(self):
+        return self.object
+
+    def __cmp__(self, other):
+        return cmp(self.object._p_touched, other.object._p_touched)
+
+
 class Cache(object):
 
     def __init__(self, size):
         self.objects = {}
         self.set_size(size)
         self.finger = 0
-        self.held_objects = Set() 
-
-    def hold(self, obj):
-        """
-        Hold a reference to obj so that it will not be removed by
-        the Python garbage collector.
-        """
-        self.held_objects.add(obj)
+        # When the cache target is exceeded, shrink identifies a set of
+        # non-ghost instances and converts the oldest "ghost_fraction"
+        # of them into ghosts.
+        # Higher values make cache size control more aggressive.
+        self.ghost_fraction = 0.5
+        assert 0 <= self.ghost_fraction <= 1
 
     def get_size(self):
         """Return the target size of the cache."""
@@ -296,57 +332,63 @@ class Cache(object):
             return weak_reference()
 
     def __setitem__(self, key, obj):
-        self.objects[key] = ref(obj)
+        self.objects[key] = weak_reference = _Ref(obj)
+        # we want a strong reference until we decide to strink the cache
+        weak_reference.make_strong()
 
     def __delitem__(self, key):
         del self.objects[key]
 
-    def shrink(self, loaded_oids):
-        if 0:
-            # debugging code, ensure loaded_oids is sane
-            for oid, r in self.objects.iteritems():
-                obj = r()
-                if obj is not None and obj._p_is_saved():
-                    # every SAVED object must be in loaded_oids
-                    assert oid in loaded_oids, obj._p_format_oid()
-            for oid in loaded_oids:
-                # every oid in loaded_oids must have an entry in the cache
-                assert oid in self.objects
-
-        size = len(self.objects)
-        assert len(loaded_oids) <= size
-        extra = size - self.size
-        if extra < 0:
-            log(10, '[%s] cache size %s loaded %s', getpid(), size,
-                len(loaded_oids))
-            return
-        start_time = time()
-        aged = 0
-        removed = Set()
-        ghosts = Set()
-        start = self.finger % size
-        # Look at no more than 1/4th and no less than 1/64th of objects
-        stop = start + max(min(size >> 2, extra), size >> 6)
+    def _get_heap(self, slice_size):
+        """(slice_size:int) -> [_HeapItem]
+        Examine slice_size items in self.objects.
+        Make every examined reference weak.
+        Remove oids of objects that have no other remaining references in memory.
+        Return a heap of _HeapItems of all of the remaining 
+        objects examined that are not ghosts.
+        """
+        removed = []
+        start = self.finger % len(self.objects)
+        stop = start + slice_size
+        heap = []
         for oid in islice(chain(self.objects, self.objects), start, stop):
-            weak_reference = self.objects[oid]
-            obj = weak_reference()
+            reference = self.objects[oid]
+            reference.make_weak()
+            obj = reference()
             if obj is None:
-                removed.add(oid)
-            elif obj._p_touched:
-                obj._p_touched = 0
-                aged += 1
+                removed.append(oid)
             elif obj._p_is_saved():
-                obj._p_set_status_ghost()
-                ghosts.add(oid)
+                heappush(heap, _HeapItem(obj))
+        # Remove dead references.
         for oid in removed:
             del self.objects[oid]
-        loaded_oids -= removed
-        loaded_oids -= ghosts
         self.finger = stop - len(removed)
-        log(10, '[%s] shrink %fs aged %s removed %s ghosted %s'
-            ' loaded %s size %s', getpid(), time() - start_time,
-            aged, len(removed), len(ghosts), len(loaded_oids),
-            len(self.objects))
+        return heap
+
+    def shrink(self):
+        """
+        Try to reduce the size of self.objects.
+        """
+        current = len(self.objects)
+        if current < self.size:
+            # No excess.
+            log(10, '[%s] cache %s', getpid(), current)
+            return
+        start_time = time()
+
+        slice_size = max(min(self.size - current, current / 4), current / 64)
+        heap = self._get_heap(slice_size)
+
+        num_ghosts = int(self.ghost_fraction * len(heap))
+
+        for j in xrange(num_ghosts):
+            obj = heappop(heap).get_object()
+            obj._p_set_status_ghost()
+        for item in heap:
+            self.objects[item.get_object()._p_oid].make_strong()
+        log(10, '[%s] shrink %fs removed %s ghosted %s'
+            ' size %s', getpid(), time() - start_time,
+            current - len(self.objects), num_ghosts, len(self.objects))
 
 
 def touch_every_reference(connection, *words):
@@ -375,5 +417,4 @@ def gen_every_instance(connection, *classes):
             yield connection.get(oid)
 
 
-import sys
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

@@ -22,6 +22,13 @@ import schevo.namespace
 class FieldMeta(type):
     """Create field constuctors for every Field class."""
 
+    def __new__(cls, class_name, bases, class_dict):
+        # Only do something if creating a Field subclass.
+        if class_name != 'NoSlotsField':
+            slots = ['assigned', '_initial', '_instance', '_rev', '_value']
+            class_dict['__slots__'] = slots
+        return type.__new__(cls, class_name, bases, class_dict)
+
     def __init__(cls, class_name, bases, class_dict):
         type.__init__(cls, class_name, bases, class_dict)
         # Create a field constructor.
@@ -51,8 +58,6 @@ class Field(base.Field):
     against it.
 
     assigned: True if a value was assigned after field was created.
-
-    changed: True if a value was changed by a transaction.
 
     data_type: Python data type of the value.
 
@@ -107,14 +112,13 @@ class Field(base.Field):
     valid_values: A list of valid values, or None if not applicable.
     """
 
-    __metaclass__ = FieldMeta
+    __metaclass__ = FieldMeta  # Defines __slots__ as well.
 
     # Keeps the original field class around when subclassing in schema
     # definitions.
     BaseFieldClass = None
 
     allow_empty = False
-    assigned = False
     data_type = None
     default = (UNASSIGNED, )
     doc = ''
@@ -134,47 +138,41 @@ class Field(base.Field):
     subdued_values = None
     valid_values = None
 
-    _changed = False
+    _name = None
 
-    def __init__(self, instance, attribute, value=None, rev=None):
-        """Create a Field instance assigned to an instance with a given value.
+    def __init__(self, instance, value=None, rev=None):
+        """Create a Field instance for an instance with a given value.
 
-        instance: usually an Entity (or Entity subclass) instance, or
-        a Fieldspace instance.
+        instance: usually an Entity, Transaction or Query instance.
         
-        attribute: should be a string naming the attribute in
-        instance.  value should be any valid value.
-
-        attrs: optional dictionary of field attributes.
-
-        args: optional list of positional arguments used to set a
-        default field attribute.
-
         value: optional initial value, without validation checking.
+
+        rev: revision of the instance containing the value, if
+        instance is an Entity.
         """
+        self.assigned = False
         # The instance to which this value applies.
         # This should not change once it is set.
         self._instance = instance
-        # Name of attribute to which this field is assigned.
-        # This should not change once it is set.
-        self._attribute = attribute
-        # Initial value for the field, usually supplied for existing fields.
+        # Initial value for the field, usually for existing fields.
         if value is not None:
             self._value = value
         else:
-            # Otherwise a field is created with an initial value of UNASSIGNED.
+            # Otherwise a field is created with a value of UNASSIGNED.
             self._value = UNASSIGNED
-        # Initial rev for the field, usually supplied for existing fields.
+        # Initial value to support was_changed() method.
+        self._initial = self._value
+        # Initial rev for the field, usually for existing fields.
         if rev is not None:
             self._rev = rev
         else:
             # Otherwise a field is created with an initial rev of -1.
             self._rev = -1
-        # Capture the initial value so we can tell if this field was changed.
-        self._initialValue = self._value
-        # Become readonly if an fget is defined.
-        if self.fget is not None:
-            self.readonly = True
+
+    def _initialize(self, value):
+        """Initialize the field with a value."""
+        self._initial = value
+        self._value = value
 
     @classmethod
     def _init_kw(cls, kw):
@@ -188,7 +186,7 @@ class Field(base.Field):
     @classmethod
     def _init_args(cls, args):
         """Apply positional arguments that were specified in a
-        FieldDefinition. Called after _init_kw."""
+        FieldDefinition.  Called after _init_kw."""
         pass
 
     @classmethod
@@ -214,16 +212,46 @@ class Field(base.Field):
             return unicode(v)
 
     @property
-    def changed(self):
-        return self._changed
-
-    @property
     def name(self):
-        return self._attribute
+        return self._name
 
     @property
     def rev(self):
         return self._rev
+
+    @property
+    def value(self):
+        return self.get()
+
+    def check(self, value):
+        """Return True if the value passes all validation checks."""
+        try:
+            self.validate(value)
+            return True
+        except:
+            return False
+
+    def convert(self, value, db=None):
+        """Convert the value to a different type.
+
+        If `db` is specified, may take into account that database when
+        converting values.
+        """
+        return value
+
+    def copy(self):
+        """Return a copy of this field that can be modified."""
+        FieldClass = self.__class__
+        new_field = FieldClass(None, None)
+        new_field.__dict__.update(self.__dict__)
+        return new_field
+        
+    def get(self):
+        """Return the field value."""
+        if self.fget is not None:
+            return self.fget[0](self._instance)
+        else:
+            return self._value
 
     def reversible(self, value=None):
         """Return a reversible string representation of the field value, or
@@ -242,67 +270,17 @@ class Field(base.Field):
         else:
             return unicode(self)
 
-    def assign(self, value):
-        """Assign a field value and return it.  For use by Suppliers.
-
-        Used by non-persistence layers and has less strict validation
-        requirements.
-
-        The convert() method may result in the value returned being
-        different from the value given.
-        """
-        # None is never allowed.
-        if value is None:
-            msg = '%s value of None is not allowed by %s %r' % (
-                self._attribute, self._instance, self._instance)
-            self._raise(ValueError, msg)
-        # Readonly fields cannot be changed directly.
-        if self.readonly:
-            msg = '%s field on %s %r is readonly' % (
-                self._attribute, self._instance, self._instance)
-            self._raise(AttributeError, msg)
-        # Apply any value conversions.
-        if value is not UNASSIGNED:
-            value = self.convert(value)
-        # Change the value.
-        self._value = value
-        # Mark this field as having been assigned.
-        self.assigned = True
-
-    def copy(self):
-        """Return a copy of this field that can be modified."""
-        FieldClass = self.__class__
-        new_field = FieldClass(None, None)
-        new_field.__dict__.update(self.__dict__)
-        return new_field
-        
-    def get(self):
-        """Return the field value."""
-        if self.fget is not None:
-            return self.fget[0](self._instance)
-        else:
-            return self._value
-
     def set(self, value):
-        """Set the field value.
-
-        Used by the persistence layer and has strict validation
-        requirements.
-        """
+        """Set the field value."""
         # None is never allowed.
         if value is None:
             msg = '%s value of None is not allowed by %s %r' % (
-                self._attribute, self._instance, self._instance)
+                self._name, self._instance, self._instance)
             self._raise(ValueError, msg)
         # Readonly fields cannot be changed directly.
         if self.readonly:
             msg = '%s field is readonly and cannot be changed on %s %r' % (
-                self._attribute, self._instance, self._instance)
-            self._raise(AttributeError, msg)
-        # A value must be provided.
-        if self.required and value is UNASSIGNED:
-            msg = '%s value is required by %s %r' % (
-                self._attribute, self._instance, self._instance)
+                self._name, self._instance, self._instance)
             self._raise(AttributeError, msg)
         # Apply any value conversions.
         if value is not UNASSIGNED:
@@ -310,34 +288,10 @@ class Field(base.Field):
         # If the new value is no different than the current value, return.
         if hasattr(self, '_value') and value == self._value:
             return
-        # Validate the value against any constraints.
-        self.validate(value)
         # Change the value.
         self._value = value
-
-##     def was_changed(self):
-##         """Return True if value was changed.  For use by Suppliers."""
-##         return self._value != self._initialValue
-
-    def _prepare(self, value):
-        """Prepare the field value."""
-        return value
-
-    def check(self, value):
-        """Return True if the value passes all validation checks."""
-        try:
-            self.validate(value)
-            return True
-        except:
-            return False
-
-    def convert(self, value, db=None):
-        """Convert the value to a different type.
-
-        If `db` is specified, may take into account that database when
-        converting values.
-        """
-        return value
+        # Mark this field as having been assigned.
+        self.assigned = True
 
     def validate(self, value):
         """Validate the value, raising an error on failure.
@@ -346,15 +300,15 @@ class Field(base.Field):
         requirements.
         """
         valid_values = self.valid_values
-        if value is UNASSIGNED:
-            if self.required:
-                msg = '%s %r %s value is required' % (
-                    self._instance, self._instance, self._attribute)
-                self._raise(AttributeError, msg)
-        elif valid_values is not None and value not in valid_values:
-            inst = self._instance
-            msg = '%s %r %s must be one of the valid values %r, not %r %r' % (
-                inst, inst, self._attribute, valid_values, value, type(value))
+        # A value must be provided.
+        if self.required and value is UNASSIGNED:
+            msg = '%s value is required by %s' % (
+                self._name, self._instance)
+            self._raise(AttributeError, msg)
+        # Valid values.
+        if valid_values is not None and value not in valid_values:
+            msg = '%s %s must be one of the valid values %r, not %r %r' % (
+                self._instance, self._name, valid_values, value, type(value))
             self._raise(ValueError, msg)
 
     def verify(self, value):
@@ -364,6 +318,9 @@ class Field(base.Field):
         requirements.
         """
         return self.validate(value)
+
+    def was_changed(self):
+        return self._value != self._initial
 
     def _raise(self, exctype, msg):
         custom = self.error_message
@@ -378,12 +335,13 @@ class Field(base.Field):
             return
         min_value = self.min_value
         convert = self.convert
-        if min_value is not None and value < convert(min_value):
-            msg = '%s value must be >= %r' % (self._attribute, min_value)
+        converted_value = convert(value)
+        if min_value is not None and converted_value < convert(min_value):
+            msg = '%s value must be >= %r' % (self._name, min_value)
             self._raise(ValueError, msg)
         max_value = self.max_value
-        if max_value is not None and value > convert(max_value):
-            msg = '%s value must be <= %r' % (self._attribute, max_value)
+        if max_value is not None and converted_value > convert(max_value):
+            msg = '%s value must be <= %r' % (self._name, max_value)
             self._raise(ValueError, msg)
 
 
@@ -473,9 +431,14 @@ class HashedValue(Field):
 
 
 class String(Field):
-    """String field class."""
+    """String field class.
+
+    monospace: Hint to a UI to display contents using a monospace
+    font.
+    """
 
     data_type = str
+    monospace = False
 
     def convert(self, value, db=None):
         """Convert the value to a string."""
@@ -486,8 +449,8 @@ class String(Field):
     def validate(self, value):
         Field.validate(self, value)
         if not self.allow_empty and value == '':
-            self._raise(
-                ValueError, '%s value must not be empty.' % self._attribute)
+            msg = '%s value must not be empty.' % self._name
+            self._raise(ValueError, msg)
 
 
 class Path(String):
@@ -508,9 +471,14 @@ class Path(String):
 
 
 class Unicode(Field):
-    """Unicode field class."""
+    """Unicode field class.
+
+    monospace: Hint to a UI to display contents using a monospace
+    font.
+    """
 
     data_type = unicode
+    monospace = False
 
     def convert(self, value, db=None):
         """Convert the value to a Unicode string."""
@@ -521,8 +489,8 @@ class Unicode(Field):
     def validate(self, value):
         Field.validate(self, value)
         if not self.allow_empty and value == u'':
-            self._raise(
-                ValueError, '%s value must not be empty.' % self._attribute)
+            msg = '%s value must not be empty.' % self._name
+            self._raise(ValueError, msg)
 
 
 class Memo(Unicode):
@@ -676,8 +644,7 @@ class Money(Field):
             value = UNASSIGNED
         if value is UNASSIGNED:
             return value
-        format = '%.' + str(self.fract_digits) + 'f'
-        return float(format % float(value))
+        return round(float(value), self.fract_digits)
 
     def validate(self, value):
         """Validate the value, raising an error on failure."""
@@ -706,17 +673,17 @@ class Date(Field):
             d = datetime.date.fromtimestamp(value)
             return (d.year, d.month, d.day)
         elif isinstance(value, basestring):
-            if '-' in value:
+            if len(value.split('-')) == 3:
                 # Parse ISO date.
                 year, month, day = (int(x) for x in value.split('-'))
                 return (year, month, day)
-            elif '/' in value:
+            elif len(value.split('/')) == 3:
                 # Parse US date.
                 month, day, year = (int(x) for x in value.split('/'))
                 return (year, month, day)
             else:
-                self._raise(
-                    ValueError, '%r not a valid ISO or US date.' % value)
+                msg = '%r not a valid ISO or US date.' % value
+                self._raise(ValueError, msg)
         else:
             # If the value is not represented as a timestamp, assume
             # that it has the same attributes as a datetime object
@@ -974,8 +941,8 @@ class Entity(Field):
             return u'%s-%i' % (value.sys.extent.name, value.sys.oid)
         
     def reversible_valid_values(self, db):
-        """Returns a list of (reversible, value) tuples for the valid values
-        of this field."""
+        """Returns a list of (reversible, value) tuples for the valid
+        values of this field."""
         values = []
         if not self.required:
             values.append(UNASSIGNED)
@@ -995,22 +962,19 @@ class Entity(Field):
     def validate(self, value):
         """Validate the value, raising an error on failure."""
         Field.validate(self, value)
-        # A value must be provided.
         allow = self.allow
         if isinstance(value, tuple):
             return
         elif value is UNASSIGNED and not self.required:
             return
         elif not isinstance(value, base.Entity):
-            self._raise(
-                TypeError, ('%s value must be an Entity instance, not %r %r' %
-                            (self._attribute, type(value), value)))
+            msg = '%s value must be an Entity instance, not %r %r' % (
+                self._name, type(value), value)
+            self._raise(TypeError, msg)
         elif allow and value.sys.extent.name not in allow:
-            self._raise(
-                TypeError,
-                ('%s value must be an instance of %r, not %r %r' %
-                 (self._attribute, allow, type(value),
-                  value)))
+            msg = '%s value must be an instance of %r, not %r %r' % (
+                self._name, allow, type(value), value)
+            self._raise(TypeError, msg)
 
     def verify(self, value):
         """Verify the value, raising an error on failure."""
@@ -1018,20 +982,17 @@ class Entity(Field):
             if not self.required:
                 return
             else:
-                self._raise(
-                    AttributeError, '%s value is required' % self._attribute)
+                msg =  '%s value is required' % self._name
+                self._raise(AttributeError, msg)
         allow = self.allow
         extent_name = value.sys.extent.name
         if allow and extent_name not in allow:
-            self._raise(
-                TypeError,
-                ("%s value's class must be %r, not %r" %
-                 (self._attribute, allow, extent_name)))
+            msg = "%s value's class must be %r, not %r" % (
+                self._name, allow, extent_name)
+            self._raise(TypeError, msg)
         if not isinstance(value, base.Entity):
-            self._raise(
-                TypeError,
-                ('%s value must be an entity instance.' %
-                 self._attribute))
+            msg = '%s value must be an entity instance.' % self._name
+            self._raise(TypeError, msg)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

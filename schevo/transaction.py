@@ -9,10 +9,10 @@ from schevo.lib import optimize
 from schevo import base
 from schevo.change import summarize
 from schevo.constant import CASCADE, DEFAULT, RESTRICT, UNASSIGN, UNASSIGNED
-from schevo.error import KeyCollision, DeleteRestricted, TransactionNotExecuted
+from schevo.error import (KeyCollision, DeleteRestricted,
+                          TransactionFieldsNotChanged, TransactionNotExecuted)
 from schevo import field
-from schevo.fieldspec import (
-    FieldDefinition, FieldSpecMap, field_spec_from_class)
+from schevo.fieldspec import FieldSpecMap
 from schevo.label import label, label_from_name
 from schevo.meta import schema_metaclass
 import schevo.namespace
@@ -30,7 +30,7 @@ class Transaction(base.Transaction):
         self._changes_requiring_notification = []
         self._changes_requiring_validation = []
         self._executed = False
-        self._fields = self._field_spec.field_map(instance=self)
+        self._field_map = self._field_spec.field_map(instance=self)
         self._inversions = []
         self._relaxed = set()
         self.f = schevo.namespace.Fields(self)
@@ -38,13 +38,13 @@ class Transaction(base.Transaction):
         self.x = TransactionExtenders()
 
     def __getattr__(self, name):
-        return self._fields[name].get()
+        return self._field_map[name].get()
 
     def __setattr__(self, name, value):
         if name == 'sys' or name.startswith('_') or len(name) == 1:
             return base.Transaction.__setattr__(self, name, value)
         else:
-            self._fields[name].assign(value)
+            self._field_map[name].set(value)
 
     def __str__(self):
         text = label(self)
@@ -66,7 +66,14 @@ class Transaction(base.Transaction):
 
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
-        return sorted(self._fields.keys())
+        return sorted(self._field_map.keys())
+
+    def _initialize(self, field_map):
+        """Initialize field values."""
+        tx_field_map = self._field_map
+        for name, field in field_map.iteritems():
+            if name in tx_field_map:
+                tx_field_map[name]._initialize(field._value)
 
     def _undo(self):
         """Return a transaction that can undo this one."""
@@ -78,18 +85,9 @@ class Transaction(base.Transaction):
         # transaction.
         return Inverse(self)
     
-    def _update(self, fields):
-        """Update fields and make sure they reference this instance."""
-        self._fields.update(fields)
-        # Make sure that the instance associated with each field is
-        # this transaction, not some other object such as an entity
-        # instance.
-        for name in fields.iterkeys():
-            self._fields[name]._instance = self
-
     def _update_all_fields(self, name, value):
         """Update the attribute `name` to `value` on all fields."""
-        for field in self._fields.values():
+        for field in self._field_map.values():
             setattr(field, name, value)
 
 
@@ -122,8 +120,8 @@ class TransactionSys(NamespaceExtension):
         if hasattr(self._transaction, '_extent_name'):
             return self._transaction._extent_name
 
-    def fields(self):
-        return self._transaction._fields
+    def field_map(self):
+        return self._transaction._field_map
         
     def summarize(self):
         return summarize(self._transaction)
@@ -161,24 +159,18 @@ class Create(Transaction):
 
     def __init__(self, **kw):
         Transaction.__init__(self)
-        fields = self._fields
+        field_map = self._field_map
         for name, value in kw.iteritems():
-            # Bypass using field.assign(), so that validation does not
-            # occur.  Programmatically passing in keyword arguments to
-            # a transaction is given more trust than fields set via a
-            # user interface.
-            field = fields[name]
-            field._value = field.convert(value)
-            field.assigned = True
+            setattr(self, name, value)
         self._setup()
         # Assign default values for fields that haven't yet been
         # assigned a value.
-        for field in fields.itervalues():
+        for field in field_map.itervalues():
             if not field.assigned and not field.readonly:
                 default = field.default[0]
                 while callable(default) and default is not UNASSIGNED:
                     default = default()
-                field.assign(default)
+                field.set(default)
 
     def _setup(self):
         """Override this in subclasses to customize a transaction."""
@@ -194,17 +186,20 @@ class Create(Transaction):
 
     def _execute(self, db):
         self._before_execute(db)
+        # Validate individual fields.
+        for field in self._field_map.itervalues():
+            field.validate(field._value)
         style = self._style
         extent_name = self._extent_name
-        fields = self._fields.value_map()
+        field_value_map = self._field_map.value_map()
         # Strip out unwanted fields.
         fget_fields = self._fget_fields
         field_spec = self._EntityClass._field_spec
-        for name in fields.keys():
+        for name in field_value_map.keys():
             if name in fget_fields or name not in field_spec:
-                del fields[name]
+                del field_value_map[name]
         if style == _Create_Standard:
-            oid = db._create_entity(extent_name, fields)
+            oid = db._create_entity(extent_name, field_value_map)
         else:
             oid = None
             extent = db.extent(extent_name)
@@ -214,7 +209,7 @@ class Create(Transaction):
                 raise RuntimeError(msg)
             criteria = {}
             for name in default_key:
-                criteria[name] = fields[name]
+                criteria[name] = field_value_map[name]
             entity = extent.findone(**criteria)
             if entity is not None:
                 # Entity already exists.
@@ -222,12 +217,12 @@ class Create(Transaction):
                 if style == _Create_If_Necessary:
                     return entity
                 elif style == _Create_Or_Update:
-                    entity = db.execute(entity.t.update(**fields))
+                    entity = db.execute(entity.t.update(**field_value_map))
                     return entity
                 else:
                     raise RuntimeError('_style is not set correctly.')
             else:
-                oid = db._create_entity(extent_name, fields)
+                oid = db._create_entity(extent_name, field_value_map)
         self._oid = oid
         entity = db._entity(extent_name, oid)
         self._after_execute(db, entity)
@@ -245,10 +240,11 @@ class Delete(Transaction):
         self.sys._set('count', entity.sys.count)
         self.sys._set('links', entity.sys.links)
         self.sys._set('old', entity)
-        fields = entity.sys.fields(
+        field_map = entity.sys.field_map(
             include_hidden=True, include_readonly_fget=False)
-        self._update(fields)
+        self._initialize(field_map)
         self._update_all_fields('readonly', True)
+        self._update_all_fields('required', False)
         self._setup()
 
     def _setup(self):
@@ -319,6 +315,7 @@ class Delete(Transaction):
             tx = other.t.generic_update()
             for field_name in field_names:
                 tx.f[field_name].readonly = False
+                tx.f[field_name].required = False
                 setattr(tx, field_name, UNASSIGNED)
             db.execute(tx, strict=False)
             tx = other.t.delete()
@@ -336,6 +333,8 @@ class Update(Transaction):
 
     _label = u'Update'
 
+    _require_changes = True
+
     def __init__(self, entity, **kw):
         Transaction.__init__(self)
         self._entity = entity
@@ -343,9 +342,9 @@ class Update(Transaction):
         self.sys._set('links', entity.sys.links)
         self.sys._set('old', entity)
         self._oid = entity._oid
-        fields = entity.sys.fields(
+        field_map = entity.sys.field_map(
             include_hidden=True, include_readonly_fget=False)
-        self._update(fields)
+        self._initialize(field_map)
         for name, value in kw.iteritems():
             setattr(self, name, value)
         self._setup()
@@ -363,25 +362,30 @@ class Update(Transaction):
         pass
 
     def _execute(self, db):
+        if self._require_changes:
+            nothing_changed = True
+            for field in self._field_map.itervalues():
+                if field.was_changed():
+                    nothing_changed = False
+                    break
+            if nothing_changed:
+                msg = 'A transaction must have at least one field changed.'
+                raise TransactionFieldsNotChanged(msg)
+        self._before_execute(db, self._entity)
+        # Validate individual fields.
+        for field in self._field_map.itervalues():
+            field.validate(field._value)
         extent_name = self._extent_name
         oid = self._oid
-        old_fields = db._entity_fields(extent_name, oid)
-        self._before_execute(db, self._entity)
         # Strip out unwanted fields.
-        fields = self._fields.value_map()
+        field_value_map = self._field_map.value_map()
         fget_fields = self._fget_fields
         field_spec = self._EntityClass._field_spec
-        for name in fields.keys():
+        for name in field_value_map.keys():
             if name in fget_fields or name not in field_spec:
-                del fields[name]
-        db._update_entity(extent_name, oid, fields)
+                del field_value_map[name]
+        db._update_entity(extent_name, oid, field_value_map)
         entity = db._entity(extent_name, oid)
-        # Flag fields that actually changed.
-        for name in old_fields:
-            if name in fields and name not in fget_fields:
-                field = entity.f[name]
-                if field._value != old_fields[name]:
-                    field._changed = True
         self._after_execute(db, entity)
         return entity
 
@@ -430,7 +434,7 @@ class _Populate(Transaction):
         data_attr = self._data_attr
         def process_data(extent):
             """Recursively process data, parents before children."""
-            if extent in processing:
+            if extent in processing or extent not in self._extents:
                 return
             processing.append(extent)
             # Get the field spec from the extent's create transaction
@@ -516,12 +520,14 @@ class _Populate(Transaction):
                        if extent.name in self._extent_names]
         else:
             extents = db.extents()
+        # Keep track of extents we will populate.
+        self._extents = extents
         # Apply the priority.
-        extents = reversed(sorted(
+        priority_extents = reversed(sorted(
             (getattr(extent._EntityClass, priority_attr, 0), extent)
             for extent in extents
             ))
-        for priority, extent in extents:
+        for priority, extent in priority_extents:
             process_data(extent)
         # Call module-level handlers.
         fn = getattr(db._schema_module, 'on' + data_attr, None)

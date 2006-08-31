@@ -20,9 +20,9 @@ from schevo.lib.optimize import do_not_optimize
 TRACE_TO = sys.stderr
 
 
-if __debug__:
-    print >>TRACE_TO, """\
-Schevo tracing is ON.  See schevo.trace.__doc__ for more information."""
+## if __debug__:
+##     print >>TRACE_TO, """\
+## Schevo tracing is ON."""
 
 
 # History of trace messages.  Set to None to prevent appending.

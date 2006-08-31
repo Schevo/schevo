@@ -17,7 +17,7 @@ from schevo.test import BaseTest, CreatesSchema, raises
 class TestField(BaseTest):
 
     def test_Field(self):
-        f = field.Field(instance=None, attribute=None)
+        f = field.Field(instance=None)
         f.set('Spam')
         assert f.get() == 'Spam'
         f.set(123)
@@ -25,7 +25,7 @@ class TestField(BaseTest):
 
     def test_FieldMap(self):
         fm = fieldspec.FieldMap()
-        f = field.Field(instance=None, attribute=None)
+        f = field.Field(instance=None)
         f.set('Spam')
         fm['Test'] = f
         assert fm.value_map() == {'Test': 'Spam'}
@@ -67,20 +67,21 @@ class Base:
     min_max_values = []
     error_message = 'Custom error message.'
 
-    def empty_field(self):
+    def empty_field(self, **kw):
         """Returns a field instance with no instance or attribute."""
-        return self.FieldClass(instance=None, attribute=None)
+        class CustomClass(self.FieldClass):
+            pass
+        for key, value in kw.iteritems():
+            setattr(CustomClass, key, value)
+        field = CustomClass(instance=None)
+        return field
 
     def test_never_allow_none(self):
         f = self.empty_field()
-        raises(ValueError, f.assign, None)
         raises(ValueError, f.set, None)
 
     def test_requiredIsFalse(self):
-        f = self.empty_field()
-        f.required = False
-        f.assign(UNASSIGNED)
-        assert f.get() is UNASSIGNED
+        f = self.empty_field(required=False)
         f.set(UNASSIGNED)
         assert f.get() is UNASSIGNED
 
@@ -91,9 +92,6 @@ class Base:
 
     def test_good_values_default(self):
         for value in self.good_values_default:
-            # Assignment.
-            f = self.empty_field()
-            f.assign(value)
             # Setting.
             f = self.empty_field()
             f.set(value)
@@ -111,7 +109,7 @@ class Base:
                 f.set(value)
             except ValueError, e:
                 assert e.args[0] != self.error_message
-            f.error_message = self.error_message
+            f = self.empty_field(error_message = self.error_message)
             try:
                 f.set(value)
             except ValueError, e:
@@ -120,26 +118,30 @@ class Base:
     def test_str_values_default(self):
         for value, strValue in self.str_values_default:
             f = self.empty_field()
-            f.assign(value)
+            f.set(value)
             assert str(f) == strValue
 
     def test_min_max_values(self):
         for value, min_value, max_value, is_valid in self.min_max_values:
-            f = self.empty_field()
+            kw = {}
             if min_value:
-                f.min_value = min_value
+                kw['min_value'] = min_value
             if max_value:
-                f.max_value = max_value
+                kw['max_value'] = max_value
+            f = self.empty_field(**kw)
             if is_valid:
                 # No exception is expected.
+                f.validate(value)
                 f.set(value)
-                assert f.get() == value
+                assert f.value == value
             else:
                 # Exception is expected.
-                raises(ValueError, f.set, value)
+                raises(ValueError, f.validate, value)
 
 
 class TestString(Base, BaseTest):
+
+    class FieldClass(field.String): pass
 
     convert_values_default = [(0., '0.0'),
                               (555.55, '555.55'),
@@ -148,12 +150,13 @@ class TestString(Base, BaseTest):
                               (-555, '-555'),
                               (u'abcdefg', 'abcdefg'),
                               ]
-    FieldClass = field.String
     good_values_default = ['abcdefg']
     bad_values_default = ['']
     
 
 class TestUnicode(Base, BaseTest):
+
+    class FieldClass(field.Unicode): pass
 
     # More Unicode expertise needed.
 
@@ -164,11 +167,12 @@ class TestUnicode(Base, BaseTest):
                               (-555, u'-555'),
                               ('abcdefg', u'abcdefg'),
                               ]
-    FieldClass = field.Unicode
     good_values_default = [u'abcdefg']
 
 
 class TestInteger(Base, BaseTest):
+
+    class FieldClass(field.Integer): pass
 
     convert_values_default = [(0.0, 0),
                               (555.55, 555),
@@ -180,7 +184,6 @@ class TestInteger(Base, BaseTest):
                               (u'555', 555),
                               (u'-555', -555),
                               ]
-    FieldClass = field.Integer
     good_values_default = [0,
                            5, 555, 555555,
                            -5, -555, -555555,
@@ -211,6 +214,8 @@ class TestInteger(Base, BaseTest):
 
 class TestFloat(Base, BaseTest):
 
+    class FieldClass(field.Float): pass
+
     convert_values_default = [(0, 0.0),
                               (555, 555.0),
                               (-555, -555.0),
@@ -227,7 +232,6 @@ class TestFloat(Base, BaseTest):
                               (u'-555', -555.0),
                               (u'-555.55', -555.55),
                               ]
-    FieldClass = field.Float
     good_values_default = [0.0,
                            5.5, 555.555, 555555.5,
                            -5.5, -555.555, -555555.5,
@@ -269,7 +273,7 @@ class TestFloat(Base, BaseTest):
 ##                               (u'55.555', 55.55),
 ##                               (u'-55.555', -55.55),
 ##                               ]
-##     FieldClass = field.Money
+##     class FieldClass(field.Money): pass
 ##     good_values_default = [0.00,
 ##                            5.50, 555.67, 555678.90,
 ##                            -5.50, -555.67, -555678.90,
@@ -289,7 +293,8 @@ class TestFloat(Base, BaseTest):
 
 class TestDate(Base, BaseTest):
 
-    FieldClass = field.Date
+    class FieldClass(field.Date): pass
+    
     good_values_default = [
         datetime.date(2004, 5, 5),
         datetime.date(1765, 4, 3),
@@ -325,7 +330,8 @@ class TestDate(Base, BaseTest):
 
 class TestDatetime(Base, BaseTest):
 
-    FieldClass = field.Datetime
+    class FieldClass(field.Datetime): pass
+    
     good_values_default = [
         datetime.datetime(2004, 5, 5, 22, 32, 5),
         datetime.datetime(1765, 4, 3, 10, 11, 12),
@@ -369,12 +375,13 @@ class TestDatetime(Base, BaseTest):
 
 class TestBoolean(Base, BaseTest):
 
+    class FieldClass(field.Boolean): pass
+
     convert_values_default = [(1, True),
                               (0, False),
                               ('True', True), # trueLabel
                               ('False', False), # falseLabel
                               ]
-    FieldClass = field.Boolean
     good_values_default = [True, False]
     str_values_default = [(True, 'True'),
                           (False, 'False'),
@@ -383,7 +390,7 @@ class TestBoolean(Base, BaseTest):
 
 class TestHashedValue(Base, BaseTest):
 
-    FieldClass = field.HashedValue
+    class FieldClass(field.HashedValue): pass
 
     def test_hash_differs_from_value(self):
         value = 'abcde'
@@ -419,7 +426,7 @@ class TestHashedValue(Base, BaseTest):
         value = 'abcde'
         # f1 represents the field used by the GUI.
         f1 = self.empty_field()
-        f1.assign(value)
+        f1.set(value)
         # f2 represents the persisted field, whose value is set based
         # on the value of f1
         f2 = self.empty_field()
@@ -431,7 +438,7 @@ class TestHashedValue(Base, BaseTest):
     def test_unassigned(self):
         value = field.UNASSIGNED
         f = self.empty_field()
-        f.assign(value)
+        f.set(value)
         assert f.get() == value
         assert not f.compare(value)
 
@@ -440,7 +447,7 @@ class TestImage(object):
 
     def test_unicode_representation(self):
         f = field.Image(None, None)
-        f.assign('some-image-data')
+        f.set('some-image-data')
         assert unicode(f) == u'(Binary data)'
 
 
@@ -448,7 +455,7 @@ class TestPassword(object):
 
     def test_unicode_representation(self):
         f = field.Password(None, None)
-        f.assign('some-password')
+        f.set('some-password')
         assert unicode(f) == u'(Hidden)'
 
 

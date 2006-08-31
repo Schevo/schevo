@@ -1131,7 +1131,7 @@ class Database(base.Database):
     def _on_open(self):
         """Allow schema to run code after the database is opened."""
         if hasattr(self, '_schema_module'):
-            # And empty database created without a schema source will
+            # An empty database created without a schema source will
             # not have a schema module.
             fn = getattr(self._schema_module, 'on_open', None)
             if callable(fn):
@@ -1468,11 +1468,11 @@ schevo.schema.prep(locals())
             if typ in (CREATE, UPDATE):
                 EntityClass = entity_classes[extent_name]
                 entity = EntityClass(oid)
-                fields = entity.sys.fields(
+                field_map = entity.sys.field_map(
                     include_hidden=True,
                     include_readonly_fget=False,
                     )
-                for field in fields.itervalues():
+                for field in field_map.itervalues():
                     field.validate(field._value)
 
     def _reset_all(self):
@@ -1492,6 +1492,7 @@ schevo.schema.prep(locals())
         self.dispatch = Database.dispatch
         self.label = Database.label
         self._initialize()
+        self._on_open()
 
 
 def _create_index(extent_map, index_spec, unique):

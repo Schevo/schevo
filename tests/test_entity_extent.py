@@ -4,6 +4,7 @@ For copyright, license, and warranty, see bottom of file.
 """
 
 import datetime
+import random
 
 from schevo.constant import UNASSIGNED
 from schevo import error
@@ -288,8 +289,7 @@ class TestEntityExtent(test.CreatesSchema):
         self.reopen()
         extent = db.User
         tx = extent.t.create(name='foo')
-        self.assertRaises(error.KeyCollision,
-                          db.execute, tx)
+        self.assertRaises(error.KeyCollision, db.execute, tx)
 
     def test_no_key_conflicts_on_create_if_necessary(self):
         # Create an entity.
@@ -326,8 +326,7 @@ class TestEntityExtent(test.CreatesSchema):
         tx = extent.t.create(name='bar')
         user_bar = db.execute(tx)
         tx = user_bar.t.update(name='foo')
-        self.assertRaises(error.KeyCollision,
-                          db.execute, tx)
+        self.assertRaises(error.KeyCollision, db.execute, tx)
 
     def test_no_key_conflicts_on_delete(self):
         extent = db.User
@@ -532,11 +531,9 @@ class TestEntityExtent(test.CreatesSchema):
         realm = db.Realm[1]
         avatar = db.Avatar[1]
         user_del_tx = user.t.delete()
-        self.assertRaises(error.DeleteRestricted,
-                          db.execute, user_del_tx)
+        self.assertRaises(error.DeleteRestricted, db.execute, user_del_tx)
         realm_del_tx = realm.t.delete()
-        self.assertRaises(error.DeleteRestricted,
-                          db.execute, realm_del_tx)
+        self.assertRaises(error.DeleteRestricted, db.execute, realm_del_tx)
         # After deleting the avatar, deleting user and realm becomes
         # possible.
         db.execute(avatar.t.delete())
@@ -572,13 +569,11 @@ class TestEntityExtent(test.CreatesSchema):
     def test_field_requirements(self):
         tx = db.User.t.create()
         # User was not specified, so transaction shouldn't succeed.
-        self.assertRaises(AttributeError,
-                          db.execute, tx)
+        self.assertRaises(AttributeError, db.execute, tx)
         # Even if the transaction's fields are modified, the entity's
         # field spec should remain enforced.
         tx.f.name.required = False
-        self.assertRaises(AttributeError,
-                          db.execute, tx)
+        self.assertRaises(AttributeError, db.execute, tx)
         # Age should not be required though.
         tx = db.User.t.create()
         tx.name = 'foo'
@@ -586,11 +581,9 @@ class TestEntityExtent(test.CreatesSchema):
         assert result.age is UNASSIGNED
         # When updating, restrictions should still be enforced.
         tx = result.t.update(name=UNASSIGNED)
-        self.assertRaises(AttributeError,
-                          db.execute, tx)
+        self.assertRaises(AttributeError, db.execute, tx)
         tx.f.name.required = False
-        self.assertRaises(AttributeError,
-                          db.execute, tx)
+        self.assertRaises(AttributeError, db.execute, tx)
 
     def test_find(self):
         user, realm, avatar = self.db.execute(self.UserRealmAvatar())
@@ -667,18 +660,16 @@ class TestEntityExtent(test.CreatesSchema):
         return
         extent = db.User
         user = db.execute(extent.t.create(name='foo', age=20))
-        self.assertRaises(AttributeError,
-                          user.t_update, name='bar')
+        self.assertRaises(AttributeError, user.t_update, name='bar')
 
     def test_field_namespace(self):
         extent = db.User
         user = db.execute(extent.t.create(name='foo', age=20))
-        assert isinstance(user.f.name, type(user.sys.fields()['name']))
-        assert isinstance(user.f.age, type(user.sys.fields()['age']))
+        assert isinstance(user.f.name, type(user.sys.field_map()['name']))
+        assert isinstance(user.f.age, type(user.sys.field_map()['age']))
 
     def test_nonexistent_entity(self):
-        self.assertRaises(error.EntityDoesNotExist,
-                          lambda: db.User[99])
+        self.assertRaises(error.EntityDoesNotExist, lambda: db.User[99])
 
     def test_fget_fields(self):
         male = db.execute(db.Gender.t.create(code='M', name='Male'))
@@ -693,17 +684,16 @@ class TestEntityExtent(test.CreatesSchema):
         # found for each gender.
         assert male.count == 1
         assert female.count == 2
-        # sys.fields should also have the results of fget calls.
-        male_fields = male.sys.fields()
-        assert male_fields['count'].get() == 1
+        # sys.field_map should also have the results of fget calls.
+        male_field_map = male.sys.field_map()
+        assert male_field_map['count'].get() == 1
         assert male.f.count.get() == 1
 
     def test_extent_knows_its_next_oid(self):
         assert db.Gender.next_oid == 1
         assert db.Person.next_oid == 3
         # Property is readonly.
-        self.assertRaises(AttributeError,
-                          setattr, db.Person, 'next_oid', 2)
+        self.assertRaises(AttributeError, setattr, db.Person, 'next_oid', 2)
 
     def test_hash(self):
         # Make sure Entity instances behave nicely as dictionary keys.
@@ -778,6 +768,16 @@ class TestEntityExtent(test.CreatesSchema):
         assert realm == realm2
         assert realm.sys.rev == 1
         assert realm.name == realm2.name
+
+    def test_extent_sorting(self):
+        """When sorting sequences of extent instances, their sort
+        order is determined by their name."""
+        expected = db.extent_names()
+        extents = db.extents()
+        random.shuffle(extents)
+        extents.sort()
+        extent_names = [e.name for e in extents]
+        assert extent_names == expected
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
