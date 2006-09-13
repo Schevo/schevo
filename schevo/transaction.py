@@ -314,7 +314,7 @@ class Delete(Transaction):
             other = EntityClass(oid)
             # Must update fields to UNASSIGNED first to prevent
             # DeleteRestrict from being raised by the database itself.
-            field_map = other.sys.field_map(include_readonly_fget=False)
+            field_map = other.sys.field_map(not_fget)
             field_value_map = dict(field_map.value_map())
             new_value_map = dict((name, UNASSIGNED) for name in field_names)
             field_value_map.update(new_value_map)
