@@ -9,8 +9,9 @@ from schevo.lib import optimize
 from schevo import base
 from schevo.constant import UNASSIGNED
 from schevo import field
+from schevo.field import not_fget
 from schevo.fieldspec import (
-    FieldDefinition, FieldSpecMap, field_spec_from_class)
+    FieldDefinition, FieldMap, FieldSpecMap, field_spec_from_class)
 from schevo.label import label, label_from_name
 from schevo.meta import schema_metaclass
 import schevo.namespace
@@ -36,7 +37,7 @@ class View(base.View):
         self._extent = entity._extent
         self._oid = entity._oid
         f = self._field_map = self._field_spec.field_map(instance=self)
-        f.update_values(entity.sys.field_map(include_readonly_fget=False))
+        f.update_values(entity.sys.field_map(not_fget))
         # All fields should be readonly by default.
         for field in f.itervalues():
             field.readonly = True
@@ -115,32 +116,14 @@ class ViewSys(NamespaceExtension):
     def entity(self):
         return self._view._entity
 
-    def field_map(self, include_expensive=True, include_hidden=False,
-                  include_readonly_fget=True):
-        """Return field_map for the view.
-
-        - `include_expensive`: Set to `True` to include fields with
-          `expensive` attribute set to `True`.
-          
-        - `include_hidden`: Set to `True` to include fields with
-          `hidden` attribute set to `True`.
-
-        - `include_readonly_fget`: Set to `True` to include fields
-          with `fget` attribute set to something other than `None`.
-        """
-        view_field_map = self._view._field_map
+    def field_map(self, *filters):
+        """Return field_map for the view, filtered by optional
+        callable objects specified in `filters`."""
         # Remove fields that should not be included.
-        to_remove = []
-        for name, field in view_field_map.iteritems():
-            if field.hidden and not include_hidden:
-                to_remove.append(name)
-            elif field.expensive and not include_expensive:
-                to_remove.append(name)
-            elif field.fget is not None and not include_readonly_fget:
-                to_remove.append(name)
-        for name in to_remove:
-            del view_field_map[name]
-        return view_field_map
+        new_fields = self._view._field_map.itervalues()
+        for filt in filters:
+            new_fields = (field for field in new_fields if filt(field))
+        return FieldMap((field.name, field) for field in new_fields)
 
     @property
     def extent(self):

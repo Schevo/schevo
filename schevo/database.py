@@ -20,6 +20,7 @@ from schevo import error
 from schevo.entity import Entity
 from schevo.extent import Extent
 from schevo.field import Entity as EntityField
+from schevo.field import not_fget
 from schevo import icon
 from schevo.lib import module
 from schevo.namespace import NamespaceExtension
@@ -1468,10 +1469,7 @@ schevo.schema.prep(locals())
             if typ in (CREATE, UPDATE):
                 EntityClass = entity_classes[extent_name]
                 entity = EntityClass(oid)
-                field_map = entity.sys.field_map(
-                    include_hidden=True,
-                    include_readonly_fget=False,
-                    )
+                field_map = entity.sys.field_map(not_fget)
                 for field in field_map.itervalues():
                     field.validate(field._value)
 

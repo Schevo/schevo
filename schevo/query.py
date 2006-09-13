@@ -12,7 +12,7 @@ from schevo.constant import UNASSIGNED
 import schevo.error
 from schevo import field
 from schevo.fieldspec import (
-    FieldDefinition, FieldSpecMap, field_spec_from_class)
+    FieldDefinition, FieldMap, FieldSpecMap, field_spec_from_class)
 from schevo.label import label, plural, label_from_name
 from schevo.lib.odict import odict
 from schevo.meta import schema_metaclass
@@ -110,8 +110,12 @@ class ParamSys(NamespaceExtension):
         NamespaceExtension.__init__(self)
         self._query = query
 
-    def field_map(self):
-        return self._query._field_map
+    def field_map(self, *filters):
+        # Remove fields that should not be included.
+        new_fields = self._query._field_map.itervalues()
+        for filt in filters:
+            new_fields = (field for field in new_fields if filt(field))
+        return FieldMap((field.name, field) for field in new_fields)
 
 
 class Exact(Param):

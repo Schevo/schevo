@@ -12,7 +12,8 @@ from schevo.constant import CASCADE, DEFAULT, RESTRICT, UNASSIGN, UNASSIGNED
 from schevo.error import (KeyCollision, DeleteRestricted,
                           TransactionFieldsNotChanged, TransactionNotExecuted)
 from schevo import field
-from schevo.fieldspec import FieldSpecMap
+from schevo.field import not_fget
+from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import label, label_from_name
 from schevo.meta import schema_metaclass
 import schevo.namespace
@@ -120,9 +121,13 @@ class TransactionSys(NamespaceExtension):
         if hasattr(self._transaction, '_extent_name'):
             return self._transaction._extent_name
 
-    def field_map(self):
-        return self._transaction._field_map
-        
+    def field_map(self, *filters):
+        # Remove fields that should not be included.
+        new_fields = self._transaction._field_map.itervalues()
+        for filt in filters:
+            new_fields = (field for field in new_fields if filt(field))
+        return FieldMap((field.name, field) for field in new_fields)
+
     def summarize(self):
         return summarize(self._transaction)
 
@@ -240,8 +245,7 @@ class Delete(Transaction):
         self.sys._set('count', entity.sys.count)
         self.sys._set('links', entity.sys.links)
         self.sys._set('old', entity)
-        field_map = entity.sys.field_map(
-            include_hidden=True, include_readonly_fget=False)
+        field_map = entity.sys.field_map(not_fget)
         self._initialize(field_map)
         self._update_all_fields('readonly', True)
         self._update_all_fields('required', False)
@@ -342,8 +346,7 @@ class Update(Transaction):
         self.sys._set('links', entity.sys.links)
         self.sys._set('old', entity)
         self._oid = entity._oid
-        field_map = entity.sys.field_map(
-            include_hidden=True, include_readonly_fget=False)
+        field_map = entity.sys.field_map(not_fget)
         self._initialize(field_map)
         for name, value in kw.iteritems():
             setattr(self, name, value)

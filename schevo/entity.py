@@ -13,7 +13,7 @@ from schevo.constant import UNASSIGNED
 from schevo.error import (
     EntityDoesNotExist, ExtentDoesNotExist, FieldDoesNotExist)
 from schevo.fieldspec import field_spec_from_class
-from schevo.fieldspec import FieldSpecMap
+from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import (
     LabelMixin, label_from_name, plural_from_name, with_label)
 import schevo.namespace
@@ -643,33 +643,18 @@ class EntitySys(NamespaceExtension):
         """Return the name of the extent to which this entity belongs."""
         return self._entity._extent.name
 
-    def field_map(self, include_expensive=True, include_hidden=False,
-                  include_readonly_fget=True):
-        """Return field_map for the entity.
-
-        - `include_expensive`: Set to `True` to include fields with
-          `expensive` attribute set to `True`.
-          
-        - `include_hidden`: Set to `True` to include fields with
-          `hidden` attribute set to `True`.
-
-        - `include_readonly_fget`: Set to `True` to include fields
-          with `fget` attribute set to something other than `None`.
-        """
+    def field_map(self, *filters):
+        """Return field_map for the entity, filtered by optional
+        callable objects specified in `filters`."""
         e = self._entity
         stored_values = e._db._entity_fields(e._extent.name, e._oid)
         entity_field_map = e._field_spec.field_map(e, stored_values)
         # Remove fields that should not be included.
-        to_remove = []
-        for name, field in entity_field_map.iteritems():
-            if field.hidden and not include_hidden:
-                to_remove.append(name)
-            elif field.expensive and not include_expensive:
-                to_remove.append(name)
-            elif field.fget is not None and not include_readonly_fget:
-                to_remove.append(name)
-        for name in to_remove:
-            del entity_field_map[name]
+        new_fields = entity_field_map.itervalues()
+        for filt in filters:
+            new_fields = (field for field in new_fields if filt(field))
+        entity_field_map = FieldMap(
+            (field.name, field) for field in new_fields)
         # Update fields that have fget callables.
         for field in entity_field_map.itervalues():
             if field.fget is not None:

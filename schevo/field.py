@@ -19,6 +19,18 @@ import schevo.fieldspec
 import schevo.namespace
 
 
+# Filters for calls to field_map methods.
+
+def not_expensive(field):
+    return not field.expensive
+
+def not_fget(field):
+    return not field.fget
+
+def not_hidden(field):
+    return not field.hidden
+
+
 class FieldMeta(type):
     """Create field constuctors for every Field class."""
 
@@ -140,6 +152,18 @@ class Field(base.Field):
 
     _name = None
 
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def rev(self):
+        return self._rev
+
+    @property
+    def value(self):
+        return self.get()
+
     def __init__(self, instance, value=None, rev=None):
         """Create a Field instance for an instance with a given value.
 
@@ -210,18 +234,6 @@ class Field(base.Field):
             return u'<UNASSIGNED>'
         else:
             return unicode(v)
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def rev(self):
-        return self._rev
-
-    @property
-    def value(self):
-        return self.get()
 
     def check(self, value):
         """Return True if the value passes all validation checks."""
