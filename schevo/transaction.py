@@ -314,14 +314,11 @@ class Delete(Transaction):
             other = EntityClass(oid)
             # Must update fields to UNASSIGNED first to prevent
             # DeleteRestrict from being raised by the database itself.
-            # Use generic update() here to avoid a customized Update
-            # that wouldn't expect to be called in this context.
-            tx = other.t.generic_update()
-            for field_name in field_names:
-                tx.f[field_name].readonly = False
-                tx.f[field_name].required = False
-                setattr(tx, field_name, UNASSIGNED)
-            db.execute(tx, strict=False)
+            field_map = other.sys.field_map(include_readonly_fget=False)
+            field_value_map = dict(field_map.value_map())
+            new_value_map = dict((name, UNASSIGNED) for name in field_names)
+            field_value_map.update(new_value_map)
+            db._update_entity(other._extent.name, oid, field_value_map)
             tx = other.t.delete()
             db.execute(tx, strict=False)
         # Attempt to delete the entity itself.

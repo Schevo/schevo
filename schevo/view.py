@@ -126,6 +126,15 @@ class ViewSys(NamespaceExtension):
         return FieldMap((field.name, field) for field in new_fields)
 
     @property
+    def count(self):
+        return self._view._entity.sys.count
+
+    @property
+    def exists(self):
+        """Return True if the entity exists; False if it was deleted."""
+        return self._view._entity.sys.exists
+
+    @property
     def extent(self):
         return self._view._entity.sys.extent
 
@@ -134,16 +143,16 @@ class ViewSys(NamespaceExtension):
         return self.extent.name
 
     @property
-    def count(self):
-        return self._view._entity.sys.count
-
-    @property
     def links(self):
         return self._view._entity.sys.links
 
     @property
     def oid(self):
         return self._view._entity.sys.oid
+
+    @property
+    def rev(self):
+        return self._view._entity.sys.rev
 
 
 class ViewTransactions(NamespaceExtension):

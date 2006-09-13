@@ -31,12 +31,21 @@ class TestOnDelete(CreatesSchema):
         """Has a reference to an AlphaAlpha, such that when that
         AlphaAlpha is deleted, this AlphaBravo will also be deleted."""
 
-        alpha_alpha = f.entity('AlphaAlpha', on_delete=CASCADE)
+        alpha_alpha = f.entity(('AlphaAlpha', CASCADE))
+        foo = f.entity('Foo')
 
         class _Update(T.Update):
 
             def _before_execute(self, db, entity):
-                raise RuntimeError("Generic Update should be used internally.")
+                raise RuntimeError("Update should not be used directly.")
+
+
+    class Foo(E.Entity):
+        """A reference to Foo is maintained by AlphaBravo."""
+
+        name = f.unicode()
+
+        _key(name)
 
 
     class AlphaCharlie(E.Entity):
@@ -95,14 +104,14 @@ class TestOnDelete(CreatesSchema):
         aa = db.execute(tx)
         tx = aa.t.update(alpha_alpha=aa)
         db.execute(tx)
-        tx = db.AlphaBravo.t.create(alpha_alpha=aa)
+        tx = db.Foo.t.create(name='Foo')
+        foo = db.execute(tx)
+        tx = db.AlphaBravo.t.create(alpha_alpha=aa, foo=foo)
         ab = db.execute(tx)
         return (aa, ab)
 
     def test_cascade(self):
-        alpha_alpha = self._alpha_alpha()
-        tx = db.AlphaBravo.t.create(alpha_alpha=alpha_alpha)
-        alpha_bravo = db.execute(tx)
+        alpha_alpha, alpha_bravo = self._alpha_and_bravo()
         tx = alpha_alpha.t.delete()
         db.execute(tx)
         assert alpha_bravo not in db.AlphaBravo

@@ -144,6 +144,10 @@ class Database(base.Database):
     def __repr__(self):
         return '<Database %r :: V %r>' % (self.label, self.version)
 
+    @property
+    def _extent_id_name(self):
+        return dict((v, k) for k, v in self._extent_name_id.items())
+
     def close(self):
         """Close the database."""
         assert log(1, 'Stopping plugins.')
@@ -297,16 +301,14 @@ class Database(base.Database):
     def version(self):
         return self._root['SCHEVO']['version']
 
-    def _append_change(self, typ, extent_name, oid, minimal=True):
+    def _append_change(self, typ, extent_name, oid):
         executing = self._executing
         if executing:
-            e1 = executing[-1]
+            info = (typ, extent_name, oid)
+            tx = executing[-1]
+            tx._changes_requiring_validation.append(info)
             if not self._bulk_mode:
-                e1._changes_requiring_notification.append(
-                    (typ, extent_name, oid))
-            if minimal:
-                e1._changes_requiring_validation.append(
-                    (typ, extent_name, oid))
+                tx._changes_requiring_notification.append(info)
 
     def _append_inversion(self, method, *args, **kw):
         """Append an inversion to a transaction if one is being
@@ -349,8 +351,7 @@ class Database(base.Database):
         _walk_index(branch, ascending, oids)
         return oids
     
-    def _create_entity(self, extent_name, fields, oid=None, rev=None,
-                       notify=True):
+    def _create_entity(self, extent_name, fields, oid=None, rev=None):
         """Create a new entity in an extent; return the oid."""
         extent_map = self._extent_map(extent_name)
         entities = extent_map['entities']
@@ -436,17 +437,9 @@ class Database(base.Database):
             extent_map['len'] += 1
             # Allow inversion of this operation.
             self._append_inversion(self._delete_entity, extent_name, oid)
-            if notify:
-                append_change = self._append_change
-                append_change(CREATE, extent_name, oid)
-                # Notify that parents with fgets have been updated.
-                for name, value in fields.iteritems():
-                    field_id = field_name_id[name]
-                    if (field_id in entity_field_ids
-                        and isinstance(value, Entity)):
-                        if value._fget_fields:
-                            append_change(UPDATE, value._extent.name,
-                                          value._oid, False)
+            # Keep track of changes.
+            append_change = self._append_change
+            append_change(CREATE, extent_name, oid)
             return oid
         except:
             # Revert changes made during create attempt.
@@ -458,7 +451,7 @@ class Database(base.Database):
             extent_map['next_oid'] = old_next_oid
             raise
 
-    def _delete_entity(self, extent_name, oid, notify=True):
+    def _delete_entity(self, extent_name, oid):
         entity_map, extent_map = self._entity_extent_map(extent_name, oid)
         extent_id = extent_map['id']
         extent_name_id = self._extent_name_id
@@ -495,24 +488,17 @@ class Database(base.Database):
                 other_extent_map = extent_maps_by_id[other_extent_id]
                 other_entity_map = other_extent_map['entities'][other_oid]
                 links = other_entity_map['links']
-                del links[link_key][oid]
+                other_links = links[link_key]
+                del other_links[oid]
                 other_entity_map['link_count'] -= 1
         del extent_map['entities'][oid]
         extent_map['len'] -= 1
         # Allow inversion of this operation.
         self._append_inversion(self._create_entity, extent_name, old_fields,
                                oid, old_rev)
-        if notify:
-            append_change = self._append_change
-            append_change(DELETE, extent_name, oid)
-            # Notify that parents with fgets have been updated.
-            for name, value in old_fields.iteritems():
-                field_id = field_name_id[name]
-                if (field_id in entity_field_ids and
-                    isinstance(value, Entity)
-                    ):
-                    if value._fget_fields:
-                        append_change(UPDATE, value._extent.name, value._oid)
+        # Keep track of changes.
+        append_change = self._append_change
+        append_change(DELETE, extent_name, oid)
 
     def _enforce_index(self, extent_name, *index_spec):
         """Validate and begin enforcing constraints on the specified
@@ -808,7 +794,7 @@ class Database(base.Database):
         extent_map = self._extent_map(extent_name)
         extent_map['next_oid'] = next_oid
 
-    def _update_entity(self, extent_name, oid, fields, rev=None, notify=True):
+    def _update_entity(self, extent_name, oid, fields, rev=None):
         """Update an existing entity in an extent."""
         # XXX: Could be optimized to update mappings only when
         # necessary.
@@ -875,7 +861,8 @@ class Database(base.Database):
                     other_extent_map = extent_maps_by_id[other_extent_id]
                     other_entity_map = other_extent_map['entities'][other_oid]
                     links = other_entity_map['links']
-                    del links[link_key][oid]
+                    other_links = links[link_key]
+                    del other_links[oid]
                     other_entity_map['link_count'] -= 1
                     ld_append((other_entity_map, links, link_key, oid))
             # Create ephemeral fields for creating new index mappings.
@@ -924,36 +911,9 @@ class Database(base.Database):
             # Allow inversion of this operation.
             self._append_inversion(self._update_entity, extent_name, oid,
                                    old_fields, old_rev)
-            if notify:
-                append_change = self._append_change
-                append_change(UPDATE, extent_name, oid)
-                # Notify that old parents with fgets have been updated.
-                for name, value in old_fields.iteritems():
-                    field_id = field_name_id[name]
-                    if (field_id in entity_field_ids and
-                        isinstance(value, Entity)
-                        ):
-                        if value._fget_fields:
-                            append_change(UPDATE, value._extent.name,
-                                          value._oid)
-                # Notify that new parents with fgets have been updated.
-                for name, value in fields.iteritems():
-                    field_id = field_name_id[name]
-                    if (field_id in entity_field_ids and
-                        isinstance(value, tuple)
-                        ):
-                        other_extent_id, other_oid = value
-                        other_extent_name = extent_maps_by_id[
-                            other_extent_id]['name']
-                        EntityClass = entity_classes[other_extent_name]
-                        if EntityClass._fget_fields:
-                            append_change(UPDATE, other_extent_name,
-                                          other_oid)
-                # Notify all children that I've been updated.
-                for children in self._entity_links(extent_name,
-                                                   oid).itervalues():
-                    for child in children:
-                        append_change(UPDATE, child._extent.name, child._oid)
+            # Keep track of changes.
+            append_change = self._append_change
+            append_change(UPDATE, extent_name, oid)
         except:
             # Revert changes made during update attempt.
             for _e, _i, _o, _f in indices_added:

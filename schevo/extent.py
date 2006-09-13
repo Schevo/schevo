@@ -109,6 +109,10 @@ class Extent(base.Extent):
         """Return an iterator of OIDs sorted by index_spec."""
         return self._by(self.name, *index_spec)
 
+    def count(self, **criteria):
+        """Return count of entities matching given field value(s)."""
+        return len(self._find(self.name, **criteria))
+
     def enforce_index(self, *index_spec):
         """Validate and begin enforcing constraints on the specified
         index if it was relaxed within the currently-executing
