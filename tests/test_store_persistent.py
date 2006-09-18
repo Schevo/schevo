@@ -7,30 +7,29 @@ from schevo.store.connection import Connection
 from schevo.store.file_storage import TempFileStorage
 from schevo.store.persistent import PersistentTester as Persistent
 from schevo.store.utils import p64
-from sancho.utest import UTest
 
 
-class Test (UTest):
+class Test(object):
 
-    def check_getstate(self):
+    def test_check_getstate(self):
         p=Persistent()
         assert p.__getstate__() == {}
         p.a = 1
         assert p.__getstate__() == {'a':1}
 
-    def check_setstate(self):
+    def test_check_setstate(self):
         p=Persistent()
         p.__setstate__({})
         p.__setstate__({'a':1})
         assert p.a == 1
 
-    def check_change(self):
+    def test_check_change(self):
         p=Persistent()
         p._p_changed == 0
         p._p_note_change()
         assert p._p_changed == True
 
-    def check_accessors(self):
+    def test_check_accessors(self):
         p=Persistent()
         p._p_oid
         assert p._p_format_oid() == 'None'
@@ -38,7 +37,7 @@ class Test (UTest):
         assert p._p_format_oid() == '1'
         assert repr(p) == "<PersistentTester 1>"
 
-    def check_more(self):
+    def test_check_more(self):
         storage = TempFileStorage()
         connection = Connection(storage)
         root=connection.get_root()
@@ -60,11 +59,8 @@ class Test (UTest):
         assert root._p_is_ghost()
         root._p_set_status_unsaved()
 
-    def pickling(self):
+    def test_pickling(self):
         a = Persistent()
         pickle_a = dumps(a, 2) # Pickle protocol 2 is required.
         b = loads(pickle_a)
         assert isinstance(b, Persistent)
-
-if __name__ == "__main__":
-    Test()

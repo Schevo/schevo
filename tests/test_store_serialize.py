@@ -8,12 +8,11 @@ from schevo.store.persistent import ConnectionBase
 from schevo.store.persistent import PersistentTester as Persistent
 from schevo.store.serialize import ObjectWriter, ObjectReader, pack_record
 from schevo.store.serialize import unpack_record, split_oids
-from sancho.utest import UTest
 
 
-class Test (UTest):
+class Test(object):
 
-    def check_object_writer(self):
+    def test_check_object_writer(self):
         class FakeConnection(ConnectionBase):
             def new_oid(self):
                 return ROOT_OID
@@ -43,7 +42,7 @@ class Test (UTest):
         except RuntimeError: pass
         s.close()
 
-    def check_object_reader(self):
+    def test_check_object_reader(self):
         class FakeConnection:
             pass
         self.r = r = ObjectReader(FakeConnection())
@@ -51,7 +50,7 @@ class Test (UTest):
                 '\x80\x02}q\x02U\x04dataq\x03}q\x04s.\x00\x00\x00\x00')
         assert r.get_ghost(root)._p_is_ghost()
 
-    def check_record_pack_unpack(self):
+    def test_check_record_pack_unpack(self):
         oid = '0'*8
         data = 'sample'
         reflist = ['1'*8, '2'*8]
@@ -61,6 +60,3 @@ class Test (UTest):
         assert result[1] == data
         assert split_oids(result[2]) == reflist
         assert split_oids('') == []
-
-if __name__ == "__main__":
-    Test()

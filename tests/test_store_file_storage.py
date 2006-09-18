@@ -2,17 +2,18 @@
 $URL: svn+ssh://svn/repos/trunk/durus/test/utest_file_storage.py $
 $Id: utest_file_storage.py 28063 2006-03-13 21:03:18Z dbinger $
 """
-from sancho.utest import UTest
 from schevo.store.file_storage import TempFileStorage, FileStorage
 from schevo.store.file_storage import FileStorage1, FileStorage2
 from schevo.store.serialize import pack_record
 from schevo.store.utils import p64
 
 
-class Test (UTest):
+class Test(object):
 
-    def check_file_storage(self):
+    def test_check_temp_file_storage(self):
         self._check_file_storage(TempFileStorage())
+
+    def test_check_file_storage_1(self):
         self._check_file_storage(FileStorage1())
 
     def _check_file_storage(self, storage):
@@ -62,9 +63,4 @@ class Test (UTest):
 ##         filename = f.fp.name
 ##         g = FileStorage(filename, readonly=True)
 ##         h = FileStorage2(filename, readonly=True)
-
-
-
-if __name__ == "__main__":
-    Test()
 

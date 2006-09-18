@@ -5,6 +5,8 @@ For copyright, license, and warranty, see bottom of file.
 
 from schevo.lib import optimize
 
+from types import ListType, TupleType
+
 
 class odict(dict):
     """Dictionary whose keys maintain their order of membership.
@@ -18,33 +20,49 @@ class odict(dict):
 
     def __init__(self, seq=None):
         """dict() -> new empty dictionary.
-        dict(seq) -> new dictionary initialized as if via:
+        
+        dict(seq) -> new dictionary initialized as if via::
+        
             d = {}
             for k, v in seq:
                 d[k] = v
         """
         self._keys = []
-        if seq is not None:
+        if seq is None:
+            dict.__init__(self)
+        elif isinstance(seq, (ListType, TupleType)):
+            # Lists and tuples can be iterated over again, so it's
+            # safe to delegate item value assignment to the
+            # superclass.
             for k, v in seq:
                 if k not in self._keys:
                     self._keys.append(k)
             dict.__init__(self, seq)
         else:
+            # Other sequences may only be iterated over once, so
+            # initialize an empty dictionary and assign values here.
             dict.__init__(self)
+            for k, v in seq:
+                if k not in self._keys:
+                    self[k] = v
 
     def __delitem__(self, key):
+        """x.__delitem__(y) <==> del x[y]"""
         dict.__delitem__(self, key)
         self._keys.remove(key)
 
     def __iter__(self):
+        """x.__iter__() <==> iter(x)"""
         for key in self._keys:
             yield key
 
     def __repr__(self):
+        """x.__repr__() <==> repr(x)"""
         itemreprs = ('%r: %r' % (key, self[key]) for key in self._keys)
         return '{' + ', '.join(itemreprs) + '}'
 
     def __setitem__(self, key, item):
+        """x.__setitem__(i, y) <==> x[i]=y"""
         dict.__setitem__(self, key, item)
         if not hasattr(self, '_keys'):
             self._keys = [key]
@@ -58,10 +76,12 @@ class odict(dict):
         self[key] = item
 
     def clear(self):
+        """D.clear() -> None.  Remove all items from D."""
         dict.clear(self)
         self._keys = []
 
     def copy(self):
+        """D.copy() -> a shallow copy of D"""
         items = [(key, self[key]) for key in self._keys]
         return self.__class__(items)
 
@@ -76,19 +96,29 @@ class odict(dict):
         return [(key, self[key]) for key in self._keys]
 
     def iterkeys(self):
+        """D.iterkeys() -> an iterator over the keys of D"""
         return iter(self)
 
     def iteritems(self):
+        """D.iteritems() -> an iterator over the (key, value) items of D"""
         return ((key, self[key]) for key in self._keys)
 
     def itervalues(self):
+        """D.itervalues() -> an iterator over the values of D"""
         return (self[key] for key in self._keys)
 
     def keys(self):
+        """D.keys() -> list of D's keys"""
         return self._keys[:]
 
-    def pop(self, key, failobj=None):
-        value = dict.pop(self, key, failobj)
+    def pop(self, key, *failobj):
+        """D.pop(k[,d]) -> v, remove specified key and return the
+        corresponding value
+        
+        If key is not found, d is returned if given, otherwise
+        KeyError is raised
+        """
+        value = dict.pop(self, key, *failobj)
         if key in self._keys:
             self._keys.remove(key)
         return value
@@ -105,12 +135,14 @@ class odict(dict):
         return (key, value)
 
     def setdefault(self, key, failobj=None):
+        """D.setdefault(k[,d]) -> D.get(k,d), also set D[k]=d if k not in D"""
         value = dict.setdefault(self, key, failobj)
         if key not in self._keys:
             self._keys.append(key)
         return value
 
     def update(self, other, reorder=False):
+        """Update values in this odict based on the `other` odict."""
         if not isinstance(other, odict):
             raise ValueError('other must be an odict')
         dict.update(self, other)

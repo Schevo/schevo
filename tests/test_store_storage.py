@@ -2,14 +2,14 @@
 $URL: svn+ssh://svn/repos/trunk/durus/test/utest_storage.py $
 $Id: utest_storage.py 27487 2005-09-29 13:18:29Z dbinger $
 """
-from sancho.utest import UTest, raises
+from schevo.test import raises
 from schevo.store.storage import MemoryStorage
 from schevo.store.serialize import pack_record
 from schevo.store.utils import p64
 
-class Test (UTest):
+class Test(object):
 
-    def check_memory_storage(self):
+    def test_check_memory_storage(self):
         b = MemoryStorage()
         assert b.new_oid() == p64(1)
         assert b.new_oid() == p64(2)
@@ -24,7 +24,3 @@ class Test (UTest):
         b.end()
         assert len(list(b.gen_oid_record())) == 2
         assert record == b.load(p64(0))
-
-if __name__ == "__main__":
-    Test()
-
