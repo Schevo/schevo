@@ -64,6 +64,7 @@ def field_spec_from_class(cls, class_dict, slots=False):
             if slots:
                 class NewClass(BaseFieldClass):
                     readonly = True
+                NewClass.__name__ = BaseFieldClass.__name__
             else:
                 class NoSlotsField(BaseFieldClass):
                     # No __slots__ defined in order to give
