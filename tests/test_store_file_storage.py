@@ -2,10 +2,12 @@
 $URL: svn+ssh://svn/repos/trunk/durus/test/utest_file_storage.py $
 $Id: utest_file_storage.py 28063 2006-03-13 21:03:18Z dbinger $
 """
-from schevo.store.file_storage import TempFileStorage, FileStorage
 from schevo.store.file_storage import FileStorage1, FileStorage2
+from schevo.store.file_storage import TempFileStorage, FileStorage
 from schevo.store.serialize import pack_record
 from schevo.store.utils import p64
+from os import unlink
+from tempfile import mktemp
 
 
 class Test(object):
@@ -63,4 +65,12 @@ class Test(object):
 ##         filename = f.fp.name
 ##         g = FileStorage(filename, readonly=True)
 ##         h = FileStorage2(filename, readonly=True)
+
+    def check_open_empty(self):
+        name = mktemp()
+        f = open(name, 'w')
+        f.close()
+        s = FileStorage(name)
+        s.close()
+        unlink(name)
 

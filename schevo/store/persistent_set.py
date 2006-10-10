@@ -26,7 +26,7 @@ class PersistentSet(PersistentData):
             return self.__class__(self.data & other)
 
     def __cmp__(self, other):
-        return cmp(self.data, other)
+        raise TypeError("cannot compare PersistentSets using cmp()")
 
     def __contains__(self, item):
         return item in self.data
@@ -45,9 +45,6 @@ class PersistentSet(PersistentData):
         if not isinstance(other, PersistentSet):
             raise TypeError("can only compare to a PersistentSet")
         return self.data > other.data
-
-    def __hash__(self):
-        return hash(self.data)
 
     def __iand__(self, other):
         self._p_note_change()

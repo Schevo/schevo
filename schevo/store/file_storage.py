@@ -11,7 +11,6 @@ from schevo.store.connection import ROOT_OID
 from schevo.store.serialize import split_oids, unpack_record
 from schevo.store.storage import Storage
 from schevo.store.utils import p32, u32, p64, u64
-from sets import Set
 from tempfile import NamedTemporaryFile
 from zlib import compress, decompress
 import os
@@ -81,7 +80,8 @@ class FileStorage(Storage):
         else:
             if not filename:
                 self.fp = NamedTemporaryFile(suffix=".durus", mode="w+b")
-            elif os.path.exists(self.filename):
+            elif (os.path.exists(self.filename) and
+                  os.stat(self.filename).st_size > 0):
                 self.fp = open(self.filename, 'a+b')
             else:
                 self.fp = open(self.filename, 'w+b')
@@ -214,7 +214,7 @@ class FileStorage(Storage):
         self._write_header(packed)
         def gen_reachable_records():
             todo = [ROOT_OID]
-            seen = Set()
+            seen = set()
             while todo:
                 oid = todo.pop()
                 if oid in seen:
