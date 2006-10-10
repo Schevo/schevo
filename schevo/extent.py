@@ -87,9 +87,19 @@ class Extent(base.Extent):
         return '<Extent %r in %r>' % (self.name, self.db)
 
     def as_datalist(self):
-        """Return list of entity value tuples in a form suitable for
-        initial or sample data in a schema."""
-        return [entity.sys.as_data() for entity in self]
+        """Return sorted list of entity value tuples in a form
+        suitable for initial or sample data in a schema."""
+        return sorted([entity.sys.as_data() for entity in self])
+
+    def as_unittest_code(self):
+        """Return formatted string of entity value tuples in a form
+        suitable for initial or sample data in a schema."""
+        code = 'E.%s._sample_unittest = [' % self.name
+        code += '\n    '
+        body = [str(data) for data in self.as_datalist()]
+        code += ',\n    '.join(body)
+        code += ',\n    ]'
+        return code
 
     def by(self, *index_spec):
         """Return an iterator of entities sorted by index_spec."""

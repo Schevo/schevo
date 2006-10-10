@@ -107,10 +107,14 @@ class TestPopulateComplex(CreatesSchema):
         assert db.Bar[3].foo.baz == 'answer'
 
     def test_datalist_complex(self):
-        assert db.Foo.as_datalist() == db.Foo._EntityClass._sample_unittest
-        assert db.Bar.as_datalist() == db.Bar._EntityClass._sample_unittest
-        assert db.Baz.as_datalist() == db.Baz._EntityClass._sample_unittest
-        assert db.Multi.as_datalist() == db.Multi._EntityClass._sample_unittest
+        assert db.Foo.as_datalist() == sorted(
+            db.Foo._EntityClass._sample_unittest)
+        assert db.Bar.as_datalist() == sorted(
+            db.Bar._EntityClass._sample_unittest)
+        assert db.Baz.as_datalist() == sorted(
+            db.Baz._EntityClass._sample_unittest)
+        assert db.Multi.as_datalist() == sorted(
+            db.Multi._EntityClass._sample_unittest)
 
 
 class TestPopulateHidden(CreatesSchema):

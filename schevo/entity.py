@@ -603,8 +603,13 @@ class EntitySys(NamespaceExtension):
             else:
                 return value
         values = []
+        create = self._entity.t_create()
         e = self._entity
         for f_name in e.f:
+            if f_name not in create.f:
+                # Don't include a field that doesn't exist in the
+                # create transaction.
+                continue
             f = e.f[f_name]
             if f.fget is not None or f.hidden:
                 pass

@@ -461,9 +461,18 @@ class Database(base.Database):
         link_count = entity_map['link_count']
         links = entity_map['links']
         # Disallow deletion if other entities refer to this one,
-        # unless all references are merely from ourself.
+        # unless all references are merely from ourself or an entity
+        # that will be deleted.
+        deletes = set()
+        executing = self._executing
+        if executing:
+            tx = executing[-1]
+            deletes = [(extent_name_id[del_entity_class.__name__], del_oid)
+                       for del_entity_class, del_oid in tx._deletes]
         for (other_extent_id, other_field_id), others in links.items():
             for other_oid in others:
+                if (other_extent_id, other_oid) in deletes:
+                    continue
                 # Give up as soon as we find one outside reference.
                 if (other_extent_id, other_oid) != (extent_id, oid):
                     msg = 'Cannot delete; other entities depend on this one.'
@@ -486,11 +495,12 @@ class Database(base.Database):
                 other_extent_id, other_oid = other_value
                 link_key = (referrer_extent_id, referrer_field_id)
                 other_extent_map = extent_maps_by_id[other_extent_id]
-                other_entity_map = other_extent_map['entities'][other_oid]
-                links = other_entity_map['links']
-                other_links = links[link_key]
-                del other_links[oid]
-                other_entity_map['link_count'] -= 1
+                if other_oid in other_extent_map['entities']:
+                    other_entity_map = other_extent_map['entities'][other_oid]
+                    links = other_entity_map['links']
+                    other_links = links[link_key]
+                    del other_links[oid]
+                    other_entity_map['link_count'] -= 1
         del extent_map['entities'][oid]
         extent_map['len'] -= 1
         # Allow inversion of this operation.

@@ -30,6 +30,7 @@ class Transaction(base.Transaction):
     def __init__(self):
         self._changes_requiring_notification = []
         self._changes_requiring_validation = []
+        self._deletes = set()
         self._executed = False
         self._field_map = self._field_spec.field_map(instance=self)
         self._inversions = []
@@ -265,6 +266,7 @@ class Delete(Transaction):
 
     def _execute(self, db):
         entity = self._entity
+        deletes = self._deletes
         self._before_execute(db, entity)
         # Traverse through entities that link to this one, and delete
         # or update them accordingly.
@@ -274,6 +276,7 @@ class Delete(Transaction):
         traversed = set()
         # Assume we've already traversed this entity.
         traversed.add((entity.__class__, entity.sys.oid))
+        deletes.add((entity.__class__, entity.sys.oid))
         # Dict of {(EntityClass, oid): [field_name, ...]} for fields
         # to delete.
         to_delete = {}
@@ -285,7 +288,7 @@ class Delete(Transaction):
             EntityClass = db.extent(e_name)._EntityClass
             for other in others:
                 e_o = (EntityClass, other.sys.oid)
-                if e_o in traversed:
+                if e_o in traversed or e_o in deletes:
                     continue
                 traversed.add(e_o)
                 field = getattr(other.f, f_name)
@@ -320,6 +323,7 @@ class Delete(Transaction):
             field_value_map.update(new_value_map)
             db._update_entity(other._extent.name, oid, field_value_map)
             tx = other.t.delete()
+            tx._deletes.update(deletes)
             db.execute(tx, strict=False)
         # Attempt to delete the entity itself.
         extent_name = self._extent_name
