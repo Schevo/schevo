@@ -18,7 +18,7 @@ from schevo.store.utils import p64
 from itertools import islice, chain
 from os import getpid
 from time import time
-from weakref import WeakValueDictionary, ref
+from weakref import ref, KeyedRef
 
 ROOT_OID = p64(0)
 
@@ -312,10 +312,50 @@ class Connection(ConnectionBase):
         self.storage.pack()
 
 
+class ObjectDictionary (object):
+
+    def __init__(self):
+        self.mapping = {}
+        self.dead = set()
+        def remove(wr, selfref=ref(self)):
+            self = selfref()
+            if self is not None:
+                self.dead.add(wr.key)
+        self.remove = remove
+
+    def get(self, key, default=None):
+        ref = self.mapping.get(key, None)
+        if ref is not None:
+            value = ref()
+            if value is not None and key not in self.dead:
+                return value
+        return default
+
+    def __setitem__(self, key, value):
+        self.dead.discard(key)
+        self.mapping[key] = KeyedRef(value, self.remove, key)
+
+    def __delitem__(self, key):
+        self.dead.add(key)
+
+    def __contains__(self, key):
+        return self.get(key, None) is not None
+
+    def __len__(self):
+        return len(self.mapping) - len(self.dead)
+
+    def __iter__(self):
+        while self.dead:
+            self.mapping.pop(self.dead.pop(), None)
+        for key in self.mapping:
+            if key not in self.dead:
+                yield key
+
+
 class Cache(object):
 
     def __init__(self, size):
-        self.objects = WeakValueDictionary()
+        self.objects = ObjectDictionary()
         self.recent_objects = set()
         self.set_size(size)
         self.finger = 0
@@ -378,7 +418,9 @@ class Cache(object):
         heap = []
         for oid in islice(chain(all, all), start, start + len(all)):
             self.finger += 1
-            obj = all[oid]
+            obj = all.get(oid)
+            if obj is None:
+                continue # The ref is dead.
             if obj._p_serial == transaction_serial:
                 continue # obj is current.  Leave it alone.
             heappush(heap, (obj._p_serial, oid))
