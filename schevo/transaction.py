@@ -340,14 +340,14 @@ class Update(Transaction):
 
     _require_changes = True
 
-    def __init__(self, entity, **kw):
+    def __init__(self, _entity, **kw):
         Transaction.__init__(self)
-        self._entity = entity
-        self.sys._set('count', entity.sys.count)
-        self.sys._set('links', entity.sys.links)
-        self.sys._set('old', entity)
-        self._oid = entity._oid
-        field_map = entity.sys.field_map(not_fget)
+        self._entity = _entity
+        self.sys._set('count', _entity.sys.count)
+        self.sys._set('links', _entity.sys.links)
+        self.sys._set('old', _entity)
+        self._oid = _entity._oid
+        field_map = _entity.sys.field_map(not_fget)
         self._initialize(field_map)
         for name, value in kw.iteritems():
             setattr(self, name, value)
@@ -558,6 +558,21 @@ class Populate(_Populate):
         _Populate.__init__(self)
         if sample_name:
             self._data_attr = '%s_%s' % (self._data_attr, sample_name)
+
+
+# ---------------------------------------------------------------------
+
+
+class CallableWrapper(Transaction):
+    """A transaction that, upon execution, calls a callable object
+    with the open database."""
+
+    def __init__(self, fn):
+        super(CallableWrapper, self).__init__()
+        self._fn = fn
+
+    def _execute(self, db):
+        return self._fn(db)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

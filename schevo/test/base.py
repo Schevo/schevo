@@ -9,6 +9,8 @@ import unittest
 
 from schevo import database
 from schevo.lib import module
+import schevo.schema
+from schevo.script.path import package_path
 
 from textwrap import dedent
 from StringIO import StringIO
@@ -167,12 +169,6 @@ class CreatesSchema(CreatesDatabase):
             if not hasattr(self, db_name):
                 db._reset_all()
             setattr(self, db_name, db)
-            # Also set the module-level global.
-            modname = self.__class__.__module__
-            mod = sys.modules[modname]
-            setattr(mod, db_name, db)
-            setattr(mod, ex_name, db.execute)
-            self.suffixes.add(suffix)
         else:
             # Forget existing modules.
             for m in module.MODULES:
@@ -183,12 +179,68 @@ class CreatesSchema(CreatesDatabase):
                 connection = getattr(self, 'connection' + suffix)
                 _db_cache[(schema, suffix)] = (db, fp, connection)
                 _cached_dbs.add(db)
+        # Also set the module-level global.
+        modname = self.__class__.__module__
+        mod = sys.modules[modname]
+        setattr(mod, db_name, db)
+        setattr(mod, ex_name, db.execute)
+        self.suffixes.add(suffix)
         return db
 
     def open(self):
         db = self._open()
         db.populate('unittest')
         return db
+
+
+class EvolvesSchemata(CreatesDatabase):
+
+    schemata = []
+
+    def _open(self, suffix=''):
+        # Forget existing modules.
+        for m in module.MODULES:
+            module.forget(m)
+        # Open database with version 1.
+        db = self._base_open(suffix, self.schemata[0])
+        # Evolve to latest.
+        for i in xrange(1, len(self.schemata)):
+            source = self.schemata[i]
+            db._evolve(source, version=i+1)
+        # Also set the module-level global.
+        db_name = 'db' + suffix
+        ex_name = 'ex' + suffix
+        fpv_name = 'fpv' + suffix
+        modname = self.__class__.__module__
+        mod = sys.modules[modname]
+        setattr(mod, db_name, db)
+        setattr(mod, ex_name, db.execute)
+        self.suffixes.add(suffix)
+        return db
+
+    def open(self):
+        db = self._open()
+        db.populate('unittest')
+        return db
+
+    @staticmethod
+    def from_package(pkg_name, final_version):
+        schemata = []
+        schema_path = package_path(pkg_name)
+        version = 0
+        while True:
+            if version == final_version:
+                break
+            version += 1
+            try:
+                source = schevo.schema.read(schema_path, version=version)
+            except schevo.error.SchemaFileIOError:
+                if final_version == 'latest':
+                    break
+                else:
+                    raise
+            schemata.append(source)
+        return schemata
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

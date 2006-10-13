@@ -164,10 +164,11 @@ def _export_all(namespace_to, namespace_from, **kw):
 # threads are importing schemata simultaneously.
 import_lock = threading.Lock()
 
-def start(db=None):
+def start(db=None, evolving=False):
     """Lock schema importing."""
     import_lock.acquire()
     schevo.namespace.SCHEMADB = db
+    schevo.namespace.EVOLVING = evolving
     if db:
         db._imported_schemata = {}
 
@@ -219,6 +220,7 @@ def finish(db, schema_module=None):
     # Reset the global namespace SCHEMADEF.
     schevo.namespace.SCHEMADEF = None
     schevo.namespace.SCHEMADB = None
+    schevo.namespace.EVOLVING = False
     # Remove this class now that the schema has been processed.
     del schema_def.E.Entity
     # Add relationship metadata to each Entity class.
@@ -328,9 +330,10 @@ def read(location, version):
     schema_filepath = os.path.join(schema_path, schema_filename)
     try:
         schema_file = file(schema_filepath, 'rU')
+        schema_source = schema_file.read()
     except IOError:
-        raise RuntimeError('Could not open schema file %r' % schema_filepath)
-    schema_source = schema_file.read()
+        raise schevo.error.SchemaFileIOError(
+            'Could not open schema file %r' % schema_filepath)
     schema_file.close()
     return schema_source
 

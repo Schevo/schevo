@@ -32,7 +32,8 @@ from schevo.store.file_storage import FileStorage
 from schevo.store.persistent_dict import PersistentDict as PDict
 from schevo.store.persistent_list import PersistentList as PList
 from schevo.trace import log
-from schevo.transaction import Combination, Initialize, Populate
+from schevo.transaction import (
+    CallableWrapper, Combination, Initialize, Populate, Transaction)
 
 
 def inject(filename, schema_source, version):
@@ -135,9 +136,7 @@ class Database(base.Database):
         schevo = self._root['SCHEVO']
         self._extent_name_id = schevo['extent_name_id']
         self._extent_maps_by_id = schevo['extents']
-        extent_maps_by_name = self._extent_maps_by_name = {}
-        for extent in self._extent_maps_by_id.itervalues():
-            extent_maps_by_name[extent['name']] = extent
+        self._update_extent_maps_by_name()
         # Plugin support.
         self._plugins = []
 
@@ -484,12 +483,13 @@ class Database(base.Database):
         indices = extent_map['indices']
         fields_by_id = entity_map['fields']
         for index_spec in indices.iterkeys():
-            field_values = tuple(fields_by_id[f_id] for f_id in index_spec)
+            field_values = tuple(fields_by_id.get(f_id, UNASSIGNED)
+                                 for f_id in index_spec)
             _index_remove(extent_map, index_spec, oid, field_values)
         # Delete links from this entity to other entities.
         referrer_extent_id = extent_name_id[extent_name]
         for referrer_field_id in entity_field_ids:
-            other_value = fields_by_id[referrer_field_id]
+            other_value = fields_by_id.get(referrer_field_id, UNASSIGNED)
             if isinstance(other_value, tuple):
                 # Remove the link to the other entity.
                 other_extent_id, other_oid = other_value
@@ -1031,6 +1031,53 @@ class Database(base.Database):
                 'OID %r does not exist in %r' % (oid, extent_name))
         return entity_map, extent_map
 
+    def _evolve(self, schema_source, version):
+        """Evolve the database to a new schema definition.
+
+        - `schema_source`: String containing the source code for the
+          schema to be evolved to.
+
+        - `version`: Integer with the version number of the new schema
+          source.  Must be the current database version, plus 1.
+        """
+        if version != self.version + 1:
+            raise error.DatabaseVersionMismatch(
+                'Current version is %i, expected %i, got %i'
+                % (self.version, self.version + 1, version))
+        def call(module, name):
+            fn = getattr(module, name, None)
+            if callable(fn):
+                tx = CallableWrapper(fn)
+                # Trick the database into not performing a
+                # storage-level commit.
+                self._executing = [Transaction()]
+                try:
+                    self.execute(tx)
+                finally:
+                    self._executing = []
+        # Load the new schema.
+        schema_module = self._import_from_source(schema_source)
+        try:
+            # Execute `before_evolve` function if defined.
+            call(schema_module, 'before_evolve')
+            # Perform first pass of evolution.
+            self._sync(schema_source, initialize=False, commit=False,
+                       evolving=True)
+            # Execute `during_evolve` function if defined.
+            call(self._schema_module, 'during_evolve')
+            # Perform standard schema synchronization.
+            self._sync(schema_source, initialize=False, commit=False,
+                       evolving=False)
+            # Execute `after_evolve` function if defined.
+            call(self._schema_module, 'after_evolve')
+        except:
+            self._rollback()
+            # Re-raise exception.
+            raise
+        else:
+            self._root['SCHEVO']['version'] = version
+            self._commit()
+
     def _extent_map(self, extent_name):
         """Return an extent PDict corresponding to `extent_name`."""
         try:
@@ -1126,7 +1173,8 @@ class Database(base.Database):
                     del other_links[referrer_key]
                 other_entity['link_count'] = other_link_count
 
-    def _sync(self, schema_source=None, initialize=True):
+    def _sync(self, schema_source=None, initialize=True, commit=True,
+              evolving=False):
         """Synchronize the database with a schema definition.
 
         - `schema_source`: String containing the source code for a
@@ -1135,6 +1183,13 @@ class Database(base.Database):
 
         - `initialize`: True if a new database should be populated
           with initial values defined in the schema.
+
+        - `commit`: True if a successful synchronization should commit
+          to the storage backend.  False if the caller of `_sync` will
+          handle this task.
+
+        - `evolving`: True if the synchronization is occuring during a
+          database evolution.
         """
         sync_schema_changes = True
         locked = False
@@ -1144,7 +1199,7 @@ class Database(base.Database):
             old_schema_source = SCHEVO['schema_source']
             if old_schema_source is not None:
                 old_schema_module = None
-                schevo.schema.start(self)
+                schevo.schema.start(self, evolving)
                 locked = True
                 schema_name = schema_counter.next_schema_name()
                 try:
@@ -1186,7 +1241,7 @@ schevo.schema.prep(locals())
 """)
                 # /XXX
                 schema_module = None
-                schevo.schema.start(self)
+                schevo.schema.start(self, evolving)
                 locked = True
                 schema_name = schema_counter.next_schema_name()
                 try:
@@ -1206,7 +1261,7 @@ schevo.schema.prep(locals())
             if sync_schema_changes:
                 # Update schema source stored in database.
                 SCHEVO['schema_source'] = schema_source
-                self._sync_extents(schema)
+                self._sync_extents(schema, evolving)
             # Create extent instances.
             E = schema.E
             extents = self._extents = {}
@@ -1234,20 +1289,36 @@ schevo.schema.prep(locals())
         except:
             if locked:
                 schevo.schema.import_lock.release()
-            self._rollback()
+            if commit:
+                self._rollback()
             raise
         else:
-            self._commit()
+            if commit:
+                self._commit()
 
-    def _sync_extents(self, schema):
+    def _sync_extents(self, schema, evolving):
         """Synchronize the extents based on the schema."""
         E = schema.E
         old_schema = self._old_schema
-        # Determine which extents are in the schema and which are in
-        # the database.
-        in_db = set(self.extent_names())
+        # Rename extents in the database whose entity class definition
+        # has a `_was` attribute.
         in_schema = set(iter(E))
+        if evolving:
+            for extent_name in in_schema:
+                EntityClass = E[extent_name]
+                was_named = EntityClass._was
+                if was_named is not None:
+                    # Change the name of the existing extent in the
+                    # database.
+                    extent_name_id = self._extent_name_id
+                    extent_map = self._extent_map(was_named)
+                    extent_id = extent_map['id']
+                    extent_map['name'] = extent_name
+                    del extent_name_id[was_named]
+                    extent_name_id[extent_name] = extent_id
+            self._update_extent_maps_by_name()
         # Create extents that are in schema but not in db.
+        in_db = set(self.extent_names())
         to_create = in_schema - in_db
         for extent_name in to_create:
             if extent_name.startswith('_'):
@@ -1281,13 +1352,17 @@ schevo.schema.prep(locals())
                 extent_map = self._extent_map(extent_name)
                 field_name_id = extent_map['field_name_id']
                 extent_id = extent_map['id']
-                for old_field_name, FieldClass in (
-                    old_schema.E[extent_name]._field_spec.iteritems()
-                    ):
-                    old_field_id = field_name_id[old_field_name]
-                    if issubclass(FieldClass, EntityField):
-                        self._remove_stale_links(
-                            extent_id, old_field_id, FieldClass)
+                # The old extent name will not exist in the old schema
+                # if it was an evolve_only class definition, and we
+                # are not in the process of evolving.
+                if extent_name in old_schema.E:
+                    for old_field_name, FieldClass in (
+                        old_schema.E[extent_name]._field_spec.iteritems()
+                        ):
+                        old_field_id = field_name_id[old_field_name]
+                        if issubclass(FieldClass, EntityField):
+                            self._remove_stale_links(
+                                extent_id, old_field_id, FieldClass)
             # Delete the extent.  XXX: Need to skip system extents?
             self._delete_extent(extent_name)
         # Update entity_field_ids, field_id_name, and field_name_id
@@ -1300,19 +1375,40 @@ schevo.schema.prep(locals())
             entity_field_ids = set(extent_map['entity_field_ids'])
             field_id_name = extent_map['field_id_name']
             field_name_id = extent_map['field_name_id']
-            # Remove fields that no longer exist.
+            # Rename fields with 'was' attribute.
             existing_field_names = set(field_name_id.keys())
             new_field_names = set(field_spec.keys())
+            if evolving:
+                for field_name in new_field_names:
+                    field_class = field_spec[field_name]
+                    was_named = field_class.was
+                    if was_named is not None:
+                        if was_named not in existing_field_names:
+                            raise error.FieldDoesNotExist(
+                                'Field %s.%s was being renamed from '
+                                '%s, but that field does not exist '
+                                'in the previous schema.'
+                                % (extent_name, field_name, was_named))
+                        # Rename the field.
+                        field_id = field_name_id[was_named]
+                        del field_name_id[was_named]
+                        field_name_id[field_name] = field_id
+                        field_id_name[field_id] = field_name
+            # Remove fields that no longer exist.
             old_field_names = existing_field_names - new_field_names
             for old_field_name in old_field_names:
                 old_field_id = field_name_id[old_field_name]
                 if old_schema:
                     # Get the field spec for the field being deleted.
-                    FieldClass = old_schema.E[extent_name]._field_spec[
-                        old_field_name]
-                    if issubclass(FieldClass, EntityField):
-                        self._remove_stale_links(
-                            extent_id, old_field_id, FieldClass)
+                    # It may not exist in the old schema, if it was only
+                    # there in an _evolve_only class definition.
+                    if extent_name in old_schema.E:
+                        FieldClass = old_schema.E[extent_name]._field_spec.get(
+                            old_field_name, None)
+                        if (FieldClass is not None and
+                            issubclass(FieldClass, EntityField)):
+                            self._remove_stale_links(
+                                extent_id, old_field_id, FieldClass)
                 if old_field_id in entity_field_ids:
                     entity_field_ids.remove(old_field_id)
                 del field_name_id[old_field_name]
@@ -1375,6 +1471,11 @@ schevo.schema.prep(locals())
 ##                 return uid
 ##             self._v_nextid = None
 
+    def _update_extent_maps_by_name(self):
+        extent_maps_by_name = self._extent_maps_by_name = {}
+        for extent in self._extent_maps_by_id.itervalues():
+            extent_maps_by_name[extent['name']] = extent
+
     def _update_extent_key_spec(self, extent_name, key_spec, index_spec):
         """Update an existing extent to match given key spec."""
         extent_map = self._extent_map(extent_name)
@@ -1384,6 +1485,12 @@ schevo.schema.prep(locals())
                         for field_names in key_spec]
         index_spec_ids = [_field_ids(extent_map, field_names)
                           for field_names in index_spec]
+        # Convert key indices that have been changed to non-unique
+        # incides.
+        for i_spec in index_spec_ids:
+            if i_spec not in key_spec and i_spec in indices:
+                unique, branch = indices[i_spec]
+                indices[i_spec] = (False, branch)
         # Create new key indices for those that don't exist.
         for i_spec in key_spec_ids:
             if i_spec not in indices:
@@ -1446,7 +1553,9 @@ schevo.schema.prep(locals())
     def _reset_all(self):
         """Clear all entities, indices, etc. in the database.
 
-        FOR USE WITH UNIT TESTS.  NOT INDENDED FOR GENERAL USE.
+        FOR USE WITH SINGLE-SCHEMA UNIT TESTS.
+
+        NOT INDENDED FOR GENERAL USE.
         """
         for extent_name in self.extent_names():
             extent_map = self._extent_map(extent_name)

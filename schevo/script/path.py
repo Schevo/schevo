@@ -1,33 +1,31 @@
-"""Test base classes.
+"""Path-handling functions for Schevo script commands.
 
 For copyright, license, and warranty, see bottom of file.
 """
 
-__all__ = [
-    'BaseTest',
-    'CreatesDatabase',
-    'CreatesSchema',
-    'EvolvesSchemata',
-    'PREAMBLE',
-    'raises',
-    ]
-
 import sys
+from schevo.lib import optimize
 
-import schevo.trace
-from schevo.trace import log
-# XXX Problems with nose 0.8.7, so disable detailed tracing for now.
-## schevo.trace.TRACE_TO = sys.stdout
-## schevo.trace.monitor_level = 3
+import os
 
-from schevo.test.base import (
-    BaseTest,
-    CreatesDatabase,
-    CreatesSchema,
-    EvolvesSchemata,
-    PREAMBLE,
-    raises,
-    )
+
+def package_path(pkg_or_path):
+    """If pkg_or_path is a module, return its path; otherwise,
+    return pkg_or_path."""
+    from_list = pkg_or_path.split('.')[:1]
+    try:
+        pkg = __import__(pkg_or_path, {}, {}, from_list)
+    except ImportError:
+        return os.path.abspath(pkg_or_path)
+    if '__init__.py' in pkg.__file__:
+        # Package was specified; return the dir it's in.
+        return os.path.abspath(os.path.dirname(pkg.__file__))
+    else:
+        # Module was specified; return its filename.
+        return os.path.abspath(pkg.__file__)
+
+
+optimize.bind_all(sys.modules[__name__])  # Last line of module.
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

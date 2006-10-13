@@ -122,6 +122,9 @@ class Field(base.Field):
     less contrast than normal.
 
     valid_values: A list of valid values, or None if not applicable.
+
+    was: The name of the field in the previous schema, or None if the
+    field was not renamed since the previous schema.
     """
 
     __metaclass__ = FieldMeta  # Defines __slots__ as well.
@@ -149,6 +152,7 @@ class Field(base.Field):
     required = True
     subdued_values = None
     valid_values = None
+    was = None
 
     _name = None
 

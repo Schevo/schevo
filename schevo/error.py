@@ -12,6 +12,11 @@ class DatabaseClosed(RuntimeError):
     """The database or database connection was closed."""
 
 
+class DatabaseVersionMismatch(RuntimeError):
+    """The schema version being evolved to is not the version
+    subsequent to the current database schema."""
+
+
 class DeleteRestricted(Restricted):
     """Delete attempted on an instance with foreign references."""
 
@@ -70,6 +75,10 @@ class TransactionRuleViolation(RuntimeError):
 
 class SchemaError(SyntaxError):
     """An error was found in the schema."""
+
+
+class SchemaFileIOError(IOError):
+    """The schema file could not be read."""
 
 
 class AmbiguousFieldDefinition(SchemaError):

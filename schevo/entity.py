@@ -275,8 +275,12 @@ class EntityMeta(type):
                 if func.im_self is None:
                     x_names.append(x_name)
         cls._x_names = x_names
-        # Only if this global schema definition variable exists.
-        if schevo.namespace.SCHEMADEF is not None:
+        # Only if this global schema definition variable exists, and
+        # this class applies to the current evolution context.
+        if (schevo.namespace.SCHEMADEF is not None
+            and (schevo.namespace.EVOLVING
+                 or not cls._evolve_only)
+            ):
             # Add this subclass to the entity classes namespace.
             schevo.namespace.SCHEMADEF.E._set(class_name, cls)
             # Keep track of relationship metadata.
@@ -304,6 +308,10 @@ class Entity(base.Entity, LabelMixin):
 
     # The first _key() specification defined.
     _default_key = None
+
+    # True if the class definition should only be valid during schema
+    # evolution.
+    _evolve_only = False
 
     # The extent associated with this Entity type.
     _extent = None
@@ -344,6 +352,10 @@ class Entity(base.Entity, LabelMixin):
 
     # Sample entity instances to optionally create in a new database.
     _sample = []
+
+    # Name of the class in the previous schema version, or None if not
+    # being renamed.
+    _was = None
 
     # Names of query, transaction, view, and extender methods
     # applicable to entity instances.

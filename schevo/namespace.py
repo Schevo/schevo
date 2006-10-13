@@ -11,6 +11,7 @@ from schevo.lib import optimize
 
 
 # Global objects used during Schevo schema loading.
+EVOLVING = False
 SCHEMADEF = None
 SCHEMADB = None
 
@@ -82,6 +83,9 @@ class NamespaceExtension(object):
 
     def __init__(self):
         self._d = {}
+
+    def __contains__(self, name):
+        return name in self._d
 
     def __getattr__(self, name):
         try:

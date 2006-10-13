@@ -7,8 +7,8 @@ from schevo.script.command import Command, CommandSet
 from schevo.script import (
     db_create,
     db_inject,
-##     db_evolve,
-##     db_update,
+    db_evolve,
+    db_update,
     )
 
 
@@ -21,8 +21,8 @@ class Database(CommandSet):
         self.commands = {
             'create': db_create.start,
             'inject': db_inject.start,
-##             'evolve': db_evolve.start,
-##             'update': db_update.start,
+            'evolve': db_evolve.start,
+            'update': db_update.start,
             }
 
 
