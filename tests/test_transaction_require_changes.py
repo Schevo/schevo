@@ -3,12 +3,11 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
+from schevo.test import CreatesSchema, raises
 from schevo import error
-from schevo import test
-from schevo.test import raises
 
 
-class TestTransactionRequireChanges(test.CreatesSchema):
+class TestTransactionRequireChanges(CreatesSchema):
 
     body = '''
 
@@ -33,7 +32,7 @@ class TestTransactionRequireChanges(test.CreatesSchema):
         b = db.execute(db.Bravo.t.create(bar=1))
         tx = b.t.update()
         # Error is raised when no fields are changed.
-        raises(error.TransactionFieldsNotChanged, db.execute, tx)
+        assert raises(error.TransactionFieldsNotChanged, db.execute, tx)
         # No error is raised when changes are made.
         b = db.execute(b.t.update(bar=2))
         assert b.bar == 2

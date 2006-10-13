@@ -6,10 +6,7 @@ from datetime import datetime
 from schevo.store.logger import log, is_logging
 from schevo.store.serialize import extract_class_name, split_oids
 from schevo.store.utils import p32, u32, u64
-from grp import getgrnam, getgrgid
-from os import unlink, stat, chown, geteuid, getegid, umask
 from os.path import exists
-from pwd import getpwnam, getpwuid
 from time import sleep
 import errno
 import select
@@ -106,90 +103,98 @@ class HostPortAddress (SocketAddress):
     def close(self, s):
         s.close()
 
-class UnixDomainSocketAddress (SocketAddress):
 
-    def __init__(self, filename, owner=None, group=None, umask=None):
-        self.filename = filename
-        self.owner = owner
-        self.group = group
-        self.umask = umask
+import sys
+if sys.platform != 'win32':
 
-    def __str__(self):
-        result = self.filename
-        if exists(self.filename):
-            filestat = stat(self.filename)
-            uid = filestat.st_uid
-            gid = filestat.st_gid
-            rwx = ['---', '--x', '-w-', '-wx', 'r--', 'r-x', 'rw-', 'rwx']
-            owner = getpwuid(uid).pw_name
-            group = getgrgid(gid).gr_name
-            result += ' (%s%s%s %s %s)' % (
-               rwx[filestat.st_mode >> 6 & 7],
-               rwx[filestat.st_mode >> 3 & 7],
-               rwx[filestat.st_mode & 7],
-               owner,
-               group)
-        return result
+    from grp import getgrnam, getgrgid
+    from os import unlink, stat, chown, geteuid, getegid, umask
+    from pwd import getpwnam, getpwuid
 
-    def get_address_family(self):
-        return socket.AF_UNIX
+    class UnixDomainSocketAddress (SocketAddress):
 
-    def bind_socket(self, s):
-        if self.umask is not None:
-            old_umask = umask(self.umask)
-        try:
-            s.bind(self.filename)
-        except socket.error, exc:
-            error = exc.args[0]
-            if not exists(self.filename):
-                raise
-            if stat(self.filename).st_size > 0:
-                raise
-            if error == errno.EADDRINUSE:
-                connected = self.get_connected_socket()
-                if connected:
-                    connected.close()
-                    raise
-                unlink(self.filename)
+        def __init__(self, filename, owner=None, group=None, umask=None):
+            self.filename = filename
+            self.owner = owner
+            self.group = group
+            self.umask = umask
+
+        def __str__(self):
+            result = self.filename
+            if exists(self.filename):
+                filestat = stat(self.filename)
+                uid = filestat.st_uid
+                gid = filestat.st_gid
+                rwx = ['---', '--x', '-w-', '-wx', 'r--', 'r-x', 'rw-', 'rwx']
+                owner = getpwuid(uid).pw_name
+                group = getgrgid(gid).gr_name
+                result += ' (%s%s%s %s %s)' % (
+                   rwx[filestat.st_mode >> 6 & 7],
+                   rwx[filestat.st_mode >> 3 & 7],
+                   rwx[filestat.st_mode & 7],
+                   owner,
+                   group)
+            return result
+
+        def get_address_family(self):
+            return socket.AF_UNIX
+
+        def bind_socket(self, s):
+            if self.umask is not None:
+                old_umask = umask(self.umask)
+            try:
                 s.bind(self.filename)
-            else:
-                raise
-        uid = geteuid()
-        if self.owner is not None:
-            if type(self.owner) is int:
-                uid = self.owner
-            else:
-                uid = getpwnam(self.owner).pw_uid
-        gid = getegid()
-        if self.group is not None:
-            if type(self.group) is int:
-                gid = self.group
-            else:
-                gid = getgrnam(self.group).gr_gid
-        if self.owner is not None or self.group is not None:
-            chown(self.filename, uid, gid)
-        if self.umask is not None:
-            umask(old_umask)
+            except socket.error, exc:
+                error = exc.args[0]
+                if not exists(self.filename):
+                    raise
+                if stat(self.filename).st_size > 0:
+                    raise
+                if error == errno.EADDRINUSE:
+                    connected = self.get_connected_socket()
+                    if connected:
+                        connected.close()
+                        raise
+                    unlink(self.filename)
+                    s.bind(self.filename)
+                else:
+                    raise
+            uid = geteuid()
+            if self.owner is not None:
+                if type(self.owner) is int:
+                    uid = self.owner
+                else:
+                    uid = getpwnam(self.owner).pw_uid
+            gid = getegid()
+            if self.group is not None:
+                if type(self.group) is int:
+                    gid = self.group
+                else:
+                    gid = getgrnam(self.group).gr_gid
+            if self.owner is not None or self.group is not None:
+                chown(self.filename, uid, gid)
+            if self.umask is not None:
+                umask(old_umask)
 
-    def get_connected_socket(self):
-        sock = socket.socket(self.get_address_family(), socket.SOCK_STREAM)
-        try:
-            sock.connect(self.filename)
-        except socket.error, exc:
-            error = exc.args[0]
-            if error in (errno.ENOENT, errno.ENOTSOCK, errno.ECONNREFUSED):
-                return None
-            else:
-                raise
-        return sock
+        def get_connected_socket(self):
+            sock = socket.socket(self.get_address_family(), socket.SOCK_STREAM)
+            try:
+                sock.connect(self.filename)
+            except socket.error, exc:
+                error = exc.args[0]
+                if error in (errno.ENOENT, errno.ENOTSOCK, errno.ECONNREFUSED):
+                    return None
+                else:
+                    raise
+            return sock
 
-    def set_connection_options(self, s):
-        s.settimeout(TIMEOUT)
+        def set_connection_options(self, s):
+            s.settimeout(TIMEOUT)
 
-    def close(self, s):
-        s.close()
-        if exists(self.filename):
-            unlink(self.filename)
+        def close(self, s):
+            s.close()
+            if exists(self.filename):
+                unlink(self.filename)
 
 
 class StorageServer:

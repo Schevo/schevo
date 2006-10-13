@@ -3,10 +3,10 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
-from schevo import test
+from schevo.test import CreatesSchema, raises
 
 
-class TestBank(test.CreatesSchema):
+class TestBank(CreatesSchema):
     
     body = '''
     
@@ -146,7 +146,7 @@ class TestBank(test.CreatesSchema):
         tx = personal.t.transfer()
         tx.to_account = business
         tx.amount = 205.00
-        self.assertRaises(Exception, db.execute, tx)
+        assert raises(Exception, db.execute, tx)
 
     def test_transfer_account_suspended(self):
         betty = db.Person.findone(name='Betty Rubble')
@@ -156,12 +156,12 @@ class TestBank(test.CreatesSchema):
         tx = family.t.transfer()
         tx.to_account = savings
         tx.amount = 0.01
-        self.assertRaises(Exception, db.execute, tx)
+        assert raises(Exception, db.execute, tx)
         # Attempt transfer from savings to family.
         tx = savings.t.transfer()
         tx.to_account = family
         tx.amount = 0.01
-        self.assertRaises(Exception, db.execute, tx)
+        assert raises(Exception, db.execute, tx)
         
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

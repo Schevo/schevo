@@ -7,7 +7,7 @@ from textwrap import dedent
 
 from schevo.constant import UNASSIGNED
 from schevo import error
-from schevo import test
+from schevo.test import CreatesDatabase, raises
 from schevo.test import raises
 
 

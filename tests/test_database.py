@@ -4,10 +4,10 @@ For copyright, license, and warranty, see bottom of file.
 """
 
 from schevo import error
-from schevo import test
+from schevo.test import CreatesDatabase, raises
 
 
-class TestDatabase(test.CreatesDatabase):
+class TestDatabase(CreatesDatabase):
     """Subclass and set self.db to the database instance to test."""
 
     def test_schevo_key_in_root(self):
@@ -22,7 +22,7 @@ class TestDatabase(test.CreatesDatabase):
     def test_empty(self):
         """A database should start out with very little."""
         assert self.db.version == 0
-        self.assertRaises(AttributeError, setattr, self.db, 'version', 2)
+        assert raises(AttributeError, setattr, self.db, 'version', 2)
         assert len(self.db.extent_names()) == 0
 
     def test_create_extent(self):
@@ -44,8 +44,8 @@ class TestDatabase(test.CreatesDatabase):
         """You cannot create an extent twice."""
         db = self.db
         db._create_extent('Some_Extent', ['name', 'age'], [])
-        self.assertRaises(error.ExtentExists, db._create_extent,
-                          'Some_Extent', ['name', 'age'], [])
+        assert raises(error.ExtentExists, db._create_extent,
+                      'Some_Extent', ['name', 'age'], [])
 
     def test_delete_extent(self):
         """An extent can be removed."""
@@ -59,7 +59,7 @@ class TestDatabase(test.CreatesDatabase):
     def test_delete_nonexistent_extent(self):
         """A non-existent extent cannot be removed."""
         db = self.db
-        self.assertRaises(error.ExtentDoesNotExist, db._delete_extent, 'Foo')
+        assert raises(error.ExtentDoesNotExist, db._delete_extent, 'Foo')
 
     def test_extent_begins_empty(self):
         db = self.db
@@ -109,8 +109,8 @@ class TestDatabase(test.CreatesDatabase):
         db._delete_entity('Some_Extent', oid)
         db._commit()
         # Entity no longer exists.
-        self.assertRaises(error.EntityDoesNotExist,
-                          db._entity_fields, 'Some_Extent', oid)
+        assert raises(error.EntityDoesNotExist,
+                      db._entity_fields, 'Some_Extent', oid)
         # Extent's length decrements
         assert db._extent_len('Some_Extent') == 0
         # Creating a new entity never uses a deleted oid.

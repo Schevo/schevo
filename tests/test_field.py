@@ -78,7 +78,7 @@ class Base:
 
     def test_never_allow_none(self):
         f = self.empty_field()
-        raises(ValueError, f.set, None)
+        assert raises(ValueError, f.set, None)
 
     def test_requiredIsFalse(self):
         f = self.empty_field(required=False)
@@ -136,7 +136,7 @@ class Base:
                 assert f.value == value
             else:
                 # Exception is expected.
-                raises(ValueError, f.validate, value)
+                assert raises(ValueError, f.validate, value)
 
 
 class TestString(Base, BaseTest):

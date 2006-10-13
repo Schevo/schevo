@@ -8,7 +8,7 @@ import unittest
 from schevo.lib import module
 import schevo.database
 import schevo.schema
-from schevo import test
+from schevo.test import CreatesSchema
 
 
 BODY = """
@@ -76,7 +76,7 @@ def t_tx_with_fields():
 """
 
 
-class TestSchema(test.CreatesSchema):
+class TestSchema(CreatesSchema):
 
     body = BODY
 

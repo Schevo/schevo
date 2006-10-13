@@ -6,8 +6,10 @@ from schevo.store.file_storage import FileStorage1, FileStorage2
 from schevo.store.file_storage import TempFileStorage, FileStorage
 from schevo.store.serialize import pack_record
 from schevo.store.utils import p64
+
 from os import unlink
 from tempfile import mktemp
+import sys
 
 
 class Test(object):
@@ -58,15 +60,14 @@ class Test(object):
         except IOError: # storage closed
             pass
 
-## This test fails on Windows.
+    def test_check_reopen(self):
+        if sys.platform != 'win32':
+            f = TempFileStorage()
+            filename = f.fp.name
+            g = FileStorage(filename, readonly=True)
+            h = FileStorage2(filename, readonly=True)
 
-##     def check_reopen(self):
-##         f = TempFileStorage()
-##         filename = f.fp.name
-##         g = FileStorage(filename, readonly=True)
-##         h = FileStorage2(filename, readonly=True)
-
-    def check_open_empty(self):
+    def test_check_open_empty(self):
         name = mktemp()
         f = open(name, 'w')
         f.close()

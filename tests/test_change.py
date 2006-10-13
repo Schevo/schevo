@@ -9,7 +9,7 @@ from schevo.change import CREATE, DELETE, UPDATE, Distributor, normalize
 from schevo.constant import UNASSIGNED
 from schevo.database import TransactionExecuted
 from schevo import error
-from schevo import test
+from schevo.test import CreatesSchema, raises
 from schevo.transaction import Transaction
 
 
@@ -141,7 +141,7 @@ class Transfer(T.Transaction):
 '''
 
 
-class TestChangeset(test.CreatesSchema):
+class TestChangeset(CreatesSchema):
     """Upon execution of a transaction, a list of changes that it made
     becomes available regarding Create, Delete, and Update operations
     that occurred in each extent.
@@ -183,8 +183,7 @@ class TestChangeset(test.CreatesSchema):
         tx = db.User.t.create()
         # Transaction must be executed before its changes is
         # available.
-        self.assertRaises(error.TransactionNotExecuted,
-                          getattr, tx, '_changes')
+        assert raises(error.TransactionNotExecuted, getattr, tx, '_changes')
 
     def test_create(self):
         tx = db.User.t.create(name='foo')
@@ -295,7 +294,7 @@ class TestChangeset(test.CreatesSchema):
         assert summary.updates == dict(User=set([user.sys.oid]))
 
 
-class TestExecuteNotification(test.CreatesSchema):
+class TestExecuteNotification(CreatesSchema):
     """The database object, when told to do so, dispatches
     notifications of transaction execution using Louie."""
 
@@ -327,7 +326,7 @@ class TestExecuteNotification(test.CreatesSchema):
         assert tx in subscriber.received
 
 
-class TestDistributor(test.CreatesSchema):
+class TestDistributor(CreatesSchema):
     """Given a list of changes made by transaction(s) and a mapping of
     change notification criteria to objects that are interested in
     changes matching each criteria, a Distributor object will notify
@@ -354,7 +353,7 @@ class TestDistributor(test.CreatesSchema):
             self.received.append(change)
 
     def setUp(self):
-        test.CreatesSchema.setUp(self)
+        CreatesSchema.setUp(self)
         louie.reset()
         db.dispatch = True
         dist = self.dist = Distributor(db)

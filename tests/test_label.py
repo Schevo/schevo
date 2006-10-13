@@ -3,12 +3,12 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
+from schevo.test import CreatesSchema
 from schevo import label
-from schevo import test
 from schevo import transaction
 
 
-class TestDecoration(test.CreatesSchema):
+class TestDecoration(CreatesSchema):
 
     body = '''
 

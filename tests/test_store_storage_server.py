@@ -3,8 +3,12 @@ $URL: svn+ssh://svn/repos/trunk/durus/test/utest_storage_server.py $
 $Id: utest_storage_server.py 28137 2006-04-04 14:34:21Z dbinger $
 """
 from schevo.store.file_storage import TempFileStorage
+from schevo.store.storage_server import DEFAULT_HOST
 from schevo.store.storage_server import StorageServer, recv
+
 from random import choice
+import sys
+
 
 class Test(object):
 
@@ -13,8 +17,9 @@ class Test(object):
         host = '127.0.0.1'
         port = 2972
         server=StorageServer(storage, host=host, port=port)
-        file = "test.durus_server"
-        server=StorageServer(storage, address=file)
+        if sys.platform != 'win32':
+            file = "test.durus_server"
+            server=StorageServer(storage, address=file)
 
     def test_check_receive(self):
         class Dribble:

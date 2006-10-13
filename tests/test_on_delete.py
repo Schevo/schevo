@@ -5,7 +5,7 @@ For copyright, license, and warranty, see bottom of file.
 
 from schevo.constant import UNASSIGNED
 from schevo import error
-from schevo.test import CreatesSchema
+from schevo.test import CreatesSchema, raises
 
 
 class TestOnDelete(CreatesSchema):
@@ -121,8 +121,7 @@ class TestOnDelete(CreatesSchema):
         tx = db.AlphaCharlie.t.create(alpha_alpha=alpha_alpha)
         alpha_charlie = db.execute(tx)
         tx = alpha_alpha.t.delete()
-        self.assertRaises(error.DeleteRestricted,
-                          db.execute, tx)
+        assert raises(error.DeleteRestricted, db.execute, tx)
 
     def test_unassign(self):
         alpha_alpha = self._alpha_alpha()
@@ -137,7 +136,7 @@ class TestOnDelete(CreatesSchema):
         tx = db.AlphaFoxtrot.t.create(alpha_alpha=alpha_alpha)
         alpha_foxtrot = db.execute(tx)
         tx = alpha_alpha.t.delete()
-        self.assertRaises(RuntimeError, db.execute, tx)
+        assert raises(RuntimeError, db.execute, tx)
 
     def test_unassign_or_cascade(self):
         alpha_alpha = self._alpha_alpha()

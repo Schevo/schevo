@@ -8,11 +8,11 @@ import datetime
 from schevo.constant import UNASSIGNED
 from schevo import error
 from schevo.label import plural
-from schevo import test
+from schevo.test import CreatesSchema
 from schevo.transaction import Transaction
 
 
-class TestHiddenBases(test.CreatesSchema):
+class TestHiddenBases(CreatesSchema):
 
     body = '''
 
@@ -38,7 +38,7 @@ class TestHiddenBases(test.CreatesSchema):
         assert ('gamma', 'beta') in GolfAlpha.key_spec
 
 
-class TestSameNameSubclasses(test.CreatesSchema):
+class TestSameNameSubclasses(CreatesSchema):
 
     body = '''
 
@@ -68,7 +68,7 @@ class TestSameNameSubclasses(test.CreatesSchema):
         assert plural(db.Something) == u'Somethingys'
 
 
-class TestSubclassTransactionCorrectness(test.CreatesSchema):
+class TestSubclassTransactionCorrectness(CreatesSchema):
 
     body = '''
     

@@ -203,7 +203,7 @@ class TestQuery(CreatesSchema):
         q.remove_match('integer')
         assert q.match_names == ['string', 'float', 'entity']
         assert len(q.queries) == 3
-        raises(error.FieldDoesNotExist, q.remove_match, 'integer')
+        assert raises(error.FieldDoesNotExist, q.remove_match, 'integer')
         
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

@@ -3,15 +3,15 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
-from schevo.constant import UNASSIGNED
+from schevo.test import CreatesSchema, raises
 from schevo import error
 from schevo import field
 from schevo.label import label
-from schevo import test
 from schevo import transaction
+from schevo.constant import UNASSIGNED
 
 
-class TestTransaction(test.CreatesSchema):
+class TestTransaction(CreatesSchema):
 
     body = '''
 
@@ -496,7 +496,7 @@ class TestTransaction(test.CreatesSchema):
         # its own _execute method, it should never be used directly
         # like we do here.
         tx = transaction.Transaction()
-        self.assertRaises(NotImplementedError, db.execute, tx)
+        assert raises(NotImplementedError, db.execute, tx)
 
     def test_create_simple(self):
         # No users to start out with.
@@ -588,7 +588,7 @@ class TestTransaction(test.CreatesSchema):
         assert tx.sys.field_map().keys() == ['name', 'age']
         assert tx.name == 'foo'
         # Fields should be readonly.
-        self.assertRaises(AttributeError, setattr, tx, 'name', 'bar')
+        assert raises(AttributeError, setattr, tx, 'name', 'bar')
         # Execute it.
         result2 = db.execute(tx)
         # The result should be None since the entity instance no
@@ -597,7 +597,7 @@ class TestTransaction(test.CreatesSchema):
         # The extent should be updated accordingly.
         assert len(db.User) == 0
         # The first result should no longer be valid.
-        self.assertRaises(error.EntityDoesNotExist, getattr, result1, 'name')
+        assert raises(error.EntityDoesNotExist, getattr, result1, 'name')
         # Creating a new entity should result in a new OID.
         tx = db.User.t.create(name='baz')
         result = db.execute(tx)
@@ -608,8 +608,7 @@ class TestTransaction(test.CreatesSchema):
         folder2 = db.execute(db.Folder.t.create(name='folder2',
                                                 parent=folder1))
         # Deleting the folder should fail.
-        self.assertRaises(error.DeleteRestricted,
-                          db.execute, folder1.t.delete())
+        assert raises(error.DeleteRestricted, db.execute, folder1.t.delete())
         assert folder1 in db.Folder
         assert folder2 in db.Folder
 
@@ -700,7 +699,7 @@ class TestTransaction(test.CreatesSchema):
         assert len(db.User) == 0
         # Execute a transaction that fails.
         tx = db.User.t.trigger_key_collision()
-        self.assertRaises(error.KeyCollision, db.execute, tx)
+        assert raises(error.KeyCollision, db.execute, tx)
         # The successful subtransaction should be rolled back.
         assert len(db.User) == 0
 
@@ -713,7 +712,7 @@ class TestTransaction(test.CreatesSchema):
         tx = db.User.t.create(name='foo')
         result = db.execute(tx)
         # Executing the transaction again is not allowed.
-        self.assertRaises(error.TransactionAlreadyExecuted, db.execute, tx)
+        assert raises(error.TransactionAlreadyExecuted, db.execute, tx)
         assert len(db.User) == 1
         
     def test_sys_executed(self):
@@ -741,9 +740,9 @@ class TestTransaction(test.CreatesSchema):
         # Cannot pass more than one top-level transaction.
         tx1 = db.User.t.create(name='1')
         tx2 = db.User.t.create(name='2')
-        self.assertRaises(RuntimeError, db.execute, tx1, tx2)
+        assert raises(RuntimeError, db.execute, tx1, tx2)
         # Must pass at least one top-level transaction.
-        self.assertRaises(RuntimeError, db.execute)
+        assert raises(RuntimeError, db.execute)
 
     def test_failing_transaction_subclass(self):
         # Creating a cog should result in also creating five
@@ -766,7 +765,7 @@ class TestTransaction(test.CreatesSchema):
         before_len = len(db.User)
         tx = db.t.subtransactions()
         # Prior to execution, a transaction cannot be undone.
-        self.assertRaises(error.TransactionNotExecuted, tx._undo)
+        assert raises(error.TransactionNotExecuted, tx._undo)
         # Continue with execution, storing the undo.
         db.execute(tx)
         after_len = len(db.User)
@@ -808,7 +807,7 @@ class TestTransaction(test.CreatesSchema):
         del tx.f.name
         assert tx.sys.field_map().keys() == ['age']
         tx.age = 5
-        self.assertRaises(AttributeError, db.execute, tx)
+        assert raises(AttributeError, db.execute, tx)
 
 # These test_f_... tests attempt to make changes to the f namespace
 # directly, but we have so much metaclass magic that you can't really
@@ -820,7 +819,7 @@ class TestTransaction(test.CreatesSchema):
 ##         # results in an AttributeError.
 ##         tx = db.User.t.create()
 ##         f = field.Field(None, None)
-##         self.assertRaises(AttributeError, setattr, tx.f, 'age', f)
+##         assert raises(AttributeError, setattr, tx.f, 'age', f)
 ##         # Removing an existing field and adding a different field in
 ##         # its place succeeds.  The field's `instance` and `attribute`
 ##         # are synced to the transaction and the field name regardless
@@ -831,7 +830,7 @@ class TestTransaction(test.CreatesSchema):
 ##         assert f._attribute == 'age'
 ##         # The value assigned to an attribute must be a field instance.
 ##         del tx.f.age
-##         self.assertRaises(ValueError, setattr, tx.f, 'age', 5)
+##         assert raises(ValueError, setattr, tx.f, 'age', 5)
 ##         # Field assignment ordering is kept.
 ##         tx = db.User.t.create()
 ##         fname = tx.f.name
@@ -855,7 +854,7 @@ class TestTransaction(test.CreatesSchema):
 ##         user = db.execute(tx)
 ##         assert user.name == 'foo'
 ##         assert user.age == 12
-##         self.assertRaises(AttributeError, getattr, user, 'extra')
+##         assert raises(AttributeError, getattr, user, 'extra')
 ##         # Make sure extra fields on update are ignored as well.
 ##         tx = user.t.update()
 ##         tx.f.extra = field.Field(None, None)
@@ -868,7 +867,7 @@ class TestTransaction(test.CreatesSchema):
 ##         db.execute(tx)
 ##         assert user.name == 'bar'
 ##         assert user.age == 15
-##         self.assertRaises(AttributeError, getattr, user, 'extra')
+##         assert raises(AttributeError, getattr, user, 'extra')
 ##         # If labels are already given, don't apply one automatically.
 ##         tx = user.t.update()
 ##         f = field.Field(None, None)
@@ -893,10 +892,10 @@ class TestTransaction(test.CreatesSchema):
         # Even if strict is set to False when executing an outermost
         # transaction, it will still be executed strictly.
         tx = db.User.t.create()
-        self.assertRaises(AttributeError, db.execute, tx, strict=False)
+        assert raises(AttributeError, db.execute, tx, strict=False)
 
     def test_cannot_relax_outside_transaction(self):
-        self.assertRaises(RuntimeError, db.LoopSegment.relax_index, 'next')
+        assert raises(RuntimeError, db.LoopSegment.relax_index, 'next')
 
     def test_relaxed_index(self):
         # Create a loop of three segments using a transaction that
@@ -916,7 +915,7 @@ class TestTransaction(test.CreatesSchema):
         # Now do something that causes a key collision.
         tx = db.LoopSegment.t.dirty_create_loop()
         tx.count = 3
-        self.assertRaises(error.KeyCollision, db.execute, tx)
+        assert raises(error.KeyCollision, db.execute, tx)
         # Make sure stuff was cleaned up.
         assert len(db.LoopSegment) == 3
         # Make sure we can still do things successfully.
@@ -936,7 +935,7 @@ class TestTransaction(test.CreatesSchema):
         db.execute(user.t.delete())
         # Check that the proper exception is raised due to the missing
         # entity.
-        self.assertRaises(error.EntityDoesNotExist, db.execute, tx)
+        assert raises(error.EntityDoesNotExist, db.execute, tx)
         # Perform the same check with regard to update transactions.
         user = db.execute(db.User.t.create(name='foo'))
         user2 = db.execute(db.User.t.create(name='baz'))
@@ -944,7 +943,7 @@ class TestTransaction(test.CreatesSchema):
             name='xyz', user=user, realm=realm))
         tx = avatar.t.update(user=user2)
         db.execute(user2.t.delete())
-        self.assertRaises(error.EntityDoesNotExist, db.execute, tx)
+        assert raises(error.EntityDoesNotExist, db.execute, tx)
 
     def test_extra_fields(self):
         # A normal Gender create does not normally have fget fields in
@@ -968,8 +967,8 @@ class TestTransaction(test.CreatesSchema):
         # type of the calculated field is an entity field
         assert db._entity_field(
             'ProblemGender', pgender.sys.oid, 'count') != 'foo'
-        self.assertRaises(KeyError, db._entity_field, 'ProblemGender',
-                          pgender.sys.oid, 'foo')
+        assert raises(KeyError, db._entity_field, 'ProblemGender',
+                      pgender.sys.oid, 'foo')
         # Same thing for updates.
         tx = pgender.t.update()
         tx.count = 'bar'
@@ -978,8 +977,8 @@ class TestTransaction(test.CreatesSchema):
         assert pgender.count == 0
         assert db._entity_field(
             'ProblemGender', pgender.sys.oid, 'count') != 'foo'
-        self.assertRaises(KeyError, db._entity_field, 'ProblemGender',
-                          pgender.sys.oid, 'foo')
+        assert raises(KeyError, db._entity_field, 'ProblemGender',
+                      pgender.sys.oid, 'foo')
 
     def test_delete_update_count_links(self):
         """Standard delete and update transactions have .sys.count and

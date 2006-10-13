@@ -13,7 +13,7 @@ class Test(object):
         b = MemoryStorage()
         assert b.new_oid() == p64(1)
         assert b.new_oid() == p64(2)
-        raises(KeyError, b.load, p64(0))
+        assert raises(KeyError, b.load, p64(0))
         record = pack_record(p64(0), 'ok', '')
         b.begin()
         b.store(p64(0), record)
@@ -27,4 +27,4 @@ class Test(object):
         records = b.bulk_load([p64(0), p64(1)])
         assert len(list(records)) == 2
         records = b.bulk_load([p64(0), p64(1), p64(2)])
-        raises(KeyError, list, records)
+        assert raises(KeyError, list, records)

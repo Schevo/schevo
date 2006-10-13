@@ -9,10 +9,11 @@ import random
 from schevo.constant import UNASSIGNED
 from schevo import error
 from schevo import test
+from schevo.test import CreatesSchema, raises
 from schevo.transaction import Transaction
 
 
-class TestEntityExtent(test.CreatesSchema):
+class TestEntityExtent(CreatesSchema):
 
     body = '''
 
@@ -289,7 +290,7 @@ class TestEntityExtent(test.CreatesSchema):
         self.reopen()
         extent = db.User
         tx = extent.t.create(name='foo')
-        self.assertRaises(error.KeyCollision, db.execute, tx)
+        assert raises(error.KeyCollision, db.execute, tx)
 
     def test_no_key_conflicts_on_create_if_necessary(self):
         # Create an entity.
@@ -326,7 +327,7 @@ class TestEntityExtent(test.CreatesSchema):
         tx = extent.t.create(name='bar')
         user_bar = db.execute(tx)
         tx = user_bar.t.update(name='foo')
-        self.assertRaises(error.KeyCollision, db.execute, tx)
+        assert raises(error.KeyCollision, db.execute, tx)
 
     def test_no_key_conflicts_on_delete(self):
         extent = db.User
@@ -442,8 +443,8 @@ class TestEntityExtent(test.CreatesSchema):
         assert len(realm_links) == 1
         assert realm_links[0] == avatar
         # Extent name typo.
-        self.assertRaises(error.ExtentDoesNotExist,
-                          realm.sys.links, 'Ratava', 'realm')
+        assert raises(error.ExtentDoesNotExist,
+                      realm.sys.links, 'Ratava', 'realm')
 
     def test_entity_links_update(self):
         user1, realm, avatar = self.db.execute(self.UserRealmAvatar())
@@ -514,15 +515,11 @@ class TestEntityExtent(test.CreatesSchema):
         self.reopen()
         user = db.User[1]
         args = ('Avatar', 'userr')
-        self.assertRaises(error.FieldDoesNotExist,
-                          user.sys.links, *args)
-        self.assertRaises(error.FieldDoesNotExist,
-                          user.sys.links_filter, *args)
+        assert raises(error.FieldDoesNotExist, user.sys.links, *args)
+        assert raises(error.FieldDoesNotExist, user.sys.links_filter, *args)
         args = ('Avatarr', 'user')
-        self.assertRaises(error.ExtentDoesNotExist,
-                          user.sys.links, *args)
-        self.assertRaises(error.ExtentDoesNotExist,
-                          user.sys.links_filter, *args)
+        assert raises(error.ExtentDoesNotExist, user.sys.links, *args)
+        assert raises(error.ExtentDoesNotExist, user.sys.links_filter, *args)
 
     def test_entity_delete_restrict(self):
         self.db.execute(self.UserRealmAvatar())
@@ -531,9 +528,9 @@ class TestEntityExtent(test.CreatesSchema):
         realm = db.Realm[1]
         avatar = db.Avatar[1]
         user_del_tx = user.t.delete()
-        self.assertRaises(error.DeleteRestricted, db.execute, user_del_tx)
+        assert raises(error.DeleteRestricted, db.execute, user_del_tx)
         realm_del_tx = realm.t.delete()
-        self.assertRaises(error.DeleteRestricted, db.execute, realm_del_tx)
+        assert raises(error.DeleteRestricted, db.execute, realm_del_tx)
         # After deleting the avatar, deleting user and realm becomes
         # possible.
         db.execute(avatar.t.delete())
@@ -569,11 +566,11 @@ class TestEntityExtent(test.CreatesSchema):
     def test_field_requirements(self):
         tx = db.User.t.create()
         # User was not specified, so transaction shouldn't succeed.
-        self.assertRaises(AttributeError, db.execute, tx)
+        assert raises(AttributeError, db.execute, tx)
         # Even if the transaction's fields are modified, the entity's
         # field spec should remain enforced.
         tx.f.name.required = False
-        self.assertRaises(AttributeError, db.execute, tx)
+        assert raises(AttributeError, db.execute, tx)
         # Age should not be required though.
         tx = db.User.t.create()
         tx.name = 'foo'
@@ -581,9 +578,9 @@ class TestEntityExtent(test.CreatesSchema):
         assert result.age is UNASSIGNED
         # When updating, restrictions should still be enforced.
         tx = result.t.update(name=UNASSIGNED)
-        self.assertRaises(AttributeError, db.execute, tx)
+        assert raises(AttributeError, db.execute, tx)
         tx.f.name.required = False
-        self.assertRaises(AttributeError, db.execute, tx)
+        assert raises(AttributeError, db.execute, tx)
 
     def test_find(self):
         user, realm, avatar = self.db.execute(self.UserRealmAvatar())
@@ -610,8 +607,8 @@ class TestEntityExtent(test.CreatesSchema):
 
     def test_find_bad_field_name(self):
         extent = db.User
-        self.assertRaises(error.FieldDoesNotExist,
-                          extent.find, some_field='some_value')
+        assert raises(error.FieldDoesNotExist,
+                      extent.find, some_field='some_value')
 
     def test_findone(self):
         extent = db.User
@@ -637,8 +634,7 @@ class TestEntityExtent(test.CreatesSchema):
         user1 = db.execute(extent.t.create(name='foo', age=20))
         user2 = db.execute(extent.t.create(name='bar', age=20))
         user3 = db.execute(extent.t.create(name='baz', age=30))
-        self.assertRaises(error.FindoneFoundMoreThanOne,
-                          extent.findone, age=20)
+        assert raises(error.FindoneFoundMoreThanOne, extent.findone, age=20)
 
     def test_findone_date_datetime(self):
         dt = datetime.datetime.now()
@@ -660,7 +656,7 @@ class TestEntityExtent(test.CreatesSchema):
         return
         extent = db.User
         user = db.execute(extent.t.create(name='foo', age=20))
-        self.assertRaises(AttributeError, user.t_update, name='bar')
+        assert raises(AttributeError, user.t_update, name='bar')
 
     def test_field_namespace(self):
         extent = db.User
@@ -669,7 +665,7 @@ class TestEntityExtent(test.CreatesSchema):
         assert isinstance(user.f.age, type(user.sys.field_map()['age']))
 
     def test_nonexistent_entity(self):
-        self.assertRaises(error.EntityDoesNotExist, lambda: db.User[99])
+        assert raises(error.EntityDoesNotExist, lambda: db.User[99])
 
     def test_fget_fields(self):
         male = db.execute(db.Gender.t.create(code='M', name='Male'))
@@ -693,7 +689,7 @@ class TestEntityExtent(test.CreatesSchema):
         assert db.Gender.next_oid == 1
         assert db.Person.next_oid == 3
         # Property is readonly.
-        self.assertRaises(AttributeError, setattr, db.Person, 'next_oid', 2)
+        assert raises(AttributeError, setattr, db.Person, 'next_oid', 2)
 
     def test_hash(self):
         # Make sure Entity instances behave nicely as dictionary keys.

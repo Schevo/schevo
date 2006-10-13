@@ -32,7 +32,7 @@ class Base(object):
     def test__cmp__(self):
         s1 = set_type()
         s2 = other_type()
-        raises(TypeError, s1.__cmp__, s2)
+        assert raises(TypeError, s1.__cmp__, s2)
 
     def test__contains__(self):
         s1 = set_type()
@@ -44,9 +44,7 @@ class Base(object):
         s1 = set_type()
         s2 = other_type()
         if set_type != other_type:
-            # XXX: This doesn't raise an error; need to look into
-            # whether or not it should.
-##             raises(TypeError, s1.__eq__, s2)
+            assert not s1.__eq__(s2)
             return
         assert s1 == s2
         assert s1.__eq__(s2)
@@ -61,7 +59,7 @@ class Base(object):
         s1 = set_type()
         s2 = other_type()
         if set_type != other_type:
-            raises(TypeError, s1.__ge__, s2)
+            assert raises(TypeError, s1.__ge__, s2)
             return
         assert s1 >= s2
         s2 = other_type(['k'])
@@ -79,7 +77,7 @@ class Base(object):
         s1 = set_type()
         s2 = other_type()
         if set_type != other_type:
-            raises(TypeError, s1.__gt__, s2)
+            assert raises(TypeError, s1.__gt__, s2)
             return
         assert not (s1 > s2)
         s2 = other_type(['k'])
@@ -92,12 +90,6 @@ class Base(object):
         s2 = other_type(['j', 'k'])
         assert not (s1 > s2)
         assert s2 > s1
-
-    def test__hash__(self):
-        s1 = set_type()
-        # XXX: This doesn't raise an error; need to look into
-        # whether or not it should.
-##         raises(TypeError, s1.__hash__)
 
     def test__iand__(self):
         s1 = set_type()
@@ -161,7 +153,7 @@ class Base(object):
         s1 = set_type()
         s2 = other_type()
         if set_type != other_type:
-            raises(TypeError, s1.__le__, s2)
+            assert raises(TypeError, s1.__le__, s2)
             return
         assert s1 <= s2
         s2 = other_type(['k'])
@@ -186,7 +178,7 @@ class Base(object):
         s1 = set_type()
         s2 = other_type()
         if set_type != other_type:
-            raises(TypeError, s1.__lt__, s2)
+            assert raises(TypeError, s1.__lt__, s2)
             return
         assert not (s1 < s2)
         s2 = other_type(['k'])
@@ -198,14 +190,11 @@ class Base(object):
         assert not (s2 < s1)
         assert s1 < s2
 
-
     def test__ne__(self):
         s1 = set_type()
         s2 = other_type()
         if set_type != other_type:
-            # XXX: This doesn't raise an error; need to look into
-            # whether or not it should.
-            ## raises(TypeError, s1.__ne__, s2)
+            assert s1.__ne__(s2)
             return
         assert not s1.__ne__(s2)
         s3 = set_type('a')
@@ -319,7 +308,7 @@ class Base(object):
         assert s1 == set_type('sdf')
 
     def test_pop(self):
-        raises(KeyError, set_type().pop)
+        assert raises(KeyError, set_type().pop)
         s1 = set_type('asdf')
         x = s1.pop()
         assert x not in s1
@@ -328,7 +317,7 @@ class Base(object):
 
     def test_remove(self):
         s1 = set_type()
-        raises(KeyError, s1.remove, 1)
+        assert raises(KeyError, s1.remove, 1)
         assert s1 == set_type()
         s1 = set_type('asdf')
         s1.remove('a')
