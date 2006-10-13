@@ -22,7 +22,7 @@ def fix(schema):
     return BOILERPLATE + dedent(schema)
 
 
-class TestEvolveIntraVersion(test.CreatesDatabase):
+class TestEvolveIntraVersion(CreatesDatabase):
     """Test evolution of schema within the same version, as occurs
     during app development."""
 
@@ -341,7 +341,7 @@ class TestEvolveIntraVersion(test.CreatesDatabase):
         db.execute(db.Foo.t.create(bar='baz'))
 
 
-class TestEvolveInterVersion(test.CreatesDatabase):
+class TestEvolveInterVersion(CreatesDatabase):
     """Test evolution of schema from version to version, as occurs
     with upgrading deployed production apps."""
 
