@@ -36,6 +36,11 @@ from schevo.transaction import (
     CallableWrapper, Combination, Initialize, Populate, Transaction)
 
 
+def evolve(db, schema_source, version):
+    db._evolve(schema_source, version)
+    db._on_open()
+
+
 def inject(filename, schema_source, version):
     fs = FileStorage(filename)
     conn = Connection(fs)
@@ -1394,6 +1399,8 @@ schevo.schema.prep(locals())
                         del field_name_id[was_named]
                         field_name_id[field_name] = field_id
                         field_id_name[field_id] = field_name
+                        # Remove from the set of existing field names.
+                        existing_field_names.remove(was_named)
             # Remove fields that no longer exist.
             old_field_names = existing_field_names - new_field_names
             for old_field_name in old_field_names:

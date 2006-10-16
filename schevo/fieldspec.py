@@ -79,7 +79,7 @@ def field_spec_from_class(cls, class_dict, slots=False):
                 # field name.
                 NewClass.label = label_from_name(name)
             spec.append((field_def.counter, name, NewClass))
-            if hasattr(cls, name):
+            if isinstance(getattr(cls, name, None), FieldDefinition):
                 delattr(cls, name)
     spec.sort()
     spec = [s[1:] for s in spec]

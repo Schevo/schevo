@@ -96,6 +96,10 @@ class CreatesDatabase(BaseTest):
         delattr(mod, db_name)
         self.suffixes.remove(suffix)
 
+    def evolve(self, schema_source, version):
+        db = self.reopen()
+        database.evolve(db, schema_source, version)
+
     def _base_open(self, suffix='', schema_source=None):
         """Open and return the database, setting self.db if no suffix
         is given.
@@ -139,6 +143,10 @@ class CreatesDatabase(BaseTest):
         db = self._open(suffix)
         delattr(self, 'fpv' + suffix)
         return db
+
+    def sync(self, schema_source):
+        db = self.reopen()
+        db._sync(schema_source)
 
 
 class CreatesSchema(CreatesDatabase):
@@ -205,8 +213,8 @@ class EvolvesSchemata(CreatesDatabase):
         db = self._base_open(suffix, self.schemata[0])
         # Evolve to latest.
         for i in xrange(1, len(self.schemata)):
-            source = self.schemata[i]
-            db._evolve(source, version=i+1)
+            schema_source = self.schemata[i]
+            database.evolve(db, schema_source, version=i+1)
         # Also set the module-level global.
         db_name = 'db' + suffix
         ex_name = 'ex' + suffix
