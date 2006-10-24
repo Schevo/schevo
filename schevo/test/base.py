@@ -25,18 +25,14 @@ SCHEMA = file(os.path.join(os.path.dirname(__file__),
                            'schema', 'schema_001.py'), 'U').read()
 
 
-try:
-    from py.test import raises
-except ImportError:
-    # Similar to py.test.raises, but we shouldn't depend on the existence
-    # of py-lib.
-    def raises(exc_type, fn, *args, **kw):
-        try:
-            fn(*args, **kw)
-        except Exception, e:
-            assert isinstance(e, exc_type)
-        else:
-            raise AssertionError('Call did not raise an exception')
+def raises(exc_type, fn, *args, **kw):
+    try:
+        fn(*args, **kw)
+    except Exception, e:
+        assert isinstance(e, exc_type)
+        return True
+    else:
+        raise AssertionError('Call did not raise an exception')
 
 
 _db_cache = {
