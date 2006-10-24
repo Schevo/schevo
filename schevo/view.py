@@ -135,6 +135,15 @@ class ViewSys(NamespaceExtension):
         return self._view._entity.sys.exists
 
     @property
+    def count(self):
+        return self._view._entity.sys.count
+
+    @property
+    def exists(self):
+        """Return True if the entity exists; False if it was deleted."""
+        return self._view._entity.sys.exists
+
+    @property
     def extent(self):
         return self._view._entity.sys.extent
 
