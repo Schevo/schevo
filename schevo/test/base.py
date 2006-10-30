@@ -201,20 +201,40 @@ class EvolvesSchemata(CreatesDatabase):
 
     schemata = []
 
+    _use_db_cache = True
+
     def _open(self, suffix=''):
-        # Forget existing modules.
-        for m in module.MODULES:
-            module.forget(m)
-        # Open database with version 1.
-        db = self._base_open(suffix, self.schemata[0])
-        # Evolve to latest.
-        for i in xrange(1, len(self.schemata)):
-            schema_source = self.schemata[i]
-            database.evolve(db, schema_source, version=i+1)
-        # Also set the module-level global.
+        use_db_cache = self._use_db_cache
         db_name = 'db' + suffix
         ex_name = 'ex' + suffix
         fpv_name = 'fpv' + suffix
+        schema = self.schemata[-1]
+        if (use_db_cache
+            and (schema, suffix) in _db_cache
+            and not hasattr(self, fpv_name)
+            ):
+            db, fp, connection = _db_cache[(schema, suffix)]
+            setattr(self, 'fp' + suffix, fp)
+            setattr(self, 'connection' + suffix, connection)
+            if not hasattr(self, db_name):
+                db._reset_all()
+            setattr(self, db_name, db)
+        else:
+            # Forget existing modules.
+            for m in module.MODULES:
+                module.forget(m)
+            # Open database with version 1.
+            db = self._base_open(suffix, self.schemata[0])
+            # Evolve to latest.
+            for i in xrange(1, len(self.schemata)):
+                schema_source = self.schemata[i]
+                database.evolve(db, schema_source, version=i+1)
+            if use_db_cache:
+                fp = getattr(self, 'fp' + suffix)
+                connection = getattr(self, 'connection' + suffix)
+                _db_cache[(schema, suffix)] = (db, fp, connection)
+                _cached_dbs.add(db)
+        # Also set the module-level global.
         modname = self.__class__.__module__
         mod = sys.modules[modname]
         setattr(mod, db_name, db)
