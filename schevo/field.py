@@ -157,6 +157,10 @@ class Field(base.Field):
     _name = None
 
     @property
+    def instance(self):
+        return self._instance
+
+    @property
     def name(self):
         return self._name
 

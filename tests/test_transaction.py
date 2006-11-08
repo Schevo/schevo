@@ -489,6 +489,25 @@ class TestTransaction(CreatesSchema):
                 name = parent.name + u'/' + name
                 parent = parent.parent
             return name
+
+
+    class FooWithCalc(E.Entity):
+
+        name = f.unicode()
+
+        _key(name)
+
+        class _Create(T.Create):
+
+            @f.integer()
+            def bar(self):
+                return 42
+
+        class _Update(T.Update):
+
+            @f.unicode()
+            def baz(self):
+                return u'BAZ'
     '''
 
     def test_not_implemented(self):
@@ -944,6 +963,13 @@ class TestTransaction(CreatesSchema):
         tx = avatar.t.update(user=user2)
         db.execute(user2.t.delete())
         assert raises(error.EntityDoesNotExist, db.execute, tx)
+
+    def test_calc_fields_in_create_or_update(self):
+        # Calculated fields within a custom transaction should be ignored.
+        foo = db.execute(db.FooWithCalc.t.create(name='Foo'))
+        assert foo.name == 'Foo'
+        db.execute(foo.t.update(name='Bar'))
+        assert foo.name == 'Bar'
 
     def test_extra_fields(self):
         # A normal Gender create does not normally have fget fields in

@@ -198,6 +198,9 @@ class ViewTransactions(NamespaceExtension):
                     cls.__dict__[t_name]._label = new_label
             d[name] = func
 
+    def __contains__(self, name):
+        return name in self._d and name not in self._v._hidden_actions
+
     def __iter__(self):
         return (k for k in self._d.iterkeys()
                 if k not in self._v._hidden_actions)

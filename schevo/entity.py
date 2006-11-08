@@ -368,8 +368,15 @@ class Entity(base.Entity, LabelMixin):
         self._oid = oid
 
     def __cmp__(self, other):
+        if other is UNASSIGNED:
+            return 1
         if other.__class__ is self.__class__:
-            return cmp(self._oid, other._oid)
+            if self._default_key:
+                key = self._default_key
+                return cmp([getattr(self, fieldname) for fieldname in key],
+                           [getattr(other, fieldname) for fieldname in key])
+            else:
+                return cmp(self._oid, other._oid)
         else:
             return cmp(hash(self), hash(other))
 
@@ -583,6 +590,9 @@ class EntityQueries(NamespaceExtension):
             name = q_name[2:]
             d[name] = func
 
+    def __contains__(self, name):
+        return name in self._d and name not in self._e._hidden_queries
+
     def __iter__(self):
         return (k for k in self._d.iterkeys()
                 if k not in self._e._hidden_queries)
@@ -729,6 +739,9 @@ class EntityTransactions(NamespaceExtension):
             name = t_name[2:]
             d[name] = func
 
+    def __contains__(self, name):
+        return name in self._d and name not in self._e._hidden_actions
+
     def __iter__(self):
         return (k for k in self._d.iterkeys()
                 if k not in self._e._hidden_actions)
@@ -747,6 +760,9 @@ class EntityViews(NamespaceExtension):
             func = getattr(entity, v_name)
             name = v_name[2:]
             d[name] = func
+
+    def __contains__(self, name):
+        return name in self._d and name not in self._e._hidden_views
 
     def __iter__(self):
         return (k for k in self._d.iterkeys()

@@ -29,6 +29,7 @@ class Extent(base.Extent):
         self.default_key = EntityClass._default_key
         self.field_spec = EntityClass._field_spec
         self.index_spec = EntityClass._index_spec
+        self.initial = EntityClass._initial
         self.key_spec = EntityClass._key_spec
         self.name = name
         self.f = ExtentFieldClasses(EntityClass)
@@ -230,6 +231,9 @@ class ExtentQueries(NamespaceExtension):
                     name = key[2:]
                     self._set(name, method)
 
+    def __contains__(self, name):
+        return name in self._d and name not in self._E._hidden_queries
+
     def __iter__(self):
         return (k for k in self._d.iterkeys()
                 if k not in self._E._hidden_queries)
@@ -254,6 +258,9 @@ class ExtentTransactions(NamespaceExtension):
                     # Drop the 't_' prefix.
                     name = key[2:]
                     self._set(name, method)
+
+    def __contains__(self, name):
+        return name in self._d and name not in self._E._hidden_actions
 
     def __iter__(self):
         return (k for k in self._d.iterkeys()

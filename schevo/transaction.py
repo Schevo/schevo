@@ -194,7 +194,8 @@ class Create(Transaction):
         self._before_execute(db)
         # Validate individual fields.
         for field in self._field_map.itervalues():
-            field.validate(field._value)
+            if field.fget is None:
+                field.validate(field._value)
         style = self._style
         extent_name = self._extent_name
         field_value_map = self._field_map.value_map()
@@ -378,7 +379,8 @@ class Update(Transaction):
         self._before_execute(db, self._entity)
         # Validate individual fields.
         for field in self._field_map.itervalues():
-            field.validate(field._value)
+            if field.fget is None:
+                field.validate(field._value)
         extent_name = self._extent_name
         oid = self._oid
         # Strip out unwanted fields.
@@ -448,7 +450,7 @@ class _Populate(Transaction):
             field_spec = tx._field_spec.copy()
             # Remove readonly fields since we can't set them, and
             # remove hidden fields since we can't "see" them.
-            for name in field_spec.iterkeys():
+            for name in field_spec.keys():
                 delete = False
                 if not hasattr(tx.f, name):
                     # The create transaction's _setup() might delete a
@@ -482,11 +484,12 @@ class _Populate(Transaction):
                     field_names, values, field_classes
                     ):
                     if value is not DEFAULT:
-                        value = resolve(value, FieldClass)
+                        value = resolve(field_name, value, FieldClass,
+                                        field_names)
                         value_map[field_name] = value
                 new = create(**value_map)
                 execute(new)
-        def resolve(value, FieldClass):    
+        def resolve(field_name, value, FieldClass, field_names):
             # Since a callable data might resolve entity fields
             # itself, we only do a lookup here if the value supplied
             # is not an Entity instance.
@@ -508,11 +511,14 @@ class _Populate(Transaction):
                     kw = value
                 elif isinstance(value, tuple):
                     kw = dict(zip(default_key, value))
-                    for field_name in default_key:
-                        FClass = lookup_extent.field_spec[field_name]
-                        kw[field_name] = resolve(kw[field_name], FClass)
+                    for key_field_name in default_key:
+                        FClass = lookup_extent.field_spec[key_field_name]
+                        v = resolve(key_field_name, kw[key_field_name], FClass,
+                                    default_key)
+                        kw[key_field_name] = v
                 else:
-                    msg = 'value is %r, which is not supported' % (value, )
+                    msg = 'value %r is not valid for field %r in %r' % (
+                        value, field_name, field_names)
                     raise TypeError(msg)
                 value = lookup_extent.findone(**kw)
             return value
