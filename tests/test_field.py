@@ -106,14 +106,18 @@ class Base:
         for value in self.bad_values_default:
             f = self.empty_field()
             try:
-                f.set(value)
+                f.validate(value)
             except ValueError, e:
                 assert e.args[0] != self.error_message
+            else:
+                raise 'ValueError not raised for value', value
             f = self.empty_field(error_message = self.error_message)
             try:
-                f.set(value)
+                f.validate(value)
             except ValueError, e:
                 assert e.args[0] == self.error_message
+            else:
+                raise 'ValueError not raised for value', value
 
     def test_str_values_default(self):
         for value, strValue in self.str_values_default:
@@ -298,6 +302,26 @@ class TestDate(Base, BaseTest):
     good_values_default = [
         datetime.date(2004, 5, 5),
         datetime.date(1765, 4, 3),
+        '2004-05-05',
+        '1765-04-03',
+        '05/05/2004',
+        '04/03/1765',
+        (2004, 5, 5),
+        (1765, 4, 3),
+        ]
+    bad_values_default = [
+        '0000-01-01',                   # year < minyear
+        (0, 1, 1),
+        '10000-01-01',                  # year > maxyear
+        (10000, 1, 1),
+        '2000-00-01',                   # month < 1
+        (2000, 0, 1),
+        '2000-13-01',                   # month > 12
+        (2000, 13, 1),
+        '2000-01-00',                   # day < 1
+        (2000, 1, 0),
+        '2000-01-32',                   # day > end of month
+        (2000, 1, 32),
         ]
     convert_values_default = [
         ('2004-05-05', (2004, 5, 5)),
@@ -335,6 +359,17 @@ class TestDatetime(Base, BaseTest):
     good_values_default = [
         datetime.datetime(2004, 5, 5, 22, 32, 5),
         datetime.datetime(1765, 4, 3, 10, 11, 12),
+        ]
+    bad_values_default = [
+        '0-5-5 1:2:3',
+        '2000-0-5 1:2:3',
+        '2000-13-5 1:2:3',
+        '2000-1-0 1:2:3',
+        '2000-1-32 1:2:3',
+        '2000-1-1 24:2:3',
+        '2000-1-1 1:60:3',
+        ## XXX: This is actually valid and resolves to 2000-1-1 1:3:0
+        # '2000-1-1 1:2:60',
         ]
     convert_values_default = [
         ('2004-05-05 22:32:05', (2004, 5, 5, 22, 32, 5, 0)),

@@ -685,9 +685,17 @@ class Date(Field):
 
     def convert(self, value, db=None):
         """Convert the value to a datetime.datetime object."""
-        if value is UNASSIGNED or isinstance(value, tuple):
+        if value is UNASSIGNED:
             return value
-        if isinstance(value, float):
+        elif isinstance(value, tuple):
+            try:
+                year, month, day = value
+                d = datetime.date(year, month, day)
+            except ValueError:
+                msg = '%r not a valid ISO or US date.' % (value, )
+                self._raise(ValueError, msg)
+            return value
+        elif isinstance(value, float):
             # A factory already exists to create a datetime.datetime
             # instance from a timestamp.
             d = datetime.date.fromtimestamp(value)
@@ -696,10 +704,22 @@ class Date(Field):
             if len(value.split('-')) == 3:
                 # Parse ISO date.
                 year, month, day = (int(x) for x in value.split('-'))
+                # Ensure that it converts to a date correctly.
+                try:
+                    d = datetime.date(year, month, day)
+                except ValueError:
+                    msg = '%r not a valid ISO or US date.' % value
+                    self._raise(ValueError, msg)
                 return (year, month, day)
             elif len(value.split('/')) == 3:
                 # Parse US date.
                 month, day, year = (int(x) for x in value.split('/'))
+                # Ensure that it converts to a date correctly.
+                try:
+                    d = datetime.date(year, month, day)
+                except ValueError:
+                    msg = '%r not a valid ISO or US date.' % value
+                    self._raise(ValueError, msg)
                 return (year, month, day)
             else:
                 msg = '%r not a valid ISO or US date.' % value
