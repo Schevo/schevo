@@ -124,6 +124,14 @@ class TestEntityExtent(CreatesSchema):
             ]
 
 
+    class Foo(E.Entity):
+
+        name = f.unicode()
+        user = f.entity('User', required=False)
+
+        _key(name, user)
+
+
     class Gender(E.Entity):
         """Gender of a person."""
 
@@ -635,6 +643,18 @@ class TestEntityExtent(CreatesSchema):
         user2 = db.execute(extent.t.create(name='bar', age=20))
         user3 = db.execute(extent.t.create(name='baz', age=30))
         assert raises(error.FindoneFoundMoreThanOne, extent.findone, age=20)
+
+    def test_findone_unassigned(self):
+        extent = db.User
+        user1 = db.execute(extent.t.create(name='foo', age=20))
+        user2 = db.execute(extent.t.create(name='bar'))
+        user3 = db.execute(extent.t.create(name='baz', age=30))
+        result = extent.findone(age=UNASSIGNED)
+        assert result == user2
+        extent = db.Foo
+        foo = db.execute(extent.t.create(name='foo'))
+        result = extent.findone(name='foo', user=UNASSIGNED)
+        assert result == foo
 
     def test_findone_date_datetime(self):
         dt = datetime.datetime.now()

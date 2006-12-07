@@ -54,6 +54,11 @@ class Person(E.Entity):
 
     _key(name)
 
+    _sample = [
+        ('Jane Doe', ('F',)),
+        ('John Doe', ('M',)),
+        ]
+
 
 class Priority(E.Entity):
     """Time-criticalness of a todo item."""
@@ -65,16 +70,20 @@ class Priority(E.Entity):
 
     @f.integer(label=u'# Open Items')
     def open(self):
-        return len([item for item in self.sys.links('Item', 'priority')
-                    if not item.data.done])
+        return len([item for item in self.m.items() if not item.done])
 
     @f.integer(label=u'# Done Items')
     def done(self):
-        return len([item for item in self.sys.links('Item', 'priority')
-                    if item.data.done])
+        return len([item for item in self.m.items() if item.done])
     
     _key(code)
     _key(name)
+
+    _sample = [
+        (1, 'Top'),
+        (2, 'Mid'),
+        (3, 'Low'),
+        ]
 
     def __str__(self):
         return '%s %s' % (self.code, self.name)
@@ -84,6 +93,11 @@ class Topic(E.Entity):
     """Subject area for todo items."""
 
     name = f.unicode()
+
+    _sample = [
+        ('Home', ),
+        ('Work', ),
+        ]
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

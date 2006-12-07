@@ -18,7 +18,6 @@ from schevo.label import label, label_from_name
 from schevo.meta import schema_metaclass
 import schevo.namespace
 from schevo.namespace import NamespaceExtension
-from schevo.trace import log
 
 
 class Transaction(base.Transaction):
@@ -601,7 +600,8 @@ class CallableWrapper(Transaction):
     with the open database."""
 
     def __init__(self, fn):
-        super(CallableWrapper, self).__init__()
+        assert callable(fn)
+        Transaction.__init__(self)
         self._fn = fn
 
     def _execute(self, db):

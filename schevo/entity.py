@@ -418,7 +418,7 @@ class Entity(base.Entity, LabelMixin):
         if oid not in extent:
             return '<%s entity oid:%i rev:DELETED>' % (extent.name, oid)
         else:
-            rev = self.sys.rev
+            rev = self._rev
             return '<%s entity oid:%i rev:%i>' % (extent.name, oid, rev)
 
     def __str__(self):
