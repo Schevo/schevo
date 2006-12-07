@@ -23,7 +23,14 @@ class TestFsIconMap(CreatesSchema):
 
     body = '''
 
-    _import('Schevo', 'icon', 1)
+    class SchevoIcon(E.Entity):
+
+        _hidden = True
+
+        name = f.unicode()
+        data = f.image()
+
+        _key(name)
     '''
 
     def setUp(self):

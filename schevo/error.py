@@ -12,6 +12,10 @@ class DatabaseClosed(RuntimeError):
     """The database or database connection was closed."""
 
 
+class DatabaseMismatch(RuntimeError):
+    """A value from one database was used incorrectly in another."""
+
+
 class DatabaseVersionMismatch(RuntimeError):
     """The schema version being evolved to is not the version
     subsequent to the current database schema."""

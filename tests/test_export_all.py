@@ -6,27 +6,27 @@ For copyright, license, and warranty, see bottom of file.
 from schevo.test import CreatesSchema
 
 
-class TestExportAll(CreatesSchema):
+## class TestExportAll(CreatesSchema):
 
-    body = '''
+##     body = '''
 
-    _import('Schevo', 'icon', 1)
-    '''
+##     _import('Schevo', 'icon', 1)
+##     '''
 
-    def test_existence(self):
-        assert db.extent_names() == ['SchevoIcon']
-        assert not db.SchevoIcon.hidden
+##     def test_existence(self):
+##         assert db.extent_names() == ['SchevoIcon']
+##         assert not db.SchevoIcon.hidden
 
 
-class TestExportAllHidden(CreatesSchema):
+## class TestExportAllHidden(CreatesSchema):
 
-    body = '''
+##     body = '''
 
-    _import('Schevo', 'icon', 1, hidden=True)
-    '''
+##     _import('Schevo', 'icon', 1, hidden=True)
+##     '''
 
-    def test_existence(self):
-        assert db.SchevoIcon.hidden
+##     def test_existence(self):
+##         assert db.SchevoIcon.hidden
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

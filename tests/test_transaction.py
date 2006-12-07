@@ -539,6 +539,54 @@ class TestTransaction(CreatesSchema):
         assert db.User[1].name == 'foo'
         assert db.User[1] == result
 
+    def test_create_copy(self):
+        user = db.execute(db.User.t.create(name='Joe', age=42))
+        user2 = db.execute(db.User.t.create(user, name='Bob'))
+        assert user2.age == 42
+        class Foo(object):
+            name = 'Tim'
+            age = 50
+        user3 = db.execute(db.User.t.create(Foo))
+        assert user3.name == 'Tim'
+        assert user3.age == 50
+        foo = Foo()
+        foo.name = 'John'
+        user4 = db.execute(db.User.t.create_if_necessary(foo))
+        assert user4.name == 'John'
+        assert user4.age == 50
+        # Pass in multiple positional arguments.
+        class Bar(object):
+            name = 'Tim'
+            other = 'Does not matter'
+        bar2 = Bar()
+        bar2.name = 'Jim'
+        bar3 = Bar()
+        bar3.name = 'James'
+        user5 = db.execute(db.User.t.create(Foo, user2, bar2, bar3))
+        assert user5.name == 'James'
+        assert user5.age == 42
+        # Entity field.
+        male = db.execute(db.Gender.t.create(code='M', name='Male'))
+        john = db.execute(db.Person.t.create(name='John Doe', gender=male))
+        other = db.execute(db.Person.t.create(john, name='Other Doe'))
+        assert other.gender.name == 'Male'
+        # Person from one db with same gender in other db.
+        self.reopen()
+        other = db.execute(db.Person.t.create(john, name='Other Foo'))
+        assert other.sys.db != john.sys.db
+        assert other.gender.name == 'Male'
+        # Person from one db WITHOUT same gender in other db.
+        self.reopen()
+        for person in db.Person:
+            if person.gender is not UNASSIGNED:
+                # Need to delete these people first otherwise deleting
+                # the gender will fail.
+                db.execute(person.t.delete())
+        gender = db.Gender.findone(code='M')
+        db.execute(gender.t.delete())
+        tx = db.Person.t.create(john, name='Other Guy')
+        assert raises(error.DatabaseMismatch, db.execute, tx)
+
     def test_create_with_fget(self):
         tx = db.Gender.t.create()
         # Transaction doesn't have a field for the fget field.

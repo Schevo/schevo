@@ -447,16 +447,16 @@ class Entity(base.Entity, LabelMixin):
 
     @classmethod
     @with_label(u'Create')
-    def t_create(cls, **kw):
+    def t_create(cls, *args, **kw):
         """Return a Create transaction."""
-        tx = cls._Create(**kw)
+        tx = cls._Create(*args, **kw)
         return tx
 
     @classmethod
     @with_label(u'Create If Necessary')
-    def t_create_if_necessary(cls, **kw):
+    def t_create_if_necessary(cls, *args, **kw):
         """Return a Create transaction that creates if necessary."""
-        tx = cls._Create(**kw)
+        tx = cls._Create(*args, **kw)
         tx._style = transaction._Create_If_Necessary
         return tx
 

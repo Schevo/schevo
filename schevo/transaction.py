@@ -9,7 +9,7 @@ from schevo.lib import optimize
 from schevo import base
 from schevo.change import summarize
 from schevo.constant import CASCADE, DEFAULT, RESTRICT, UNASSIGN, UNASSIGNED
-from schevo.error import (KeyCollision, DeleteRestricted,
+from schevo.error import (KeyCollision, DatabaseMismatch, DeleteRestricted,
                           TransactionFieldsNotChanged, TransactionNotExecuted)
 from schevo import field
 from schevo.field import not_fget
@@ -163,9 +163,16 @@ class Create(Transaction):
 
     _style = _Create_Standard
 
-    def __init__(self, **kw):
+    def __init__(self, *args, **kw):
         Transaction.__init__(self)
         field_map = self._field_map
+        # Look for matching values in args.
+        for field_name, field in field_map.iteritems():
+            for arg in args:
+                if hasattr(arg, field_name):
+                    value = getattr(arg, field_name)
+                    setattr(self, field_name, value)
+        # Assign values supplied by kw.
         for name, value in kw.iteritems():
             setattr(self, name, value)
         self._setup()
@@ -191,6 +198,25 @@ class Create(Transaction):
         pass
 
     def _execute(self, db):
+        # Attempt to resolve entity fields to the current database.
+        msg = '"%s" field of "%s" cannot be resolved to the current database'
+        for field_name, field in self._field_map.iteritems():
+            entity = field._value
+            if isinstance(entity, base.Entity) and entity.sys.db is not db:
+                resolved = False
+                if entity._default_key is not None:
+                    extent_name = entity.sys.extent.name
+                    if hasattr(db, extent_name):
+                        extent = getattr(db, extent_name)
+                        criteria = dict([(name, getattr(entity, name))
+                                         for name in entity._default_key])
+                        value = extent.findone(**criteria)
+                        if value is not None:
+                            field._value = value
+                            resolved = True
+                if not resolved:
+                    raise DatabaseMismatch(msg % (field_name, entity))
+        # Before execute callback.
         self._before_execute(db)
         # Validate individual fields.
         for field in self._field_map.itervalues():
@@ -232,6 +258,7 @@ class Create(Transaction):
                 oid = db._create_entity(extent_name, field_value_map)
         self._oid = oid
         entity = db._entity(extent_name, oid)
+        # After execute callback.
         self._after_execute(db, entity)
         return entity
 

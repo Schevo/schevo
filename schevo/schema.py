@@ -12,8 +12,8 @@ For copyright, license, and warranty, see bottom of file.
 """
 
 __all__ = [
-    '_export_all',
-    '_import',
+##     '_export_all',
+##     '_import',
     '_hide',
     '_key',
     '_index',
@@ -30,7 +30,7 @@ __all__ = [
     ]
 
 import os
-import pkg_resources
+## import pkg_resources
 import sys
 
 import schevo
@@ -99,63 +99,63 @@ def _index(*args):
     spec.append(args)
 
 
-def _import(requirement, name, version, *args, **kw):
-    """Import an external schema in the schema currently being loaded.
+## def _import(requirement, name, version, *args, **kw):
+##     """Import an external schema in the schema currently being loaded.
 
-    1. Makes sure the package ``requirement`` is satisfied.
+##     1. Makes sure the package ``requirement`` is satisfied.
 
-    2. Loads the schema called ``name`` whose version is ``version``.
-       This is dereferenced to a specific schema module using entry
-       points defined by the requirement.
+##     2. Loads the schema called ``name`` whose version is ``version``.
+##        This is dereferenced to a specific schema module using entry
+##        points defined by the requirement.
 
-    3. Calls the ``_export`` function defined in that schema, passing
-       it the global namespace of the schema that called _import,
-       plus ``*args`` and ``**kw``.
+##     3. Calls the ``_export`` function defined in that schema, passing
+##        it the global namespace of the schema that called _import,
+##        plus ``*args`` and ``**kw``.
 
-    Implementation note: If the ``_globals`` keyword argument is
-    defined, it will be used instead of the calling frame's globals.
-    This is for use in backwards-compatibility functions such as
-    `schevo.icon.schema.use`.
-    """
-    # Get the distribution that has the schema.
-    dist = pkg_resources.require(requirement)[0]
-    # Find the module name of the schema.
-    entry_map = dist.get_entry_map('schevo.schema_export')
-    entry_point = entry_map[name]
-    pkgname = entry_point.module_name
-    # Append the schema version to it.
-    modname = '%s.schema_%03i' % (pkgname, version)
-    # Get the module from _imported_schemata, since it's already been
-    # imported by the database before _import is actually called.
-    mod = schevo.namespace.SCHEMADB._imported_schemata[
-        (requirement, name, version)]
-    # Call upon the module to export.
-    globals = kw.get('_globals', None)
-    if not globals:
-        globals = inspect.currentframe(1).f_globals
-    mod._export(globals, *args, **kw)
+##     Implementation note: If the ``_globals`` keyword argument is
+##     defined, it will be used instead of the calling frame's globals.
+##     This is for use in backwards-compatibility functions such as
+##     `schevo.icon.schema.use`.
+##     """
+##     # Get the distribution that has the schema.
+##     dist = pkg_resources.require(requirement)[0]
+##     # Find the module name of the schema.
+##     entry_map = dist.get_entry_map('schevo.schema_export')
+##     entry_point = entry_map[name]
+##     pkgname = entry_point.module_name
+##     # Append the schema version to it.
+##     modname = '%s.schema_%03i' % (pkgname, version)
+##     # Get the module from _imported_schemata, since it's already been
+##     # imported by the database before _import is actually called.
+##     mod = schevo.namespace.SCHEMADB._imported_schemata[
+##         (requirement, name, version)]
+##     # Call upon the module to export.
+##     globals = kw.get('_globals', None)
+##     if not globals:
+##         globals = inspect.currentframe(1).f_globals
+##     mod._export(globals, *args, **kw)
 
 
-def _export_all(namespace_to, namespace_from, **kw):
-    """Exports all entity classes defined in ``namespace_from`` to
-    ``namespace_to`` by creating subclasses.
+## def _export_all(namespace_to, namespace_from, **kw):
+##     """Exports all entity classes defined in ``namespace_from`` to
+##     ``namespace_to`` by creating subclasses.
 
-    Various keyword arguments are supported:
+##     Various keyword arguments are supported:
 
-    - ``hidden``: If set to True, then all subclasses created are set
-      as hidden.
-    """
-    hidden = kw.get('hidden', False)
-    for name, obj in namespace_from.iteritems():
-        if (isinstance(obj, type)
-            and issubclass(obj, schevo.entity.Entity)
-            and not name.startswith('_')
-            ):
-            class Subclass(obj):
-                _actual_name = name
-                if hidden:
-                    _hidden = True
-            namespace_to[name] = Subclass
+##     - ``hidden``: If set to True, then all subclasses created are set
+##       as hidden.
+##     """
+##     hidden = kw.get('hidden', False)
+##     for name, obj in namespace_from.iteritems():
+##         if (isinstance(obj, type)
+##             and issubclass(obj, schevo.entity.Entity)
+##             and not name.startswith('_')
+##             ):
+##             class Subclass(obj):
+##                 _actual_name = name
+##                 if hidden:
+##                     _hidden = True
+##             namespace_to[name] = Subclass
 
 
 # 'import_lock' is a lock that is acquired during a schema import,
