@@ -320,13 +320,14 @@ class Field(base.Field):
         requirements.
         """
         valid_values = self.valid_values
-        # A value must be provided.
-        if self.required and value is UNASSIGNED:
-            msg = '%s value is required by %s' % (
-                self._name, self._instance)
-            self._raise(AttributeError, msg)
-        # Valid values.
-        if valid_values is not None and value not in valid_values:
+        if value is UNASSIGNED:
+            if self.required:
+                # A value must be provided.
+                msg = '%s value is required by %s' % (
+                    self._name, self._instance)
+                self._raise(AttributeError, msg)
+        elif valid_values is not None and value not in valid_values:
+            # Valid values.
             msg = '%s %s must be one of the valid values %r, not %r %r' % (
                 self._instance, self._name, valid_values, value, type(value))
             self._raise(ValueError, msg)
