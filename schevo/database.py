@@ -1260,6 +1260,7 @@ schevo.schema.prep(locals())
             self.schema = schema
             self._schema_module = schema_module
             # Expose database-level namespaces.
+            self.q = schema.q
             self.t = schema.t
             self.Q = schema.Q
             # Create an extenders namespace.
