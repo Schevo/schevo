@@ -514,7 +514,15 @@ class _Populate(Transaction):
                                         field_names)
                         value_map[field_name] = value
                 new = create(**value_map)
-                execute(new)
+                try:
+                    execute(new)
+                except:
+                    print '-' * 40
+                    print 'extent:', extent
+                    print 'data:', data
+                    print 'field_spec:', field_spec
+                    print 'value_map:', value_map
+                    raise
         def resolve(field_name, value, FieldClass, field_names):
             # Since a callable data might resolve entity fields
             # itself, we only do a lookup here if the value supplied
