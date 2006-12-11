@@ -28,6 +28,12 @@ class TestHiddenBases(CreatesSchema):
         gamma = f.integer()
 
         _key(gamma, 'beta')
+
+        class _Create(T.Create):
+
+            def _setup(self):
+                # Set an initial value.
+                self.gamma = 10
     '''
 
     def test_subclass(self):
@@ -36,6 +42,12 @@ class TestHiddenBases(CreatesSchema):
         assert GolfAlpha.field_spec.keys() == ['beta', 'gamma']
         assert ('beta', ) in GolfAlpha.key_spec
         assert ('gamma', 'beta') in GolfAlpha.key_spec
+        tx = GolfAlpha.t.create()
+        tx.beta = 'foo'
+        tx.gamma = 42
+        golf = db.execute(tx)
+        assert golf.beta == 'foo'
+        assert golf.gamma == 42
 
 
 class TestSameNameSubclasses(CreatesSchema):
