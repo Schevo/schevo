@@ -214,11 +214,12 @@ class EntityMeta(type):
             index_set.add(names)
         cls._index_spec = tuple(index_set)
         cls._index_spec_additions = ()
-        # Assign labels for the class/extent.
-        if '_label' not in class_dict and not hasattr(cls, '_label'):
-            cls._label = label_from_name(class_name)
-        if '_plural' not in class_dict and not hasattr(cls, '_plural'):
-            cls._plural = plural_from_name(class_name)
+        # Assign labels for the class/extent, unless it is a base class.
+        if not class_name.startswith('_'):
+            if '_label' not in class_dict and not hasattr(cls, '_label'):
+                cls._label = label_from_name(class_name)
+            if '_plural' not in class_dict and not hasattr(cls, '_plural'):
+                cls._plural = plural_from_name(class_name)
         # Assign labels for query, transaction, and view methods.
         for key in class_dict:
             if key[:2] in ('q_', 't_', 'v_'):
