@@ -44,7 +44,7 @@ class View(base.View):
             field.readonly = True
 
     def _setup(self, entity):
-        """Override this in subclasses to customize a transaction."""
+        """Override this in subclasses to customize a view."""
         pass
 
     def __getattr__(self, name):
