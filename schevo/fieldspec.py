@@ -50,42 +50,43 @@ class FieldSpecMap(odict):
     
 
 def field_spec_from_class(cls, class_dict, slots=False):
-    orig_spec = FieldSpecMap()
+    field_spec = FieldSpecMap()
     if cls._field_spec:
-        # Pass-through if it already has a field spec.  XXX: This
-        # should actually use the original field spec and
-        # append/modify it based on the class's spec.
-        orig_spec = cls._field_spec.copy()
-    spec = []
+        # Make new subclasses of any inherited fields.
+        for name, BaseFieldClass in cls._field_spec.iteritems():
+            field_spec[name] = new_field_class(BaseFieldClass, slots)
+    specs = []
     for name, field_def in class_dict.items():
         if isinstance(field_def, FieldDefinition):
             field_def.name = name
             BaseFieldClass = field_def.FieldClass
-            if slots:
-                class NewClass(BaseFieldClass):
-                    # The field metaclass will assign __slots__.
-                    pass
-                NewClass.__name__ = BaseFieldClass.__name__
-            else:
-                class NoSlotsField(BaseFieldClass):
-                    # No __slots__ defined in order to give
-                    # flexibility to other users of this field, like
-                    # transactions and queries.
-                    pass
-                NoSlotsField.__name__ = BaseFieldClass.__name__
-                NewClass = NoSlotsField
+            NewClass = new_field_class(BaseFieldClass, slots)
             NewClass._name = name
             if not NewClass.label:
-                # A label was not provided; determine one from the
-                # field name.
                 NewClass.label = label_from_name(name)
-            spec.append((field_def.counter, name, NewClass))
+            specs.append((field_def.counter, name, NewClass))
             if isinstance(getattr(cls, name, None), FieldDefinition):
                 delattr(cls, name)
-    spec.sort()
-    spec = [s[1:] for s in spec]
-    orig_spec.update(FieldSpecMap(spec))
-    return orig_spec
+    specs.sort()
+    specs = [s[1:] for s in specs]
+    field_spec.update(FieldSpecMap(specs))
+    return field_spec
+
+def new_field_class(BaseFieldClass, slots):
+    """Return a new field class subclassed from BaseFieldClass."""
+    if slots:
+        class NewClass(BaseFieldClass):
+            # The field metaclass will assign __slots__.
+            readonly = True
+    else:
+        class NoSlotsField(BaseFieldClass):
+            # No __slots__ will be defined in order to give
+            # flexibility to other users of this field, like
+            # transactions and queries.
+            pass
+        NewClass = NoSlotsField
+    NewClass.__name__ = BaseFieldClass.__name__
+    return NewClass
 
 
 class FieldDefinition(object):

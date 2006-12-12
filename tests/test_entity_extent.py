@@ -683,6 +683,11 @@ class TestEntityExtent(CreatesSchema):
         user = db.execute(extent.t.create(name='foo', age=20))
         assert isinstance(user.f.name, type(user.sys.field_map()['name']))
         assert isinstance(user.f.age, type(user.sys.field_map()['age']))
+        # Make sure entity fields are readonly, including calculated fields.
+        assert user.f.name.readonly
+        assert user.f.age.readonly
+        male = db.execute(db.Gender.t.create(code='M', name='Male'))
+        assert male.f.count.readonly
 
     def test_nonexistent_entity(self):
         assert raises(error.EntityDoesNotExist, lambda: db.User[99])
