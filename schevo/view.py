@@ -38,9 +38,14 @@ class View(base.View):
         self._oid = entity._oid
         f = self._field_map = self._field_spec.field_map(instance=self)
         f.update_values(entity.sys.field_map(not_fget))
+        self._setup(entity)
         # All fields should be readonly by default.
         for field in f.itervalues():
             field.readonly = True
+
+    def _setup(self, entity):
+        """Override this in subclasses to customize a transaction."""
+        pass
 
     def __getattr__(self, name):
         if name == 'sys':
