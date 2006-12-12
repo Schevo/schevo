@@ -77,14 +77,15 @@ def new_field_class(BaseFieldClass, slots):
     if slots:
         class NewClass(BaseFieldClass):
             # The field metaclass will assign __slots__.
-            readonly = True
+            pass
     else:
         class NoSlotsField(BaseFieldClass):
             # The field metaclass will not assign __slots__ in order
             # to give flexibility to other users of this field, like
             # transactions and queries.
-            readonly = False
+            pass
         NewClass = NoSlotsField
+    NewClass.readonly = BaseFieldClass.readonly
     NewClass.__name__ = BaseFieldClass.__name__
     return NewClass
 

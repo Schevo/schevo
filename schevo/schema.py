@@ -223,6 +223,11 @@ def finish(db, schema_module=None):
     schevo.namespace.EVOLVING = False
     # Remove this class now that the schema has been processed.
     del schema_def.E.Entity
+    # Force all Entity field classes to readonly.
+    for entity_name in schema_def.E:
+        EntityClass = schema_def.E[entity_name]
+        for FieldClass in EntityClass._field_spec.itervalues():
+            FieldClass.readonly = True
     # Add relationship metadata to each Entity class.
     for parent, spec in schema_def.relationships.iteritems():
         E = schema_def.E
