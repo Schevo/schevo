@@ -73,7 +73,7 @@ class View(base.View):
         if name == 'sys' or name.startswith('_') or len(name) == 1:
             return base.View.__setattr__(self, name, value)
         elif name in self._field_map:
-            self._field_map[name].assign(value)
+            self._field_map[name].set(value)
         else:
             msg = 'Field %r does not exist on %r.' % (name, self)
             raise AttributeError(msg)
