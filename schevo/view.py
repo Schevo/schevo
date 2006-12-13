@@ -36,11 +36,11 @@ class View(base.View):
         self._entity = entity
         self._extent = entity._extent
         self._oid = entity._oid
-        f = self._field_map = self._field_spec.field_map(instance=self)
-        f.update_values(entity.sys.field_map(not_fget))
+        f_map = self._field_map = self._field_spec.field_map(instance=self)
+        f_map.update_values(entity.sys.field_map(not_fget))
         self._setup(entity)
         # All fields should be readonly by default.
-        for field in f.itervalues():
+        for field in f_map.itervalues():
             field.readonly = True
 
     def _setup(self, entity):
