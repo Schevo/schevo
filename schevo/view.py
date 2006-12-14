@@ -24,7 +24,7 @@ class View(base.View):
 
     __metaclass__ = schema_metaclass('V')
 
-    __slots__ = ['_entity', '_extent', '_field_map', '_oid',
+    __slots__ = ['_entity', '_extent', '_field_map', '_oid', '_rev',
                  'f', 'm', 'q', 'sys', 't', 'v', 'x']
 
     _field_spec = FieldSpecMap()
@@ -36,6 +36,7 @@ class View(base.View):
         self._entity = entity
         self._extent = entity._extent
         self._oid = entity._oid
+        self._rev = entity._rev
         f_map = self._field_map = self._field_spec.field_map(instance=self)
         f_map.update_values(entity.sys.field_map(not_fget))
         self._setup(entity)
