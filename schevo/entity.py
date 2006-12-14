@@ -153,61 +153,43 @@ class EntityMeta(type):
                 _Update._init_class()
         _Update._fget_fields = cls._fget_fields
         cls._Update = _Update
-        #
-        # Create standard view classes.  View fields included in a
-        # view class defined in the schema appear below the fields
-        # that come from the entity field spec.
-        #
-        # Default
-        if not hasattr(cls, '_DefaultView'):
-            class _DefaultView(view.View):
-                _label = u'View'
-            _DefaultView._field_spec = v_spec.copy()
-        else:
-            # Always create a view subclass, in case the entity class
-            # inherits from something other than E.Entity
-            class _DefaultView(cls._DefaultView):
-                pass
-            subclass_spec = cls._DefaultView._field_spec
-            _DefaultView._field_spec = v_spec.copy()
-            _DefaultView._field_spec.update(subclass_spec, reorder=True)
-            if hasattr(_DefaultView, '_init_class'):
-                _DefaultView._init_class()
-        _DefaultView._fget_fields = cls._fget_fields
-        _DefaultView._hidden_actions = set(cls._hidden_actions)
-        _DefaultView._hidden_queries = set(cls._hidden_queries)
-        cls._DefaultView = _DefaultView
-        # Create subclasses of any View class defined in a base class
-        # and not already locally subclassed.
-        for parent in reversed(bases):
-            for name, attr in parent.__dict__.iteritems():
-                if (name != '_DefaultView' and name not in class_dict and
-                    inspect.isclass(attr) and issubclass(attr, base.View)):
-                    ViewClass = type(name, (attr,), {})
-                    ViewClass._EntityClass = cls
-                    ViewClass._extent_name = class_name
-                    ViewClass._hidden_actions = set(cls._hidden_actions)
-                    ViewClass._hidden_queries = set(cls._hidden_queries)
-                    setattr(cls, name, ViewClass)
-        # Iterate over all the locally defined View classes and set
-        # their hidden specs.
-        for name, attr in class_dict.iteritems():
-            if (name != '_DefaultView' and inspect.isclass(attr) and
-                issubclass(attr, base.View)):
-                attr._hidden_actions = set(cls._hidden_actions)
-                attr._hidden_queries = set(cls._hidden_queries)
         # Set the entity class and extent name on all of them.
         cls._Create._extent_name = class_name
-        cls._DefaultView._extent_name = class_name
         cls._Delete._extent_name = class_name
         cls._GenericUpdate._extent_name = class_name
         cls._Update._extent_name = class_name
         cls._Create._EntityClass = cls
-        cls._DefaultView._EntityClass = cls
         cls._Delete._EntityClass = cls
         cls._GenericUpdate._EntityClass = cls
         cls._Update._EntityClass = cls
-        # Create the hide spec.
+
+
+        # Create subclasses of any View class defined in a base class
+        # and not already locally subclassed.
+        for parent in reversed(bases):
+            for name, attr in parent.__dict__.iteritems():
+                if (name not in class_dict and
+                    inspect.isclass(attr) and issubclass(attr, base.View)):
+                    ViewClass = type(name, (attr,), {})
+                    ViewClass._label = attr._label
+                    setattr(cls, name, ViewClass)
+        # Set properties on all View classes.
+        for name, attr in cls.__dict__.iteritems():
+            if inspect.isclass(attr) and issubclass(attr, base.View):
+                attr._EntityClass = cls
+                attr._extent_name = class_name
+                attr._hidden_actions = set(cls._hidden_actions)
+                attr._hidden_queries = set(cls._hidden_queries)
+                if name == '_DefaultView':
+                    # The default view acquires field specs from its
+                    # host entity class.
+                    attr._fget_fields = cls._fget_fields
+                    subclass_spec = cls._DefaultView._field_spec
+                    attr._field_spec = v_spec.copy()
+                    attr._field_spec.update(subclass_spec, reorder=True)
+                if hasattr(attr, '_init_class'):
+                    attr._init_class()
+        # Normalize the hiddens.
         cls._hidden_actions = set(cls._hidden_actions)
         cls._hidden_queries = set(cls._hidden_queries)
         cls._hidden_views = set(cls._hidden_views)
@@ -516,6 +498,18 @@ class Entity(base.Entity, LabelMixin):
     def _rev(self):
         """Return the revision number of the entity."""
         return self._db._entity_rev(self._extent.name, self._oid)
+
+    class _Create(transaction.Create):
+        pass
+
+    class _Delete(transaction.Delete):
+        pass
+
+    class _Update(transaction.Update):
+        pass
+
+    class _DefaultView(view.View):
+        _label = u'View'
 
 
 class EntityExtenders(NamespaceExtension):
