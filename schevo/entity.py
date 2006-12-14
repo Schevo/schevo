@@ -7,6 +7,7 @@ import sys
 from schevo.lib import optimize
 
 from string import digits, ascii_letters
+import inspect
 
 from schevo import base
 from schevo.constant import UNASSIGNED
@@ -176,6 +177,25 @@ class EntityMeta(type):
         _DefaultView._hidden_actions = set(cls._hidden_actions)
         _DefaultView._hidden_queries = set(cls._hidden_queries)
         cls._DefaultView = _DefaultView
+        # Create subclasses of any View class defined in a base class
+        # and not already locally subclassed.
+        for parent in reversed(bases):
+            for name, attr in parent.__dict__.iteritems():
+                if (name != '_DefaultView' and name not in class_dict and
+                    inspect.isclass(attr) and issubclass(attr, base.View)):
+                    ViewClass = type(name, (attr,), {})
+                    ViewClass._EntityClass = cls
+                    ViewClass._extent_name = class_name
+                    ViewClass._hidden_actions = set(cls._hidden_actions)
+                    ViewClass._hidden_queries = set(cls._hidden_queries)
+                    setattr(cls, name, ViewClass)
+        # Iterate over all the locally defined View classes and set
+        # their hidden specs.
+        for name, attr in class_dict.iteritems():
+            if (name != '_DefaultView' and inspect.isclass(attr) and
+                issubclass(attr, base.View)):
+                attr._hidden_actions = set(cls._hidden_actions)
+                attr._hidden_queries = set(cls._hidden_queries)
         # Set the entity class and extent name on all of them.
         cls._Create._extent_name = class_name
         cls._DefaultView._extent_name = class_name
