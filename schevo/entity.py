@@ -48,174 +48,47 @@ class EntityMeta(type):
         return type.__new__(cls, class_name, bases, class_dict)
 
     def __init__(cls, class_name, bases, class_dict):
-        # Only do something if creating an Entity subclass.
+        # Only do something if creating a subclass of Entity.
         type.__init__(cls, class_name, bases, class_dict)
         if class_name == 'Entity':
             return
-        # If the class has an actual name, use that instead.
+        # If the class specifies an actual name, use that instead.
         if '_actual_name' in class_dict:
             class_name = cls._actual_name
             cls.__name__ = class_name
-        # Create the field spec odict.
+        # Create the field spec.
         cls._field_spec = field_spec_from_class(cls, class_dict, slots=True)
+        # Setup fields, keeping track of calculated (fget) fields.
+        cls.setup_fields()
+        # Get slotless specs for queries, transactions and views.
         spec = field_spec_from_class(cls, class_dict)
         q_spec = spec.copy()
-        tx_spec = spec.copy()
+        t_spec = spec.copy()
         v_spec = spec.copy()
-        # Keep track of fields that have fget methods.
-        fget_fields = []
-        for field_name, FieldClass in spec.iteritems():
-            fget = FieldClass.fget
-            if fget is not None:
-                fget_fields.append(field_name)
-                def get_field_value(self, fget=fget[0]):
-                    return fget(self)
-                # Transactions and the default query don't need
-                # calculated fields.
-                del q_spec[field_name]
-                del tx_spec[field_name]
-            else:
-                field = FieldClass(instance=None)
-                def get_field_value(self, field_name=field_name, field=field):
-                    """Get the field value from the database."""
-                    db = self._db
-                    extent_name = self._extent.name
-                    oid = self._oid
-                    try:
-                        value = db._entity_field(extent_name, oid, field_name)
-                    except schevo.error.EntityDoesNotExist:
-                        raise
-                    except KeyError:  # XXX This needs to be more specific.
-                        value = UNASSIGNED
-                    field._value = value
-                    return field.get()
-            setattr(cls, field_name, property(fget=get_field_value))
-        cls._fget_fields = tuple(fget_fields)
-        #
-        # Create standard transaction classes.  Transaction fields
-        # included in a transaction class defined in the schema appear
-        # below the fields that come from the entity field spec.
-        #
-        # Create
-        if not hasattr(cls, '_Create'):
-            class _Create(transaction.Create):
-                pass
-            _Create._field_spec = tx_spec.copy()
-        else:
-            # Always create a transaction subclass, in case the entity class
-            # inherits from something other than E.Entity
-            class _Create(cls._Create):
-                pass
-            subclass_spec = cls._Create._field_spec
-            _Create._field_spec = tx_spec.copy()
-            _Create._field_spec.update(subclass_spec, reorder=True)
-            if hasattr(_Create, '_init_class'):
-                _Create._init_class()
-        _Create._fget_fields = cls._fget_fields
-        cls._Create = _Create
-        # Delete
-        if not hasattr(cls, '_Delete'):
-            class _Delete(transaction.Delete):
-                pass
-            _Delete._field_spec = tx_spec.copy()
-        else:
-            # Always create a transaction subclass, in case the entity class
-            # inherits from something other than E.Entity
-            class _Delete(cls._Delete):
-                pass
-            subclass_spec = cls._Delete._field_spec
-            _Delete._field_spec = tx_spec.copy()
-            _Delete._field_spec.update(subclass_spec, reorder=True)
-            if hasattr(_Delete, '_init_class'):
-                _Delete._init_class()
-        _Delete._fget_fields = cls._fget_fields
-        cls._Delete = _Delete
-        # Generic Update (for use by cascading delete)
+        # Transactions and the default query don't need fget fields.
+        for field_name in cls._fget_fields:
+            del q_spec[field_name]
+            del t_spec[field_name]
+        # Generic Update (for use by cascading delete).  Assigned in
+        # this metaclss to prevent subclasses from overriding.
         class _GenericUpdate(transaction.Update):
-            pass
-        _GenericUpdate._field_spec = tx_spec.copy()
-        _GenericUpdate._fget_fields = cls._fget_fields
+            _EntityClass = cls
+            _extent_name = class_name
+            _fget_fields = cls._fget_fields
+            _field_spec = t_spec.copy()
         cls._GenericUpdate = _GenericUpdate
-        # Update
-        if not hasattr(cls, '_Update'):
-            class _Update(transaction.Update):
-                pass
-            _Update._field_spec = tx_spec.copy()
-        else:
-            # Always create a transaction subclass, in case the entity class
-            # inherits from something other than E.Entity
-            class _Update(cls._Update):
-                pass
-            subclass_spec = cls._Update._field_spec
-            _Update._field_spec = tx_spec.copy()
-            _Update._field_spec.update(subclass_spec, reorder=True)
-            if hasattr(_Update, '_init_class'):
-                _Update._init_class()
-        _Update._fget_fields = cls._fget_fields
-        cls._Update = _Update
-        # Set the entity class and extent name on all of them.
-        cls._Create._extent_name = class_name
-        cls._Delete._extent_name = class_name
-        cls._GenericUpdate._extent_name = class_name
-        cls._Update._extent_name = class_name
-        cls._Create._EntityClass = cls
-        cls._Delete._EntityClass = cls
-        cls._GenericUpdate._EntityClass = cls
-        cls._Update._EntityClass = cls
-
-
-        # Create subclasses of any View class defined in a base class
-        # and not already locally subclassed.
-        for parent in reversed(bases):
-            for name, attr in parent.__dict__.iteritems():
-                if (name not in class_dict and
-                    inspect.isclass(attr) and issubclass(attr, base.View)):
-                    ViewClass = type(name, (attr,), {})
-                    ViewClass._label = attr._label
-                    setattr(cls, name, ViewClass)
-        # Set properties on all View classes.
-        for name, attr in cls.__dict__.iteritems():
-            if inspect.isclass(attr) and issubclass(attr, base.View):
-                attr._EntityClass = cls
-                attr._extent_name = class_name
-                attr._hidden_actions = set(cls._hidden_actions)
-                attr._hidden_queries = set(cls._hidden_queries)
-                if name == '_DefaultView':
-                    # The default view acquires field specs from its
-                    # host entity class.
-                    attr._fget_fields = cls._fget_fields
-                    subclass_spec = cls._DefaultView._field_spec
-                    attr._field_spec = v_spec.copy()
-                    attr._field_spec.update(subclass_spec, reorder=True)
-                if hasattr(attr, '_init_class'):
-                    attr._init_class()
-        # Normalize the hiddens.
+        # Setup standard transaction classes (Create, Delete, Update).
+        cls.setup_transactions(class_name, class_dict, t_spec)
+        # Setup view classes.
+        cls.setup_views(class_name, bases, class_dict, v_spec)
+        # Normalize the hidden information.
         cls._hidden_actions = set(cls._hidden_actions)
         cls._hidden_queries = set(cls._hidden_queries)
         cls._hidden_views = set(cls._hidden_views)
-        # Create the key spec.
-        key_set = set(cls._key_spec)
-        for s in cls._key_spec_additions:
-            # Get just the names from field definitions.
-            # Note that field_def could be a string.
-            names = tuple(getattr(field_def, 'name', field_def)
-                          for field_def in s)
-            key_set.add(names)
-            # The first key becomes the default key.
-            if cls._default_key is None:
-                cls._default_key = names
-        cls._key_spec = tuple(key_set)
-        cls._key_spec_additions = ()
-        # Create the index spec.
-        index_set = set(cls._index_spec)
-        for s in cls._index_spec_additions:
-            # Get just the names from field definitions.
-            # Note that field_def could be a string.
-            names = tuple(getattr(field_def, 'name', field_def)
-                          for field_def in s)
-            index_set.add(names)
-        cls._index_spec = tuple(index_set)
-        cls._index_spec_additions = ()
+        # Setup key spec.
+        cls.setup_key_spec()
+        # Setup index spec.
+        cls.setup_index_spec()
         # Assign labels for the class/extent, unless it is a base class.
         if not class_name.startswith('_'):
             if '_label' not in class_dict and not hasattr(cls, '_label'):
@@ -281,9 +154,7 @@ class EntityMeta(type):
         # Only if this global schema definition variable exists, and
         # this class applies to the current evolution context.
         if (schevo.namespace.SCHEMADEF is not None
-            and (schevo.namespace.EVOLVING
-                 or not cls._evolve_only)
-            ):
+            and (schevo.namespace.EVOLVING or not cls._evolve_only)):
             # Add this subclass to the entity classes namespace.
             schevo.namespace.SCHEMADEF.E._set(class_name, cls)
             # Keep track of relationship metadata.
@@ -294,6 +165,103 @@ class EntityMeta(type):
                     for entity_name in FieldClass.allow:
                         spec = relationships.setdefault(entity_name, [])
                         spec.append((class_name, field_name))
+
+    def setup_fields(cls):
+        fget_fields = []
+        for field_name, FieldClass in cls._field_spec.iteritems():
+            fget = FieldClass.fget
+            if fget is not None:
+                fget_fields.append(field_name)
+                def get_field_value(self, fget=fget[0]):
+                    return fget(self)
+            else:
+                field = FieldClass(instance=None)
+                def get_field_value(self, field_name=field_name, field=field):
+                    """Get the field value from the database."""
+                    db = self._db
+                    extent_name = self._extent.name
+                    oid = self._oid
+                    try:
+                        value = db._entity_field(extent_name, oid, field_name)
+                    except schevo.error.EntityDoesNotExist:
+                        raise
+                    except KeyError:  # XXX This needs to be more specific.
+                        value = UNASSIGNED
+                    field._value = value
+                    return field.get()
+            setattr(cls, field_name, property(fget=get_field_value))
+        cls._fget_fields = tuple(fget_fields)
+
+    def setup_index_spec(cls):
+        # Create the index spec.
+        index_set = set(cls._index_spec)
+        for s in cls._index_spec_additions:
+            # Get just the names from field definitions.
+            # Note that field_def could be a string.
+            names = tuple(getattr(field_def, 'name', field_def)
+                          for field_def in s)
+            index_set.add(names)
+        cls._index_spec = tuple(index_set)
+        cls._index_spec_additions = ()
+
+    def setup_key_spec(cls):
+        # Create the key spec.
+        key_set = set(cls._key_spec)
+        for s in cls._key_spec_additions:
+            # Get just the names from field definitions.
+            # Note that field_def could be a string.
+            names = tuple(getattr(field_def, 'name', field_def)
+                          for field_def in s)
+            key_set.add(names)
+            # The first key becomes the default key.
+            if cls._default_key is None:
+                cls._default_key = names
+        cls._key_spec = tuple(key_set)
+        cls._key_spec_additions = ()
+
+    def setup_transactions(cls, class_name, class_dict, t_spec):
+        """Create standard transaction classes."""
+        # Fields in a transaction class defined in the schema appear
+        # below the fields that come from the entity field spec.
+        for name in ('_Create', '_Delete', '_Update'):
+            # Create a subclass.
+            OldClass = getattr(cls, name)
+            NewClass = type(name, (OldClass,), {})
+            NewClass._EntityClass = cls
+            NewClass._extent_name = class_name
+            NewClass._fget_fields = cls._fget_fields
+            NewClass._field_spec = t_spec.copy()
+            NewClass._field_spec.update(OldClass._field_spec, reorder=True)
+            if hasattr(NewClass, '_init_class'):
+                NewClass._init_class()
+            setattr(cls, name, NewClass)
+
+    def setup_views(cls, class_name, bases, class_dict, v_spec):
+        # Create subclasses of any View class defined in a base class
+        # and not already locally subclassed.
+        for parent in reversed(bases):
+            for name, attr in parent.__dict__.iteritems():
+                if (name not in class_dict and
+                    inspect.isclass(attr) and issubclass(attr, base.View)):
+                    ViewClass = type(name, (attr,), {})
+                    ViewClass._label = attr._label
+                    setattr(cls, name, ViewClass)
+        # Set properties on all View classes.
+        for name, attr in cls.__dict__.iteritems():
+            if inspect.isclass(attr) and issubclass(attr, base.View):
+                attr._EntityClass = cls
+                attr._extent_name = class_name
+                attr._hidden_actions = set(cls._hidden_actions)
+                attr._hidden_queries = set(cls._hidden_queries)
+                if name == '_DefaultView':
+                    # The default view acquires field specs from its
+                    # host entity class.
+                    attr._fget_fields = cls._fget_fields
+                    attr._field_spec = v_spec.copy()
+                    base_spec = cls._DefaultView._field_spec
+                    attr._field_spec.update(base_spec, reorder=True)
+                if hasattr(attr, '_init_class'):
+                    attr._init_class()
 
 
 class Entity(base.Entity, LabelMixin):
