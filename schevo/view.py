@@ -32,19 +32,19 @@ class View(base.View):
     _hidden_actions = set()
     _hidden_queries = set()
 
-    def __init__(self, entity):
+    def __init__(self, entity, *args, **kw):
         self._entity = entity
         self._extent = entity._extent
         self._oid = entity._oid
         self._rev = entity._rev
         f_map = self._field_map = self._field_spec.field_map(instance=self)
         f_map.update_values(entity.sys.field_map(not_fget))
-        self._setup(entity)
+        self._setup(entity, *args, **kw)
         # All fields should be readonly by default.
         for field in f_map.itervalues():
             field.readonly = True
 
-    def _setup(self, entity):
+    def _setup(self, entity, *args, **kw):
         """Override this in subclasses to customize a view."""
         pass
 
