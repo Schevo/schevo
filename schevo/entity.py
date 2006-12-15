@@ -81,7 +81,7 @@ class EntityMeta(type):
         cls.setup_transactions(class_name, class_dict, t_spec)
         # Setup view classes.
         cls.setup_views(class_name, bases, class_dict, v_spec)
-        # Normalize the hidden information.
+        # Normalize hidden information.
         cls._hidden_actions = set(cls._hidden_actions)
         cls._hidden_queries = set(cls._hidden_queries)
         cls._hidden_views = set(cls._hidden_views)
@@ -89,6 +89,20 @@ class EntityMeta(type):
         cls.setup_key_spec()
         # Setup index spec.
         cls.setup_index_spec()
+        # Assign labels.
+        cls.assign_labels(class_name, class_dict)
+        # Remember queries for the EntityQueries namespace.
+        cls._q_names = cls.get_method_names('q_')
+        # Remember transactions for the EntityTransactions namespace.
+        cls._t_names = cls.get_method_names('t_')
+        # Remember views for the EntityViews namespace.
+        cls._v_names = cls.get_method_names('v_')
+        # Remember x_methods for the EntityExtenders namespace.
+        cls._x_names = cls.get_method_names('x_')
+        # Add this class to the schema.
+        cls.update_schema(class_name)
+
+    def assign_labels(cls, class_name, class_dict):
         # Assign labels for the class/extent, unless it is a base class.
         if not class_name.startswith('_'):
             if '_label' not in class_dict and not hasattr(cls, '_label'):
@@ -115,56 +129,16 @@ class EntityMeta(type):
                     # Instancemethod.
                     if new_label is not None:
                         class_dict[m_name]._label = new_label
-        # Remember queries for the EntityQueries namespace.
-        q_names = []
-        for attr in dir(cls):
-            if attr.startswith('q_'):
-                q_name = attr
-                func = getattr(cls, q_name)
+
+    def get_method_names(cls, prefix):
+        """Return list of method names that start with prefix."""
+        names = []
+        for name in dir(cls):
+            if name.startswith(prefix):
+                func = getattr(cls, name)
                 if func.im_self is None:
-                    q_names.append(q_name)
-        cls._q_names = q_names
-        # Remember transactions for the EntityTransactions namespace.
-        t_names = []
-        for attr in dir(cls):
-            if attr.startswith('t_'):
-                t_name = attr
-                func = getattr(cls, t_name)
-                if func.im_self is None:
-                    t_names.append(t_name)
-        cls._t_names = t_names
-        # Remember views for the EntityViews namespace.
-        v_names = []
-        for attr in dir(cls):
-            if attr.startswith('v_'):
-                v_name = attr
-                func = getattr(cls, v_name)
-                if func.im_self is None:
-                    v_names.append(v_name)
-        cls._v_names = v_names
-        # Remember x_methods for the EntityExtenders namespace.
-        x_names = []
-        for attr in dir(cls):
-            if attr.startswith('x_'):
-                x_name = attr
-                func = getattr(cls, x_name)
-                if func.im_self is None:
-                    x_names.append(x_name)
-        cls._x_names = x_names
-        # Only if this global schema definition variable exists, and
-        # this class applies to the current evolution context.
-        if (schevo.namespace.SCHEMADEF is not None
-            and (schevo.namespace.EVOLVING or not cls._evolve_only)):
-            # Add this subclass to the entity classes namespace.
-            schevo.namespace.SCHEMADEF.E._set(class_name, cls)
-            # Keep track of relationship metadata.
-            relationships = schevo.namespace.SCHEMADEF.relationships
-            for field_name, FieldClass in cls._field_spec.iteritems():
-                if (hasattr(FieldClass, 'allow') and
-                    field_name not in cls._fget_fields):
-                    for entity_name in FieldClass.allow:
-                        spec = relationships.setdefault(entity_name, [])
-                        spec.append((class_name, field_name))
+                    names.append(name)
+        return names
 
     def setup_fields(cls):
         fget_fields = []
@@ -262,6 +236,22 @@ class EntityMeta(type):
                     attr._field_spec.update(base_spec, reorder=True)
                 if hasattr(attr, '_init_class'):
                     attr._init_class()
+
+    def update_schema(cls, class_name):
+        # Only if this global schema definition variable exists, and
+        # this class applies to the current evolution context.
+        if (schevo.namespace.SCHEMADEF is not None
+            and (schevo.namespace.EVOLVING or not cls._evolve_only)):
+            # Add this class to the entity classes namespace.
+            schevo.namespace.SCHEMADEF.E._set(class_name, cls)
+            # Keep track of relationship metadata.
+            relationships = schevo.namespace.SCHEMADEF.relationships
+            for field_name, FieldClass in cls._field_spec.iteritems():
+                if (hasattr(FieldClass, 'allow') and
+                    field_name not in cls._fget_fields):
+                    for entity_name in FieldClass.allow:
+                        spec = relationships.setdefault(entity_name, [])
+                        spec.append((class_name, field_name))
 
 
 class Entity(base.Entity, LabelMixin):
