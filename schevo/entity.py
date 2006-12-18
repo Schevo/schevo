@@ -230,9 +230,9 @@ class EntityMeta(type):
                 if name == '_DefaultView':
                     # The default view acquires field specs from its
                     # host entity class.
+                    base_spec = cls._DefaultView._field_spec
                     attr._fget_fields = cls._fget_fields
                     attr._field_spec = v_spec.copy()
-                    base_spec = cls._DefaultView._field_spec
                     attr._field_spec.update(base_spec, reorder=True)
                 if hasattr(attr, '_init_class'):
                     attr._init_class()
