@@ -145,15 +145,17 @@ class odict(dict):
         """Update values in this odict based on the `other` odict."""
         if not isinstance(other, odict):
             raise ValueError('other must be an odict')
+        if other is self:
+            raise ValueError('other cannot be the same odict')
         dict.update(self, other)
         keys = self._keys
         if not reorder:
             for key in other:
-                if key not in self._keys:
+                if key not in keys:
                     keys.append(key)
         else:
             for key in other:
-                if key in self._keys:
+                if key in keys:
                     keys.remove(key)
                 keys.append(key)
 
