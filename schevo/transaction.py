@@ -544,6 +544,9 @@ class _Populate(Transaction):
                 if isinstance(value, dict):
                     kw = value
                 elif isinstance(value, tuple):
+                    if len(default_key) != len(value):
+                        msg = 'mismatch between default key %r and value %r'
+                        raise ValueError, msg % (default_key, value)
                     kw = dict(zip(default_key, value))
                     for key_field_name in default_key:
                         FClass = lookup_extent.field_spec[key_field_name]
