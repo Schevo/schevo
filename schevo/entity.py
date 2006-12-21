@@ -223,19 +223,18 @@ class EntityMeta(type):
         # Set properties on all View classes.
         for name, attr in cls.__dict__.iteritems():
             if inspect.isclass(attr) and issubclass(attr, base.View):
-                attr._EntityClass = cls
-                attr._extent_name = class_name
-                attr._hidden_actions = set(cls._hidden_actions)
-                attr._hidden_queries = set(cls._hidden_queries)
-                if name == '_DefaultView':
-                    # The default view acquires field specs from its
-                    # host entity class.
-                    base_spec = cls._DefaultView._field_spec
-                    attr._fget_fields = cls._fget_fields
-                    attr._field_spec = v_spec.copy()
-                    attr._field_spec.update(base_spec, reorder=True)
-                if hasattr(attr, '_init_class'):
-                    attr._init_class()
+                ViewClass = attr
+                ViewClass._EntityClass = cls
+                ViewClass._extent_name = class_name
+                ViewClass._hidden_actions = set(cls._hidden_actions)
+                ViewClass._hidden_queries = set(cls._hidden_queries)
+                # Acquire field specs from the host entity class.
+                base_spec = ViewClass._field_spec
+                ViewClass._fget_fields = cls._fget_fields
+                ViewClass._field_spec = v_spec.copy()
+                ViewClass._field_spec.update(base_spec, reorder=True)
+                if hasattr(ViewClass, '_init_class'):
+                    ViewClass._init_class()
 
     def update_schema(cls, class_name):
         # Only if this global schema definition variable exists, and
