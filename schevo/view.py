@@ -29,8 +29,8 @@ class View(base.View):
 
     _field_spec = FieldSpecMap()
 
-    _hidden_actions = set()
-    _hidden_queries = set()
+    _hidden_actions = None
+    _hidden_queries = None
 
     def __init__(self, entity, *args, **kw):
         self._entity = entity
@@ -205,11 +205,19 @@ class ViewTransactions(NamespaceExtension):
             d[name] = func
 
     def __contains__(self, name):
-        return name in self._d and name not in self._v._hidden_actions
+        if self._v._hidden_actions is None:
+            hidden_actions = self._v._entity._hidden_actions
+        else:
+            hidden_actions = self._v._hidden_actions
+        return name in self._d and name not in hidden_actions
 
     def __iter__(self):
+        if self._v._hidden_actions is None:
+            hidden_actions = self._v._entity._hidden_actions
+        else:
+            hidden_actions = self._v._hidden_actions
         return (k for k in self._d.iterkeys()
-                if k not in self._v._hidden_actions)
+                if k not in hidden_actions)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
