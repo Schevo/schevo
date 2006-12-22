@@ -473,8 +473,10 @@ class Database(base.Database):
         executing = self._executing
         if executing:
             tx = executing[-1]
-            deletes = [(extent_name_id[del_entity_class.__name__], del_oid)
-                       for del_entity_class, del_oid in tx._deletes]
+            deletes.update([(extent_name_id[del_entity_cls.__name__], del_oid)
+                            for del_entity_cls, del_oid in tx._deletes])
+            deletes.update([(extent_name_id[del_entity_cls.__name__], del_oid)
+                            for del_entity_cls, del_oid in tx._known_deletes])
         for (other_extent_id, other_field_id), others in links.items():
             for other_oid in others:
                 if (other_extent_id, other_oid) in deletes:

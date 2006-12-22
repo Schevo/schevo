@@ -33,6 +33,7 @@ class Transaction(base.Transaction):
         self._executed = False
         self._field_map = self._field_spec.field_map(instance=self)
         self._inversions = []
+        self._known_deletes = []
         self._relaxed = set()
         self.f = schevo.namespace.Fields(self)
         self.sys = TransactionSys(self)
@@ -294,6 +295,7 @@ class Delete(Transaction):
     def _execute(self, db):
         entity = self._entity
         deletes = self._deletes
+        known_deletes = self._known_deletes
         self._before_execute(db, entity)
         # Traverse through entities that link to this one, and delete
         # or update them accordingly.
@@ -324,10 +326,15 @@ class Delete(Transaction):
                 if on_delete is CASCADE:
                     L = to_delete.setdefault(e_o, [])
                     L.append(f_name)
+                    known_deletes.append(e_o)
                 elif on_delete is UNASSIGN:
                     L = to_unassign.setdefault(e_o, [])
                     L.append(f_name)
                 else:
+                    if e_o in self._known_deletes:
+                        # An outer txn plans to delete this entity so
+                        # we can safely ignore the restriction.
+                        continue
                     raise DeleteRestricted(
                         '%r cannot be deleted; it is referred to by '
                         '%r.%s' % (entity, other, f_name))
@@ -339,18 +346,22 @@ class Delete(Transaction):
                 tx.f[field_name].readonly = False
                 setattr(tx, field_name, UNASSIGNED)
             db.execute(tx)
-        # Delete entities.
+        # Forceably update fields to UNASSIGNED first to prevent
+        # DeleteRestrict from being raised by the database itself.
+        others = []
         for (EntityClass, oid), field_names in to_delete.iteritems():
             other = EntityClass(oid)
-            # Must update fields to UNASSIGNED first to prevent
-            # DeleteRestrict from being raised by the database itself.
+            others.append((EntityClass.__name__, oid, other))
             field_map = other.sys.field_map(not_fget)
             field_value_map = dict(field_map.value_map())
             new_value_map = dict((name, UNASSIGNED) for name in field_names)
             field_value_map.update(new_value_map)
             db._update_entity(other._extent.name, oid, field_value_map)
+        # Delete entities in a deterministic (sorted) fashion.
+        for name, oid, other in sorted(others):
             tx = other.t.delete()
             tx._deletes.update(deletes)
+            tx._known_deletes.extend(self._known_deletes)
             db.execute(tx, strict=False)
         # Attempt to delete the entity itself.
         extent_name = self._extent_name
