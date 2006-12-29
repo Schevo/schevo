@@ -1066,6 +1066,21 @@ class TestTransaction(CreatesSchema):
         update = realm.t.update()
         assert update.sys.count == realm.sys.count
         
+    def test_callable_wrapper(self):
+        exe = db.execute
+        assert len(db.User) == 0
+        def fn1(db):
+            exe(db.User.t.create(name='foo'))
+        tx = transaction.CallableWrapper(fn1)
+        exe(tx)
+        assert len(db.User) == 1
+        # It can also be used as a decorator.
+        @transaction.CallableWrapper
+        def fn2(db):
+            exe(db.User.t.create(name='bar'))
+        exe(fn2)
+        assert len(db.User) == 2
+        
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
 #
