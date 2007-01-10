@@ -16,14 +16,21 @@ class TestHiddenBases(CreatesSchema):
 
     body = '''
 
-    class _GolfAlphaBase(E.Entity):
+    class _GolfBase(E.Entity):
 
         beta = f.unicode()
 
         _key(beta)
 
 
-    class GolfAlpha(E._GolfAlphaBase):
+    class GolfAlpha(E._GolfBase):
+
+        gamma = f.integer()
+
+        _key(gamma, 'beta')
+
+
+    class GolfBeta(E._GolfBase):
 
         gamma = f.integer()
 
@@ -34,20 +41,36 @@ class TestHiddenBases(CreatesSchema):
             def _setup(self):
                 # Set an initial value.
                 self.gamma = 10
+
     '''
 
     def test_subclass(self):
-        assert '_GolfAlphaBase' not in db.extent_names()
+        assert '_GolfBase' not in db.extent_names()
         GolfAlpha = db.GolfAlpha
         assert GolfAlpha.field_spec.keys() == ['beta', 'gamma']
         assert ('beta', ) in GolfAlpha.key_spec
         assert ('gamma', 'beta') in GolfAlpha.key_spec
         tx = GolfAlpha.t.create()
+        assert tx._field_spec.keys() == ['beta', 'gamma']
         tx.beta = 'foo'
         tx.gamma = 42
         golf = db.execute(tx)
         assert golf.beta == 'foo'
         assert golf.gamma == 42
+        tx = golf.t.update()
+        assert tx._field_spec.keys() == ['beta', 'gamma']
+        tx = golf.t.delete()
+        assert tx._field_spec.keys() == ['beta', 'gamma']
+        tx = db.GolfBeta.t.create()
+        assert tx._field_spec.keys() == ['beta', 'gamma']
+        tx.beta = 'foo'
+        golf = db.execute(tx)
+        assert golf.beta == 'foo'
+        assert golf.gamma == 10
+        tx = golf.t.update()
+        assert tx._field_spec.keys() == ['beta', 'gamma']
+        tx = golf.t.delete()
+        assert tx._field_spec.keys() == ['beta', 'gamma']
 
 
 class TestSameNameSubclasses(CreatesSchema):

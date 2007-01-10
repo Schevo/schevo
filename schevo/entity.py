@@ -77,10 +77,11 @@ class EntityMeta(type):
             _fget_fields = cls._fget_fields
             _field_spec = t_spec.copy()
         cls._GenericUpdate = _GenericUpdate
-        # Setup standard transaction classes (Create, Delete, Update).
-        cls.setup_transactions(class_name, class_dict, t_spec)
-        # Setup view classes.
-        cls.setup_views(class_name, bases, class_dict, v_spec)
+        if not class_name.startswith('_'):
+            # Setup standard transaction classes (Create, Delete, Update).
+            cls.setup_transactions(class_name, class_dict, t_spec)
+            # Setup view classes.
+            cls.setup_views(class_name, bases, class_dict, v_spec)
         # Normalize hidden information.
         cls._hidden_actions = set(cls._hidden_actions)
         cls._hidden_queries = set(cls._hidden_queries)
@@ -89,8 +90,9 @@ class EntityMeta(type):
         cls.setup_key_spec()
         # Setup index spec.
         cls.setup_index_spec()
-        # Assign labels.
-        cls.assign_labels(class_name, class_dict)
+        if not class_name.startswith('_'):
+            # Assign labels.
+            cls.assign_labels(class_name, class_dict)
         # Remember queries for the EntityQueries namespace.
         cls._q_names = cls.get_method_names('q_')
         # Remember transactions for the EntityTransactions namespace.
@@ -103,12 +105,11 @@ class EntityMeta(type):
         cls.update_schema(class_name)
 
     def assign_labels(cls, class_name, class_dict):
-        # Assign labels for the class/extent, unless it is a base class.
-        if not class_name.startswith('_'):
-            if '_label' not in class_dict and not hasattr(cls, '_label'):
-                cls._label = label_from_name(class_name)
-            if '_plural' not in class_dict and not hasattr(cls, '_plural'):
-                cls._plural = plural_from_name(class_name)
+        # Assign labels for the class/extent.
+        if '_label' not in class_dict and not hasattr(cls, '_label'):
+            cls._label = label_from_name(class_name)
+        if '_plural' not in class_dict and not hasattr(cls, '_plural'):
+            cls._plural = plural_from_name(class_name)
         # Assign labels for query, transaction, and view methods.
         for key in class_dict:
             if key[:2] in ('q_', 't_', 'v_'):

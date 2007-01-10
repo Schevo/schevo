@@ -24,7 +24,7 @@ def schema_metaclass(namespace_name):
             if (schevo.namespace.SCHEMADEF is not None
                 and hasattr(cls, '_field_spec')
                 ):
-                # Create an intial field spec odict, which will get
+                # Create an initial field spec odict, which will get
                 # updated by the EntityMeta class.
                 cls._field_spec = field_spec_from_class(cls, class_dict)
                 # Add this class to the namespace.
