@@ -11,8 +11,7 @@ from schevo import base
 from schevo.constant import UNASSIGNED
 import schevo.error
 from schevo import field
-from schevo.fieldspec import (
-    FieldDefinition, FieldMap, FieldSpecMap, field_spec_from_class)
+from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import label, plural, label_from_name
 from schevo.lib.odict import odict
 from schevo.meta import schema_metaclass

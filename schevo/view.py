@@ -10,8 +10,7 @@ from schevo import base
 from schevo.constant import UNASSIGNED
 from schevo import field
 from schevo.field import not_fget
-from schevo.fieldspec import (
-    FieldDefinition, FieldMap, FieldSpecMap, field_spec_from_class)
+from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import label, label_from_name
 from schevo.meta import schema_metaclass
 import schevo.namespace
