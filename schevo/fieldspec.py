@@ -41,6 +41,17 @@ class FieldSpecMap(odict):
 
     __slots__ = ['_keys']
 
+    def __call__(self, *filters):
+        """Return FieldSpecMap instance based on self, filtered by optional
+        callable objects specified in `filters`."""
+        new_fields = self.iteritems()
+        for filt in filters:
+            new_fields = [
+                (key, field) for key, field in new_fields
+                if filt(field)
+                ]
+        return FieldSpecMap(new_fields)
+
     def field_map(self, instance=None, values={}):
         """Return a FieldMap based on field specifications."""
         pairs = [(name, FieldClass(instance=instance,

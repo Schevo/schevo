@@ -652,7 +652,7 @@ class EntitySys(NamespaceExtension):
         # Remove fields that should not be included.
         new_fields = entity_field_map.itervalues()
         for filt in filters:
-            new_fields = (field for field in new_fields if filt(field))
+            new_fields = [field for field in new_fields if filt(field)]
         entity_field_map = FieldMap(
             (field.name, field) for field in new_fields)
         # Update fields that have fget callables.

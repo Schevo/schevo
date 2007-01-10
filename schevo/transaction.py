@@ -126,7 +126,7 @@ class TransactionSys(NamespaceExtension):
         # Remove fields that should not be included.
         new_fields = self._transaction._field_map.itervalues()
         for filt in filters:
-            new_fields = (field for field in new_fields if filt(field))
+            new_fields = [field for field in new_fields if filt(field)]
         return FieldMap((field.name, field) for field in new_fields)
 
     def summarize(self):
