@@ -55,7 +55,7 @@ class Shell(Command):
                 import IPython
             except ImportError:
                 import code
-                code.interact(locals=locals)
+                code.interact(local=locals)
             else:
                 shell = IPython.Shell.IPShell(user_ns=locals)
                 shell.mainloop()
