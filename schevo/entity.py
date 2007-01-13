@@ -601,9 +601,10 @@ class EntitySys(NamespaceExtension):
         create = self._entity.t_create()
         e = self._entity
         for f_name in e.f:
-            if f_name not in create.f:
+            if (f_name not in create.f
+                or create.f[f_name].hidden or create.f[f_name].readonly):
                 # Don't include a field that doesn't exist in the
-                # create transaction.
+                # create transaction, or is hidden or readonly.
                 continue
             f = e.f[f_name]
             if f.fget is not None or f.hidden:
