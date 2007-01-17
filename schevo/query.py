@@ -276,6 +276,15 @@ class Match(Query):
         self.field_name = field_name
         if not FieldClass:
             FieldClass = getattr(on.f, field_name)
+        # Subclass all fields so they won't be constrained by having
+        # __slots__ defined.  Convert fget fields to non-fget, so we
+        # can query against them.
+        class NoSlotsField(FieldClass):
+            fget = None
+            readonly = False
+            required = False
+        NoSlotsField.__name__ = FieldClass.__name__
+        FieldClass = NoSlotsField
         self.FieldClass = FieldClass
         self.operator = operator
         self.value = value
