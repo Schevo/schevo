@@ -22,8 +22,7 @@ if available:
     class SchevoTemplate(templates.Template):
 
         egg_plugins = ['Schevo']
-        _template_dir = pkg_resources.resource_filename(
-            Requirement.parse('Schevo'), 'schevo/paste/templates/schevo')
+        _template_dir = 'templates/schevo'
         summary = 'Schevo application template.'
 
 
