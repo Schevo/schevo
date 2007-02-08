@@ -13,8 +13,8 @@ def install(db, icon_path=None):
     """Install an icon plugin in `db` if one does not yet exist."""
     # Install plugin.
     Plugin(db)
-    # Sync if requested.
-    if icon_path:
+    # Sync if requested and plugin installed successfully.
+    if icon_path and hasattr(db, '_icon'):
         db._sync_icons(icon_path)
 
 
