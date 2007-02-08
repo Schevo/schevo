@@ -65,6 +65,7 @@ class Base:
     good_values_default = []
     str_values_default = []
     min_max_values = []
+    min_max_sizes = []
     error_message = 'Custom error message.'
 
     def empty_field(self, **kw):
@@ -142,6 +143,25 @@ class Base:
                 # Exception is expected.
                 assert raises(ValueError, f.validate, value)
 
+    def test_min_max_sizes(self):
+        for value, min_size, max_size, allow_empty, is_valid in self.min_max_sizes:
+            kw = {}
+            if min_size:
+                kw['min_size'] = min_size
+            if max_size:
+                kw['max_size'] = max_size
+            if allow_empty:
+                kw['allow_empty'] = allow_empty
+            f = self.empty_field(**kw)
+            if is_valid:
+                # No exception is expected.
+                f.validate(value)
+                f.set(value)
+                assert f.value == value
+            else:
+                # Exception is expected.
+                assert raises(ValueError, f.validate, value)
+
 
 class TestString(Base, BaseTest):
 
@@ -156,6 +176,18 @@ class TestString(Base, BaseTest):
                               ]
     good_values_default = ['abcdefg']
     bad_values_default = ['']
+    min_max_sizes = [
+        # (value, min, max, allow_empty, is_valid),
+        ('test', None, None, True, True),
+        ('test', None, None, False, True),
+        ('', None, None, True, True),
+        ('', None, None, False, False),
+        ('test', 2, 8, False, True),
+        ('', 5, 8, False, False),
+        ('', 5, 8, True, True),
+        ('test', 5, None, False, False),
+        ('test_test', None, 8, False, False),
+        ]
     
 
 class TestUnicode(Base, BaseTest):
@@ -172,6 +204,18 @@ class TestUnicode(Base, BaseTest):
                               ('abcdefg', u'abcdefg'),
                               ]
     good_values_default = [u'abcdefg']
+    min_max_sizes = [
+        # (value, min, max, allow_empty, is_valid),
+        (u'test', None, None, True, True),
+        (u'test', None, None, False, True),
+        (u'', None, None, True, True),
+        (u'', None, None, False, False),
+        (u'test', 2, 8, False, True),
+        (u'', 5, 8, False, False),
+        (u'', 5, 8, True, True),
+        (u'test', 5, None, False, False),
+        (u'test_test', None, 8, False, False),
+        ]
 
 
 class TestInteger(Base, BaseTest):

@@ -365,6 +365,23 @@ class Field(base.Field):
             msg = '%s value must be <= %r' % (self._name, max_value)
             self._raise(ValueError, msg)
 
+    def _validate_min_max_size(self, value):
+        """Validate `value` against minimum and maximum size of this
+        field."""
+        if not self.required and value is UNASSIGNED:
+            return
+        value_len = len(self.convert(value))
+        if self.allow_empty and value_len == 0:
+            return
+        min_size = self.min_size
+        if min_size is not None and value_len < int(min_size):
+            msg = '%s value length must be >= %r' % (self._name, min_size)
+            self._raise(ValueError, msg)
+        max_size = self.max_size
+        if max_size is not None and value_len > int(max_size):
+            msg = '%s value length must be <= %r' % (self._name, max_size)
+            self._raise(ValueError, msg)
+
 
 # --------------------------------------------------------------------
 
@@ -472,6 +489,7 @@ class String(Field):
         if not self.allow_empty and value == '':
             msg = '%s value must not be empty.' % self._name
             self._raise(ValueError, msg)
+        self._validate_min_max_size(value)
 
 
 class Path(String):
@@ -512,6 +530,7 @@ class Unicode(Field):
         if not self.allow_empty and value == u'':
             msg = '%s value must not be empty.' % self._name
             self._raise(ValueError, msg)
+        self._validate_min_max_size(value)
 
 
 class Memo(Unicode):
