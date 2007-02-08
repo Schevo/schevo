@@ -3,27 +3,18 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
-from pkg_resources import require, DistributionNotFound, Requirement
-try:
-    require('PasteScript')
-except DistributionNotFound:
-    available = False
-else:
-    available = True
+import pkg_resources
+
+from paste.script import templates
 
 
-if available:
-    
-    import pkg_resources
+class SchevoTemplate(templates.Template):
 
-    from paste.script import templates
-
-
-    class SchevoTemplate(templates.Template):
-
-        egg_plugins = ['Schevo']
-        _template_dir = 'templates/schevo'
-        summary = 'Schevo application template.'
+    egg_plugins = ['Schevo']
+    _template_dir = pkg_resources.resource_filename(
+        pkg_resources.Requirement.parse('Schevo'),
+        'schevo/templates/schevo')
+    summary = 'Schevo application template.'
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

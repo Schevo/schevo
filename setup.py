@@ -83,6 +83,7 @@ setup(
     
     install_requires=[
     'Louie >= 1.0',
+    'PasteScript >= 1.1',
     ],
     
     tests_require=[
@@ -107,7 +108,7 @@ setup(
     schevo_hotshot = schevo.script.main:start_hotshot
 
     [paste.paster_create_template]
-    schevo = schevo.paste:SchevoTemplate
+    schevo = schevo.template:SchevoTemplate
 
     [schevo.schevo_command]
     db = schevo.script.db:start
