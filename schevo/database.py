@@ -130,6 +130,7 @@ class Database(base.Database):
         self._remembered = []
         # Initialization.
         self._create_schevo_structures()
+        self._commit()
         # Index to extent instances assigned by _sync.
         self._extents = {}
         # Index to entity classes assigned by _sync.
@@ -948,7 +949,7 @@ class Database(base.Database):
             raise
 
     def _create_extent(self, extent_name, field_names, entity_field_names,
-                      key_spec=None, index_spec=None, commit=True):
+                      key_spec=None, index_spec=None):
         """Create a new extent with a given name."""
         if extent_name in self._extent_maps_by_name:
             raise error.ExtentExists('%r already exists.' % extent_name)
@@ -991,8 +992,6 @@ class Database(base.Database):
         # Convert field names to field IDs for entity field names.
         extent_map['entity_field_ids'] = _field_ids(
             extent_map, entity_field_names)
-        if commit:
-            self._commit()
 
     def _delete_extent(self, extent_name):
         """Remove a named extent."""
@@ -1003,20 +1002,17 @@ class Database(base.Database):
         del self._extent_name_id[extent_name]
         del self._extent_maps_by_id[extent_id]
         del self._extent_maps_by_name[extent_name]
-        self._commit()
 
     def _create_schevo_structures(self):
         """Create or update Schevo structures in the database."""
         root = self._root
         if 'SCHEVO' not in root.keys():
             schevo = root['SCHEVO'] = PDict()
+            schevo['format'] = 1
             schevo['version'] = 0
             schevo['extent_name_id'] = PDict()
             schevo['extents'] = PDict()
             schevo['schema_source'] = None
-            self._commit()
-        if 'format' not in root['SCHEVO']:
-            root['SCHEVO']['format'] = 1
 
     def _entity_map(self, extent_name, oid):
         """Return an entity PDict corresponding to named
@@ -1347,7 +1343,7 @@ schevo.schema.prep(locals())
             index_spec = EntityClass._index_spec
             self._create_extent(
                 extent_name, field_names, entity_field_names,
-                key_spec, index_spec, commit=False)
+                key_spec, index_spec)
         # Remove extents that are in the db but not in the schema.
         in_db = set(self.extent_names())
         to_remove = in_db - in_schema
@@ -1442,11 +1438,6 @@ schevo.schema.prep(locals())
             EntityClass = E[extent_name]
             key_spec = EntityClass._key_spec
             index_spec = EntityClass._index_spec
-            # XXX Temporary.
-            if 'indices' not in self._extent_map(extent_name):
-                # Assume we need to upgrade.
-                _upgrade_extent(self, extent_name)
-            # /XXX
             self._update_extent_key_spec(extent_name, key_spec, index_spec)
 
     def _unique_extent_id(self):
@@ -1772,42 +1763,6 @@ def _walk_index(branch, ascending_seq, result_list):
         # We are at a leaf.
         result_list.extend(branch.iterkeys())
         
-
-def _upgrade_extent(db, extent_name):
-    # XXX: Temporary.
-    #
-    # Look for old altkey structures.
-    extent_map = db._extent_map(extent_name)
-    if 'alt_keys' in extent_map:
-        print 'Updating indices for', extent_name, '...'
-        print '  Creating new index structure.'
-        extent_map['indices'] = PDict()
-        extent_map['index_map'] = PDict()
-        extent_map['normalized_index_map'] = PDict()
-        key_spec = db.schema.E[extent_name]._key_spec
-        for index_spec in key_spec:
-            index_spec = _field_ids(extent_map, index_spec)
-            print '  Creating new index for spec ', repr(
-                _field_names(extent_map, index_spec)), 
-            sys.stdout.flush()
-            _create_index(extent_map, index_spec, True)
-            entities = extent_map['entities']
-            for oid in entities:
-                fields_by_id = entities[oid]['fields']
-                field_values = tuple(fields_by_id[field_id]
-                                     for field_id in index_spec)
-                _index_add(extent_map, index_spec, None, oid, field_values)
-                if not (oid % 50):
-                    sys.stdout.write('.')
-                    sys.stdout.flush()
-            print
-        print '  Removing old altkey structures'
-        del extent_map['alt_keys']
-        print 'Committing.  This may take some time...'
-        db._commit()
-        print 'Done committing.'
-        print
-
 
 class DatabaseExtenders(NamespaceExtension):
     """Methods that extend the functionality of a database."""
