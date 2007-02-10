@@ -83,7 +83,7 @@ setup(
     
     install_requires=[
     'Louie >= 1.0',
-    'PasteScript >= 1.1',
+    'PasteScript == dev, >= 1.1.1dev-r6221',
     ],
     
     tests_require=[
