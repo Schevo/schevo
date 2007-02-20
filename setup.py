@@ -80,6 +80,8 @@ setup(
 
     zip_safe=False,
     
+    always_copy=False,
+    
     install_requires=[
     'Louie >= 1.0',
     'PasteScript == dev, >= 1.1.1dev-r6221',
