@@ -4,7 +4,6 @@ from setuptools import setup, Extension, find_packages
 import sys, os
 import textwrap
 
-## import finddata
 
 setup(
     name="Schevo",
@@ -77,7 +76,7 @@ setup(
 
     packages=find_packages(exclude=['doc', 'tests']),
 
-##     package_data=finddata.find_package_data(),
+    include_package_data=True,
 
     zip_safe=False,
     
