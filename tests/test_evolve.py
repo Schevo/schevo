@@ -346,12 +346,20 @@ class TestEvolveInterVersion(CreatesDatabase):
         class Foo(E.Entity):
             bar = f.string()
         """)
-        schema2 = schema1
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(bar='baz'))
         foo_oid = foo.sys.oid
+        schema2 = schema1
         self.evolve(schema2, version=2)
         assert db.version == 2
+        assert db.Foo[foo_oid].bar == 'baz'
+        schema3 = schema1
+        self.evolve(schema3, version=3)
+        assert db.version == 3
+        assert db.Foo[foo_oid].bar == 'baz'
+        schema4 = schema1
+        self.evolve(schema4, version=4)
+        assert db.version == 4
         assert db.Foo[foo_oid].bar == 'baz'
 
     def test_same_schema_initial(self):

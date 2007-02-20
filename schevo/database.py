@@ -1061,7 +1061,8 @@ class Database(base.Database):
                 finally:
                     self._executing = []
         # Load the new schema.
-        schema_module = self._import_from_source(schema_source)
+        schema_name = schema_counter.next_schema_name()
+        schema_module = self._import_from_source(schema_source, schema_name)
         try:
             # Execute `before_evolve` function if defined.
             call(schema_module, 'before_evolve')
@@ -1090,7 +1091,7 @@ class Database(base.Database):
         except KeyError:
             raise error.ExtentDoesNotExist('%r does not exist.' % extent_name)
 
-    def _import_from_source(self, source, module_name=''):
+    def _import_from_source(self, source, module_name):
         """Import a schema module from a string containing source code."""
         # Look through source lines and find imports.
 ##         for line in source.splitlines():
