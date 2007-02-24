@@ -305,9 +305,9 @@ class Field(base.Field):
         # Apply any value conversions.
         if value is not UNASSIGNED:
             value = self.convert(value)
-        # If the new value is no different than the current value, return.
-        if hasattr(self, '_value') and value == self._value:
-            return
+##         # If the new value is no different than the current value, return.
+##         if hasattr(self, '_value') and value == self._value:
+##             return
         # Change the value.
         self._value = value
         # Mark this field as having been assigned.
