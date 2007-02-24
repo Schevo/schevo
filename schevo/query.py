@@ -80,6 +80,7 @@ class Param(Query):
             self._on = None
         for name, value in kw.iteritems():
             setattr(self, name, value)
+        print self.sys.field_map()
 
     def __getattr__(self, name):
         return self._field_map[name].get()
@@ -125,6 +126,7 @@ class Exact(Param):
     _label = 'Exact Matches'
 
     def __init__(self, extent, **kw):
+        # NOTE: This deliberately does NOT call super(Exact, self).__init__
         self._on = extent
         # First, use the fields defined in a subclass, if any.
         field_spec = FieldSpecMap(self._field_spec)
@@ -142,7 +144,8 @@ class Exact(Param):
                 NoSlotsField.__name__ = FieldClass.__name__
                 FieldClass = NoSlotsField
                 field_spec[name] = FieldClass
-                field = field_map[name] = FieldClass(self, name)
+                field = field_map[name] = FieldClass(self)
+                field._name = name
         self.f = schevo.namespace.Fields(self)
         self.sys = ParamSys(self)
         for field in field_map.itervalues():
