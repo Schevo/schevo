@@ -195,6 +195,13 @@ class TestQuery(CreatesSchema):
         q = hashes()
         assert isinstance(q.f.compare_with, field.String)
         assert list(q.f) == ['compare_with']
+        
+    def test_parameterized_query_default_values(self):
+        q = db.DeltaAlpha.q.exact()
+        assert q.string is UNASSIGNED
+        assert q.integer is UNASSIGNED
+        assert q.float is UNASSIGNED
+        assert q.entity is UNASSIGNED
 
     def test_remove_match_from_intersection(self):
         q = db.DeltaAlpha.q.by_example()
