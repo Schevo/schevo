@@ -69,7 +69,7 @@ setup(
     author='Orbtech, L.L.C. and contributors',
     author_email='schevo-devel@lists.schevo.org',
 
-    url='http://schevo.org/trac/wiki/Schevo',
+    url='http://schevo.org/wiki/Schevo',
     
     license='LGPL',
     
