@@ -15,38 +15,39 @@ setup(
     long_description=textwrap.dedent("""
     Schevo is a next-generation DBMS that focuses on the following:
 
-    - **Database Integrity**: Schevo is designed from the ground up to
-      protect your data.  All changes to a Schevo database must be
-      done using transactions, and Schevo ensures that those
-      transactions always leave the database in a consistent state.
+    * **Rapid Development**.
 
-    - **Rapid Development**: Schevo includes features to make it easy
-      and fun to create even the most complex of databases.  Not only
-      is the schema syntax easy to write and understand, you can also
-      quickly place initial values in your schema that are required by
-      your database, and use the same syntax to create sets of sample
-      data to use during development.
+      It's easy and fun to create even the most complex of databases. Easily
+      write and understand schema syntax. Quickly place required initial data
+      directly in your schema; use the same syntax to create sets of sample
+      data for development use.
 
-    - **User Interface Generation**: Schevo provides user interface
-      toolkits that take advantage of the richness of the database
-      schema.  You can use the full-featured Schevo Navigator to
-      interact with your database without writing a single line of
-      code outside of your database schema.  A PyQt-based toolkit is
-      already available, and various other toolkits, including a web
-      toolkit, are in the works.
+    * **Rich Schema Definition**.
 
-    - **Rich Schema Definition**: The schema for a Schevo database is
-      written in concise, easy-to-read Python code.  Not only does the
-      schema describe how information in the database is structured,
-      but also defines all transactions and rules that ensure database
-      integrity.
+      Write database schemata using concise, easy-to-read Python code. Your
+      schema will describe not only database structure, but also all
+      transactions and rules that ensure database integrity.
 
-    - **Assisted Schema Evolution**: Once a Schevo database is
-      deployed and is used to store valuable data, you will inevitably
-      make further changes to the structure of the database.  Schevo
-      assists you in this task and makes it easy to restructure a
-      database and facilitate the migration of data from one schema
-      version to the next.
+    * **Automated Schema Evolution**.
+
+      Deploy a Schevo database and use it to store valuable data, then easily
+      make further changes to the structure of the database. Use Schevo's
+      tools to help restructure a database and safely migrate data from one
+      schema version to the next.
+
+    * **Transaction Based**.
+
+      Schevo protects your data. Use transactions to make all changes to a
+      Schevo database (it's the only way it allows you to!), and you can trust
+      Schevo to ensure that your database is left in a consistent state at all
+      times.
+
+    * **User Interface Generation**. 
+
+      User interface code takes advantage of the richness of your database
+      schema. Use a full-featured database navigator to interact with your
+      database without writing a single line of code outside your database
+      schema. Build customized UIs using Schevo-aware widgets and UI tools.
 
     The latest development version is available in a `Subversion
     repository <http://schevo.org/svn/trunk/Schevo#egg=Schevo-dev>`__.
