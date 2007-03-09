@@ -404,8 +404,9 @@ class TestDecoration(CreatesSchema):
         # Transaction instances can have custom labels assigned upon
         # creation by transaction methods, among other means.
         tx = db.Account[1].t.transfer()
-        assert label.label(tx) == 'Transfer Funds From Personal'
-        
+        text = 'Transfer Funds From Fred Flintstone :: Personal'
+        assert label.label(tx) == text
+
     def test_transaction_method_decoration(self):
         # Extents for entity classes that are not customized only have
         # a transaction method for the canonical Create transaction.
