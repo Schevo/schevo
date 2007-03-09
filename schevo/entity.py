@@ -386,8 +386,9 @@ class Entity(base.Entity, LabelMixin):
         return str(unicode(self))
 
     def __unicode__(self):
-        if 'name' in self._field_spec:
-            return unicode(self.name)
+        key = self._default_key
+        if key:
+            return u' :: '.join([unicode(getattr(self, name)) for name in key])
         else:
             return repr(self)
 
