@@ -65,6 +65,11 @@ class TransactionAlreadyExecuted(RuntimeError):
     """A transaction was already executed and cannot be re-executed."""
 
 
+class TransactionExpired(RuntimeError):
+    """Something changed in the database that caused this transaction to
+    expire."""
+
+
 class TransactionFieldsNotChanged(RuntimeError):
     """No transaction field values were changed."""
 

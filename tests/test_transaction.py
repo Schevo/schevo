@@ -628,6 +628,14 @@ class TestTransaction(CreatesSchema):
         assert result1.sys.rev == 1
         assert result1.name == 'bar'
         assert result1 == result2
+        
+    def test_update_cannot_skip_revisions(self):
+        tx = db.User.t.create(name='foo')
+        user = db.execute(tx)
+        tx1 = user.t.update(name='bar')
+        tx2 = user.t.update(name='baz')
+        db.execute(tx1)
+        assert raises(error.TransactionExpired, db.execute, tx2)
 
     def test_update_with_fget(self):
         tx = db.Gender.t.create()

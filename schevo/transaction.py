@@ -10,7 +10,8 @@ from schevo import base
 from schevo.change import summarize
 from schevo.constant import CASCADE, DEFAULT, RESTRICT, UNASSIGN, UNASSIGNED
 from schevo.error import (KeyCollision, DatabaseMismatch, DeleteRestricted,
-                          TransactionFieldsNotChanged, TransactionNotExecuted)
+                          TransactionExpired, TransactionFieldsNotChanged, 
+                          TransactionNotExecuted)
 from schevo import field
 from schevo.field import not_fget
 from schevo.fieldspec import FieldMap, FieldSpecMap
@@ -385,6 +386,7 @@ class Update(Transaction):
         self.sys._set('links', _entity.sys.links)
         self.sys._set('old', _entity)
         self._oid = _entity._oid
+        self._rev = _entity._rev
         field_map = _entity.sys.field_map(not_fget)
         self._initialize(field_map)
         for name, value in kw.iteritems():
@@ -404,6 +406,11 @@ class Update(Transaction):
         pass
 
     def _execute(self, db):
+        entity = self._entity
+        if entity._rev != self._rev:
+            raise TransactionExpired(
+                'Original entity revision was %i, is now %i'
+                % (self._rev, entity._rev))
         if self._require_changes:
             nothing_changed = True
             for field in self._field_map.itervalues():
@@ -413,7 +420,7 @@ class Update(Transaction):
             if nothing_changed:
                 msg = 'A transaction must have at least one field changed.'
                 raise TransactionFieldsNotChanged(msg)
-        self._before_execute(db, self._entity)
+        self._before_execute(db, entity)
         # Validate individual fields.
         for field in self._field_map.itervalues():
             if field.fget is None:
