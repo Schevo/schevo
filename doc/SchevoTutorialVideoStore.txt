@@ -1,0 +1,553 @@
+==============================
+ Schevo Tutorial: Video Store
+==============================
+
+In this tutorial, we will show you how to create a skeleton Schevo application
+and a simple database schema. As you update the schema, we will show you how
+to explore the database using the Python interpreter.
+
+If you have not done so already, set up a Schevo environment as described in
+SchevoGettingStarted.
+
+This tutorial is loosely based on the `Elixir Tutorial`_.
+
+.. _Elixir Tutorial: http://elixir.ematia.de/tutorial.html
+
+This tutorial is also a doctest, so let us set up doctest environment::
+
+    >>> from schevo.test import DocTest
+
+
+Create a Schevo application
+===========================
+
+At a shell prompt, use the ``paster`` tool to create a new Schevo
+application::
+
+    $ paster create --template=schevo VideoStore    # [1]
+    $ cd videostore                                 # [2]
+    $ python setup.py develop                       # [3]
+
+1. Create a new Schevo application called "VideoStore". A directory called
+``videostore`` will be created with the new application inside.
+
+2. Change into the ``videostore`` directory.
+
+3. Install it into your Python environment in development mode.
+
+
+The default database schema
+***************************
+
+In your favorite text editor, open the file
+``videostore/schema/schema_001.py``. This is the filename convention that
+Schevo uses when creating and evolving databases. The ``001`` represents the
+version number of the schema.
+
+
+Namespace preparation
+*********************
+
+In the schema you will see the following lines near the top. These prepare the
+module namespace with the necessary "ingredients" for the Schevo schema
+syntax::
+
+    >>> schema = '''
+    ...     from schevo.schema import *     # [1]
+    ...     schevo.schema.prep(locals())    # [2]
+    ...     '''
+
+1. The developers of Schevo tend to eschew the careless use of ``import *``,
+but this one is rather useful.  It imports only about 13 variables, carefully
+named to avoid namespace clashes with the database schema.
+
+2. Prepare the module's namespace for building and storing the structure of
+the database schema about to be declared.
+
+
+Icon storage
+************
+
+The default schema also has a class called ``SchevoIcon``. We're not going to
+take advantage of this in this tutorial, but let's explore this class a little
+bit as it will give us a template for the other classes you'll add to your
+schema::
+
+    >>> schema += '''
+    ...     class SchevoIcon(E.Entity):     # [1]
+    ...         """Stores icons for Schevo database and application objects."""
+    ... 
+    ...         _hidden = True              # [2]
+    ...     
+    ...         name = f.unicode()          # [3]
+    ...         data = f.image()            # [4]
+    ... 
+    ...         _key(name)                  # [5]
+    ...     '''
+
+
+1. ``SchevoIcon`` is an *entity class*. All entity classes subclass from
+``E.Entity``. See SchevoNamespaces to find out more about the ``E`` namespace.
+
+2. When the database is open, the ``SchevoIcon`` *extent* that is based on
+this class will be designated as hidden. A user interface *may* honor this and
+hide this extent from the user in some way.
+
+3. ``name`` is a Unicode string *field*. See SchevoNamespaces to read more
+about the ``f`` namespace.
+
+4. ``data`` is an Image field.
+
+5. ``(name)`` is a key for the ``SchevoIcon`` extent. Schevo will not allow
+more than one *entity* with the same value in the ``name`` field in this
+extent.
+
+
+Some terminology
+================
+
+We've introduced some terms that are not necessarily unique to Schevo, but may
+not be familiar for those accustomed to working with SQL. Here are some basic
+definitions of those terms. We've left out some details to keep this tutorial
+simple.
+
+Entity class
+    A class definition in a schema that describes the fields, transactions,
+    and other characteristics that each entity of that type will have.
+
+Extent
+    A collection object based on an entity class containing same-typed
+    entities in a database. Analogous to a table in a SQL database.
+
+Entity
+    An object that represents a single item in the database. Analogous to a
+    row in a SQL database.
+
+Field
+    An object that represents a property of an entity. Analogous to a column
+    in a SQL database.
+
+
+Add an entity class for movies
+==============================
+
+Add the following class to the database schema::
+
+    >>> schema += '''
+    ...     class Movie(E.Entity):
+    ... 
+    ...         title = f.unicode()
+    ...         release_date = f.date()
+    ...         description = f.memo(required=False)    # [1], [2]
+    ... 
+    ...         _key(title)                             # [3]
+    ...     '''
+
+
+1. ``memo`` fields are a subclass of ``Unicode`` fields; the fact that
+``description`` is a ``Memo`` field is a hint that a user interface *may*
+use to render a multi-line input widget rather than a single-line one.
+
+2. By default, all fields are required. ``description`` isn't.
+
+3. ``(title)`` is a key for this extent. There can be no two movies with the
+same title. This is a bit unrealistic, and indeed Schevo allows you to specify
+keys such as ``(title, release_date)``, but we've simplified things for this
+tutorial.
+
+
+Create a database
+=================
+
+Save the ``schema_001.py`` file. At a shell prompt, use the ``schevo`` tool to
+create a new database with the video store schema::
+
+    $ schevo db create --app=videostore sample.db
+    
+That's it!
+
+At this point, the ``sample.db`` file contains your new database, including
+the database schema itself.
+
+For the doctest, let us create an in-memory database with the current schema::
+
+    >>> t = DocTest(schema)
+    >>> db = t.db
+
+
+Add some movies
+===============
+
+The ``schevo`` tool gives you a handy way to work with a database using a
+Python interpreter. We recommend installing IPython (just run ``"easy_install
+IPython"``) for a very comfortable experience.
+
+At a shell prompt, open the database::
+
+    $ schevo shell sample.db
+
+A variable ``db``, representing the open database, is automatically inserted
+into the namespace of the interactive session.
+
+
+Transactions
+************
+
+All changes to a Schevo database are done via *transaction* objects that are
+responsible for ensuring that changes made to the database follow the rules
+you specify. See SchevoTransactions for further discussion about this design
+decision and the benefits you gain from it.
+
+Make a new ``create`` transaction for creating a new ``Movie`` entity. Assign
+values to fields, then tell the database to execute the transaction::
+
+    >>> tx = db.Movie.t.create()           # [1], [2], [3]
+    >>> tx.title = 'A Scanner Darkley'     # [4]
+    >>> tx.release_date = '2006-07-28'     # [5]
+    >>> movie = db.execute(tx)             # [6]
+
+1. ``db.Movie`` is the ``Movie`` extent in the database.
+
+2. Extents have a ``t`` namespace that contains *transaction methods*.
+
+3. By calling the ``create`` transaction method, we receive a transaction
+object that will attempt to create a new Movie entity upon execution.
+
+4. Set the transaction's fields to the values that you want the new entity to
+have.
+
+5. ``date`` fields are smart and will accept ``datetime.date`` objects as well
+as ``YYYY-MM-DD`` and ``MM/DD/YYYY`` formatted strings.
+
+6. When the transaction object executes successfully, it returns the ``Movie``
+entity that it just created.
+
+Inspecting the field values of the entity shows that the proper information
+was stored in the database::
+
+    >>> movie.title
+    u'A Scanner Darkley'
+    >>> movie.release_date
+    datetime.date(2006, 7, 28)
+
+Oops! There's a typo in the title of the movie. 
+
+The ``movie`` entity object has a ``t`` namespace as well. By default, there
+are ``update`` and ``delete`` methods in an entity's ``t`` namespace. 
+
+Create an ``update`` transaction object, correct the name, then execute the
+transaction and inspect the result::
+
+    >>> tx = movie.t.update()
+    >>> tx.title = 'A Scanner Darkly'
+    >>> movie = db.execute(tx)
+    >>> movie.title
+    u'A Scanner Darkly'
+
+
+Object representations
+======================
+
+At this point, you may notice that if you print the ``movie`` object itself,
+it doesn't give you a terribly useful view from a programmer or a user
+interface's standpoint. Let's fix that.
+
+Exit the Python session, then edit ``schema_001.py`` again and add the
+``__unicode__`` method to the ``Movie`` class::
+
+    >>> schema += '''
+    ...     class Movie(E.Entity):
+    ... 
+    ...         title = f.unicode()
+    ...         release_date = f.date()
+    ...         description = f.memo(required=False)
+    ... 
+    ...         _key(title)
+    ...
+    ...         def __unicode__(self):
+    ...             return u'%s (%i)' % (self.title, self.release_date.year)
+    ...     '''
+
+At a shell prompt, update the existing database using the new schema, then
+open a Python session again::
+
+    $ schevo update --app=videostore sample.db
+    $ schevo shell sample.db
+
+For the doctest, let us perform the equivalent operation:
+
+    >>> t.update(schema)
+    >>> db = t.db
+
+Find the movie, and inspect it::
+
+    >>> movie = db.Movie.findone(title='A Scanner Darkly')   # [1]
+    >>> movie                       # [2]
+    <Movie entity oid:1 rev:1>
+    >>> print movie                 # [3]
+    A Scanner Darkly (2006)
+
+1. The ``findone`` method of an extent finds exactly one entity in that extent
+whose fields match those passed to the method. If it can't find any, it
+returns ``None``. If it finds more than one, it raises a ``FindOneFoundMany``
+exception.
+
+2. The ``repr`` representation of the entity gives you the extent name, the
+entity object identifier, and the entity revision.
+
+3. The ``unicode`` representation now gives you a more human-friendly view of
+things, suitable not only for interactive use but also for user interface
+code.
+
+Schevo likes to make things easy for humans to read, so you can go beyond
+thinking of it as a "unicode representation" of something, and think of it
+instead as a singular or plural *label* of an object. See ObjectLabels for
+further discussion about this feature.
+
+
+Relationships
+=============
+
+Schevo has many relational-like capabilities, and it makes it easy to manage
+those.
+
+We'll flex this by having our database keep track of the director of each
+movie, and the actors that are in each movie. Close your Python session, and
+modify the schema to add the ``Actor``, ``Director``, and ``MovieCasting``
+classes, and to modify the ``Movie`` class.
+
+Wait! Before we get started, think about how much data we'll have to populate
+with those transaction objects. Schevo allows you to change the structure of a
+database within the same schema version to some degree to support rapid
+development. Wouldn't it also be nice to place some sample data directly in
+the schema?
+
+Schevo lets you do that, so take advantage of it when you modify the schema by
+assigning ``_sample`` data lists to each entity class::
+
+    >>> schema += '''
+    ...     class Actor(E.Entity):
+    ... 
+    ...         name = f.unicode()
+    ... 
+    ...         _key(name)
+    ... 
+    ... 
+    ...     class Director(E.Entity):
+    ... 
+    ...         name = f.unicode()
+    ... 
+    ...         _key(name)
+    ... 
+    ... 
+    ...     class Movie(E.Entity):
+    ... 
+    ...         title = f.unicode()
+    ...         release_date = f.date()
+    ...         director = f.entity('Director')
+    ...         description = f.memo(required=False)
+    ... 
+    ...         _key(title)
+    ... 
+    ...         def __unicode__(self):
+    ...             return u'%s (%i)' % (self.title, self.release_date.year)
+    ... 
+    ... 
+    ...     class MovieCasting(E.Entity):
+    ... 
+    ...         movie = f.entity('Movie', CASCADE)
+    ...         actor = f.entity('Actor')
+    ... 
+    ...         _key(movie, actor)
+    ... 
+    ...         def __unicode__(self):
+    ...             return u'%s :: %s' (self.movie, self.actor)
+    ... 
+    ... 
+    ...     E.Actor._sample = [
+    ...         ('Keanu Reeves', ),
+    ...         ('Winona Ryder', ),
+    ...         ]
+    ... 
+    ...     E.Director._sample = [
+    ...         ('Richard Linklater', ),
+    ...         ('Stephen Herek', ),
+    ...         ('Tim Burton', ),
+    ...         ]
+    ... 
+    ...     E.Movie._sample = [
+    ...         ('A Scanner Darkly', '2006-07-28', ('Richard Linklater', ), 
+    ...             DEFAULT),
+    ...         ("Bill & Ted's Excellent Adventure", '1989-02-17', 
+    ...             ('Stephen Herek', ), DEFAULT),
+    ...         ('Edward Scissorhands', '1990-12-14', ('Tim Burton', ), 
+    ...             DEFAULT),
+    ...         ]
+    ... 
+    ...     E.MovieCasting._sample = [
+    ...         (('A Scanner Darkly', ), ('Keanu Reeves', )),
+    ...         (('A Scanner Darkly', ), ('Winona Ryder', )),
+    ...         (("Bill & Ted's Excellent Adventure", ), ('Keanu Reeves', )),
+    ...         (('Edward Scissorhands', ), ('Winona Ryder', )),
+    ...         ]
+    ...     '''
+
+
+Following relationships
+***********************
+
+Create a new database with sample data, deleting the old one first, then open
+the database in a Python session::
+
+    $ schevo db create --app=videostore --delete --sample sample.db
+    $ schevo shell sample.db
+    
+For the doctest, let us do the equivalent::
+
+    >>> t.done()
+    >>> t = DocTest(schema)
+    >>> db = t.db
+    >>> db.populate()
+
+Let us look at how we might use the relationships that Schevo has kept for us.
+Perhaps in the full implementation of a video store, some code would like to
+find all of the movies that Winona Ryder starred in. This information could be
+helpful for helping customers and for promotion of new movies.
+
+Here's how you would find those movies::
+
+    >>> actor = db.Actor.findone(name='Winona Ryder')
+    >>> castings = actor.m.movie_castings()
+    >>> movies = [casting.movie for casting in castings]
+    >>> for movie in movies:
+    ...     print movie
+    A Scanner Darkly (2006)
+    Edward Scissorhands (1990)
+
+If we have a specific movie, we can find the actors in it::
+
+    >>> movie = db.Movie.findone(title='A Scanner Darkly')
+    >>> castings = movie.m.movie_castings()
+    >>> actors = [casting.actor for casting in castings]
+    >>> for actor in actors:
+    ...     print actor
+    Keanu Reeves
+    Winona Ryder
+
+If we have a director, we can find the movies that he or she has directed::
+
+    >>> director = db.Director.findone(name='Richard Linklater')
+    >>> movies = director.m.movies()
+    >>> for movie in movies:
+    ...     print movie
+    ...
+    A Scanner Darkly (2006)
+
+
+Adding your own API extensions
+==============================
+
+Schevo lets you add API extensions within the ``x`` namespace. A separate
+namespace is used to prevent clashes between extension methods and field
+names.
+
+When following the relationships above, there was some boilerplate when
+finding out an actor's movies, or a movie's actors, due to the
+``MovieCasting`` extent that ties them together in a many-to-many
+relationship.
+
+The developers of Schevo have found that such intermediary extents are more
+useful than trying to embody that type of relationship some other way. We have
+run into more than one instance where it became useful to add additional
+information *about the relationship itself* via extra fields in the
+intermediary extent.
+
+You can use extension methods to reduce this sort of boilerplate, while still
+retaining the full flexibility of Schevo's relationship model. Add a new
+method called ``x_movies`` to the bottom of the ``Actor`` class::
+
+    >>> schema += '''
+    ...     class Actor(E.Entity):
+    ... 
+    ...         name = f.unicode()
+    ... 
+    ...         _key(name)
+    ...
+    ...         def x_movies(self):
+    ...             return [casting.movie 
+    ...                     for casting in self.m.movie_castings()]
+    ...     '''
+
+Add a new method to the ``Movie`` class::
+
+    >>> schema += '''
+    ...     class Movie(E.Entity):
+    ... 
+    ...         title = f.unicode()
+    ...         release_date = f.date()
+    ...         director = f.entity('Director')
+    ...         description = f.memo(required=False)
+    ... 
+    ...         _key(title)
+    ... 
+    ...         def x_actors(self):
+    ...             return [casting.actor 
+    ...                     for casting in self.m.movie_castings()]
+    ...
+    ...         def __unicode__(self):
+    ...             return u'%s (%i)' % (self.title, self.release_date.year)
+    ...     '''
+
+
+Close the Python session, update the database so its schema has the new
+methods available, then open a Python session::
+
+    $ schevo db update --app=videostore sample.db
+    $ schevo shell sample.db
+
+For the doctest, do the equivalent::
+
+    >>> t.update(schema)
+    >>> db = t.db
+
+The relationships demonstrated above are now much easier to traverse::
+
+    >>> actor = db.Actor.findone(name='Winona Ryder')
+    >>> for movie in actor.x.movies():
+    ...     print movie
+    ...
+    A Scanner Darkly (2006)
+    Edward Scissorhands (1990)
+
+    >>> movie = db.Movie.findone(title='A Scanner Darkly')
+    >>> for actor in movie.x.actors():
+    ...     print actor
+    ...
+    Keanu Reeves
+    Winona Ryder
+
+Since there is a one-to-many relationship between directors and movies, the
+use of ``director.m.movies()`` stays the same since there is no intermediate
+extent used.
+
+
+Summary
+=======
+
+This tutorial has covered the following:
+
+* Creating a skeleton for a new Schevo app
+
+* Adding entity classes to the schema
+
+* Creating and updating Schevo databases
+
+* Use of transaction methods and objects to create and update entities
+
+* Defining human-friendly summaries of entities
+
+* Adding sample data to a database schema
+
+* Defining and following relationships that Schevo maintains for you
+
+* Extending the API of a database using extension methods

@@ -265,6 +265,55 @@ class EvolvesSchemata(CreatesDatabase):
                     raise
             schemata.append(source)
         return schemata
+        
+        
+class DocTest(CreatesSchema):
+    """Doctest-helping test class.
+
+    Call directly to override body for one test::
+
+      >>> from schevo.test.base import DocTest
+      >>> t = DocTest('''
+      ...     class Foo(E.Entity):
+      ...         bar = f.integer()
+      ...     ''')
+      >>> t.db.extent_names()
+      ['Foo']
+
+    Call `done` method at end of test case::
+
+      >>> t.done()
+
+    Subclass to override body for several tests::
+
+      >>> class test(DocTest):
+      ...     body = '''
+      ...     class Foo(E.Entity):
+      ...         bar = f.integer()
+      ...     '''
+      >>> t = test()
+      >>> t.db.extent_names()
+      ['Foo']
+      >>> t.done()
+    """
+
+    body = ''
+    
+    def __init__(self, body=None):
+        super(DocTest, self).__init__()
+        if body:
+            self.body = body
+        self.setUp()
+        
+    def done(self):
+        """Test case is done; free up resources."""
+        self.tearDown()
+        
+    def update(self, body):
+        """Update database with new schema, keeping same schema version."""
+        self.body = body
+        schema_source = PREAMBLE + dedent(self.body)
+        self.sync(schema_source)
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
