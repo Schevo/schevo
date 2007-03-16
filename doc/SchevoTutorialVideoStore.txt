@@ -179,8 +179,8 @@ Add some movies
 ===============
 
 The ``schevo`` tool gives you a handy way to work with a database using a
-Python interpreter. We recommend installing IPython (just run ``"easy_install
-IPython"``) for a very comfortable experience.
+Python interpreter. We recommend installing IPython (just run 
+``"easy_install IPython"``) for a very comfortable experience.
 
 At a shell prompt, open the database::
 
@@ -249,8 +249,13 @@ Object representations
 ======================
 
 At this point, you may notice that if you print the ``movie`` object itself,
-it doesn't give you a terribly useful view from a programmer or a user
-interface's standpoint. Let's fix that.
+it gives you a label based off the first *key* you define for the extent::
+
+    >>> print movie
+    A Scanner Darkly
+
+Suppose in a user interface we would like to include the year the movie was
+released whenever a summary of a movie entity is to be displayed.
 
 Exit the Python session, then edit ``schema_001.py`` again and add the
 ``__unicode__`` method to the ``Movie`` class::
