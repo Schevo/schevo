@@ -68,7 +68,7 @@ final schema will look like:
         _key(movie, actor)
 
 If you have not done so already, set up a Schevo environment as described in
-SchevoGettingStarted.
+`SchevoGettingStarted`:trac:.
 
 This tutorial is loosely based on the `Elixir Tutorial`_.
 
@@ -148,14 +148,15 @@ schema::
 
 
 1. ``SchevoIcon`` is an *entity class*. All entity classes subclass from
-``E.Entity``. See SchevoNamespaces to find out more about the ``E`` namespace.
+``E.Entity``. See `SchevoNamespaces`:trac: to find out more about the 
+``E`` namespace.
 
 2. When the database is open, the ``SchevoIcon`` *extent* that is based on
 this class will be designated as hidden. A user interface *may* honor this and
 hide this extent from the user in some way.
 
-3. ``name`` is a Unicode string *field*. See SchevoNamespaces to read more
-about the ``f`` namespace.
+3. ``name`` is a Unicode string *field*. See `SchevoNamespaces`:trac: to read
+more about the ``f`` namespace.
 
 4. ``data`` is an Image field.
 
@@ -171,6 +172,8 @@ We've introduced some terms that are not necessarily unique to Schevo, but may
 not be familiar for those accustomed to working with SQL. Here are some basic
 definitions of those terms. We've left out some details to keep this tutorial
 simple.
+
+For more detail, visit the `SchevoGlossary`:trac:.
 
 Entity class
     A class definition in a schema that describes the fields, transactions,
@@ -256,8 +259,8 @@ Transactions
 
 All changes to a Schevo database are done via *transaction* objects that are
 responsible for ensuring that changes made to the database follow the rules
-you specify. See SchevoTransactions for further discussion about this design
-decision and the benefits you gain from it.
+you specify. See `SchevoTransactions`:trac: for further discussion about this
+design decision and the benefits you gain from it.
 
 Make a new ``create`` transaction for creating a new ``Movie`` entity. Assign
 values to fields, then tell the database to execute the transaction::
@@ -367,8 +370,8 @@ code.
 
 Schevo likes to make things easy for humans to read, so you can go beyond
 thinking of it as a "unicode representation" of something, and think of it
-instead as a singular or plural *label* of an object. See ObjectLabels for
-further discussion about this feature.
+instead as a singular or plural *label* of an object. See `ObjectLabels`:trac:
+for further discussion about this feature.
 
 
 Relationships
