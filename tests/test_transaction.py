@@ -760,6 +760,14 @@ class TestTransaction(CreatesSchema):
         db.execute(tx)
         assert result not in db.Gender
 
+    def test_delete_cannot_skip_revisions(self):
+        tx = db.User.t.create(name='foo')
+        user = db.execute(tx)
+        tx1 = user.t.update(name='bar')
+        tx2 = user.t.delete()
+        db.execute(tx1)
+        assert raises(error.TransactionExpired, db.execute, tx2)
+
     def test_nested_commit(self):
         assert len(db.User) == 0
         # Execute a transaction that fails.

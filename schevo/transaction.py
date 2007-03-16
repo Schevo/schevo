@@ -272,6 +272,7 @@ class Delete(Transaction):
     def __init__(self, entity):
         Transaction.__init__(self)
         self._entity = entity
+        self._rev = entity._rev
         self.sys._set('count', entity.sys.count)
         self.sys._set('links', entity.sys.links)
         self.sys._set('old', entity)
@@ -295,6 +296,10 @@ class Delete(Transaction):
 
     def _execute(self, db):
         entity = self._entity
+        if entity._rev != self._rev:
+            raise TransactionExpired(
+                'Original entity revision was %i, is now %i'
+                % (self._rev, entity._rev))
         deletes = self._deletes
         known_deletes = self._known_deletes
         self._before_execute(db, entity)
