@@ -4,7 +4,68 @@
 
 In this tutorial, we will show you how to create a skeleton Schevo application
 and a simple database schema. As you update the schema, we will show you how
-to explore the database using the Python interpreter.
+to explore the database using the Python interpreter.  Here is what the
+final schema will look like:
+
+.. code-block:: python
+
+    """Schema for VideoStore."""
+
+    from schevo.schema import *
+    schevo.schema.prep(locals())
+
+
+    class SchevoIcon(E.Entity):
+
+        _hidden = True
+
+        name = f.unicode()
+        data = f.image()
+
+        _key(name)
+
+
+    class Actor(E.Entity):
+
+        name = f.unicode()
+    
+        _key(name)
+
+        def x_movies(self):
+            return [casting.movie 
+                    for casting in self.m.movie_castings()]
+
+
+    class Director(E.Entity):
+
+        name = f.unicode()
+    
+        _key(name)
+
+
+    class Movie(E.Entity):
+
+        title = f.unicode()
+        description = f.memo()
+        release_date = f.date()
+        director = f.entity('Director')
+
+        _key(title)
+
+        def x_actors(self):
+            return [casting.actor 
+                    for casting in self.m.movie_castings()]
+
+        def __unicode__(self):
+            return u'%s (%i)' % (self.title, self.release_date.year)
+
+
+    class MovieCasting(E.Entity):
+
+        movie = f.entity('Movie', CASCADE)
+        actor = f.entity('Actor')
+
+        _key(movie, actor)
 
 If you have not done so already, set up a Schevo environment as described in
 SchevoGettingStarted.
