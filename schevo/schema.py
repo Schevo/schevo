@@ -24,7 +24,6 @@ __all__ = [
     'UNASSIGN',
     'UNASSIGNED',
     'extentmethod',
-    'prep',
     'schevo',  # And, indirectly, 'schevo.error'.
     'with_label',
     ]
