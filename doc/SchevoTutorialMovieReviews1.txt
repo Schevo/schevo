@@ -1,6 +1,6 @@
-==============================
- Schevo Tutorial: Video Store
-==============================
+================================
+ Schevo Tutorial: Movie Reviews
+================================
 
 In this tutorial, we will show you how to create a skeleton Schevo application
 and a simple database schema. As you update the schema, we will show you how
@@ -9,7 +9,7 @@ final schema will look like:
 
 .. code-block:: python
 
-    """Schema for VideoStore."""
+    """Schema for MovieReviews."""
 
     from schevo.schema import *
     schevo.schema.prep(locals())
@@ -70,10 +70,6 @@ final schema will look like:
 If you have not done so already, set up a Schevo environment as described in
 `SchevoGettingStarted`:trac:.
 
-This tutorial is loosely based on the `Elixir Tutorial`_.
-
-.. _Elixir Tutorial: http://elixir.ematia.de/tutorial.html
-
 This tutorial is also a doctest, so let us set up doctest environment::
 
     >>> from schevo.test import DocTest
@@ -85,14 +81,14 @@ Create a Schevo application
 At a shell prompt, use the ``paster`` tool to create a new Schevo
 application::
 
-    $ paster create --template=schevo VideoStore    # [1]
-    $ cd videostore                                 # [2]
+    $ paster create --template=schevo MovieReviews  # [1]
+    $ cd moviereviews                               # [2]
     $ python setup.py develop                       # [3]
 
-1. Create a new Schevo application called "VideoStore". A directory called
-``videostore`` will be created with the new application inside.
+1. Create a new Schevo application called "MovieReviews". A directory called
+``moviereviews`` will be created with the new application inside.
 
-2. Change into the ``videostore`` directory.
+2. Change into the ``moviereviews`` directory.
 
 3. Install it into your Python environment in development mode.
 
@@ -101,7 +97,7 @@ The default database schema
 ***************************
 
 In your favorite text editor, open the file
-``videostore/schema/schema_001.py``. This is the filename convention that
+``moviereviews/schema/schema_001.py``. This is the filename convention that
 Schevo uses when creating and evolving databases. The ``001`` represents the
 version number of the schema.
 
@@ -224,9 +220,9 @@ Create a database
 =================
 
 Save the ``schema_001.py`` file. At a shell prompt, use the ``schevo`` tool to
-create a new database with the video store schema::
+create a new database with the application's schema::
 
-    $ schevo db create --app=videostore sample.db
+    $ schevo db create --app=moviereviews sample.db
     
 That's it!
 
@@ -340,7 +336,7 @@ Exit the Python session, then edit ``schema_001.py`` again and add the
 At a shell prompt, update the existing database using the new schema, then
 open a Python session again::
 
-    $ schevo update --app=videostore sample.db
+    $ schevo update --app=moviereviews sample.db
     $ schevo shell sample.db
 
 For the doctest, let us perform the equivalent operation:
@@ -468,7 +464,7 @@ Following relationships
 Create a new database with sample data, deleting the old one first, then open
 the database in a Python session::
 
-    $ schevo db create --app=videostore --delete --sample sample.db
+    $ schevo db create --app=moviereviews --delete --sample sample.db
     $ schevo shell sample.db
     
 For the doctest, let us do the equivalent::
@@ -571,7 +567,7 @@ Add a new method to the ``Movie`` class::
 Close the Python session, update the database so its schema has the new
 methods available, then open a Python session::
 
-    $ schevo db update --app=videostore sample.db
+    $ schevo db update --app=moviereviews sample.db
     $ schevo shell sample.db
 
 For the doctest, do the equivalent::
