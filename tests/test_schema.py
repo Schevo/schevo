@@ -175,6 +175,25 @@ class TestSchema(CreatesSchema):
                 _index(bar)
             '''
         assert raises(SchemaError, DocTest, body)
+        # Also make sure it works when subclassing.
+        body = '''
+            class Foo(E.Entity):
+                bar = f.integer()
+                _key(bar)
+                
+            class Foo(E.Foo):
+                _index('bar')
+            '''
+        assert raises(SchemaError, DocTest, body)
+        body = '''
+            class Foo(E.Entity):
+                bar = f.integer()
+                _index(bar)
+                
+            class Foo(E.Foo):
+                _key('bar')
+            '''
+        assert raises(SchemaError, DocTest, body)
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
