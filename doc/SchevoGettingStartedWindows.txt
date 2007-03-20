@@ -10,21 +10,15 @@ systems:
 * Microsoft Windows XP SP2 or higher.
 
 
-Install Python 2.4 or Python 2.5
-================================
+Install Python
+==============
 
-1. Download the Windows installer for the version of Python you desire.
-
-    a. For Python 2.4, visit the `2.4.4 release page
-       <http://www.python.org/download/releases/2.4.4/>`__ and
-       download the ``python-2.4.4.msi`` file.
+1. Download the Windows installer for Python 2.4 by visiting the
+   `2.4.4 release page
+   <http://www.python.org/download/releases/2.4.4/>`__ and downloading
+   the ``python-2.4.4.msi`` file.
     
-    b. For Python 2.5, visit the `2.5 release page
-       <http://www.python.org/download/releases/2.5/>`__ and download
-       the ``python-2.5.msi`` file.
-
-2. Open the file you downloaded in step 1 to start the installation
-   process.
+2. Open the ``msi`` file to start the installation process.
 
 3. Step through the Python installer, accepting the default values for
    each step.
@@ -32,9 +26,9 @@ Install Python 2.4 or Python 2.5
 4. Add the following directories to your `PATH` environment variable
    (see `Setting Environment Variables`_ below):
 
-   * ``c:\python24`` (or ``c:\python25`` if you installed Python 2.5)
+   * ``c:\python24``
 
-   * ``c:\python24\scripts`` (or ``c:\python25\scripts``)
+   * ``c:\python24\scripts``
 
 5. Test your Python installation by clicking *Start*, *Run...*, and
    entering ``cmd`` to start a command prompt. When the command prompt
@@ -53,9 +47,8 @@ Install `pywin32` extensions
 
 1. Visit the `pywin32 download page
    <http://sourceforge.net/project/showfiles.php?group_id=78018>`__
-   and download the most recent package that ends with ``py2.4.exe``
-   (or the one that ends with ``py2.5.exe`` if you are using Python
-   2.5).  For example, at the time of this writing that file would be
+   and download the most recent package that ends with ``py2.4.exe``.
+   For example, at the time of this writing that file would be
    ``pywin32-210.win32-py2.4.exe``.
 
 2. Open the file you downloaded in step 1 to start the installation
@@ -102,10 +95,9 @@ order for Schevo to build C extensions.
 
    * ``c:\mingw\bin``
 
-5. Create or edit the ``c:\python24\lib\distutils\distutils.cfg`` (or
-   ``c:\python25\lib\distutils\distutils.cfg`` file) using Notepad or
-   your favorite text editor.  Add the following to the file and save
-   it::
+5. Create or edit the ``c:\python24\lib\distutils\distutils.cfg`` file
+   using Notepad or your favorite text editor.  Add the following to
+   the file and save it::
 
      [build]
      compiler=mingw32
@@ -116,7 +108,7 @@ Download workingenv and set up an environment for Schevo
 
 1. Download `workingenv.py
    <http://svn.colorstudy.com/home/ianb/workingenv/workingenv.py>`__
-   to ``c:\python24\scripts`` (or ``c:\python25\scripts``).
+   to ``c:\python24\scripts``.
 
 2. If it doesn't exist, create a ``c:\env`` folder using Windows
    Explorer or a command prompt.
@@ -133,8 +125,6 @@ In a command prompt, run these commands to activate the Schevo
 environment and change to its source directory::
 
     c:\env\schevo\bin\activate.bat
-    c:
-    cd \env\schevo\src
 
 You'll see ``(schevo)`` added to your prompt.  Repeat this section
 every time you want to access the ``schevo`` working environment.

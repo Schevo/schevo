@@ -25,10 +25,6 @@ packages and compiler tools::
 
     $ sudo aptitude install build-essential python2.4-dev
 
-If you want to work with Python 2.5, and your distribution includes it
-(modern Ubuntu distributions do), replace ``python2.4-dev`` above with
-``python2.5-dev``.
-
 If you do not have administrator privileges, request to have them
 installed (or the equivalents on the operating system you are using).
 
