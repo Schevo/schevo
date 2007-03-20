@@ -3,8 +3,9 @@
 ===========================================
 
 
-Below, we describe in detail how to install Schevo for Microsoft Windows.
-The instructions have been tested on the following operating systems:
+Below, we describe in detail how to install Schevo for Microsoft
+Windows.  The instructions have been tested on the following operating
+systems:
 
 * Microsoft Windows XP SP2 or higher.
 
@@ -12,34 +13,33 @@ The instructions have been tested on the following operating systems:
 Install Python 2.4 or Python 2.5
 ================================
 
-**Required** 
-
 1. Download the Windows installer for the version of Python you desire.
 
-    a. For Python 2.4, visit the `2.4.4 release page 
-       <http://www.python.org/download/releases/2.4.4/>`__ and download
-       the ``python-2.4.4.msi`` file.
+    a. For Python 2.4, visit the `2.4.4 release page
+       <http://www.python.org/download/releases/2.4.4/>`__ and
+       download the ``python-2.4.4.msi`` file.
     
     b. For Python 2.5, visit the `2.5 release page
        <http://www.python.org/download/releases/2.5/>`__ and download
        the ``python-2.5.msi`` file.
 
-2. Open the file you downloaded in step 1 to start the installation process.
+2. Open the file you downloaded in step 1 to start the installation
+   process.
 
-3. Step through the Python installer, accepting the default values for each
-   step.
+3. Step through the Python installer, accepting the default values for
+   each step.
 
-4. Add the following directories to your `PATH` environment variable (see
-   `Setting Environment Variables`_ below):
+4. Add the following directories to your `PATH` environment variable
+   (see `Setting Environment Variables`_ below):
 
-   * ``c:\python24``  (or ``c:\python25`` if you installed Python 2.5)
+   * ``c:\python24`` (or ``c:\python25`` if you installed Python 2.5)
 
-   * ``c:\python24\scripts``  (or ``c:\python25\scripts``)
+   * ``c:\python24\scripts`` (or ``c:\python25\scripts``)
 
-5. Test your Python installation by clicking `Start`, `Run...`, and entering
-   ``cmd`` to start a command prompt. When the command prompt window appears,
-   enter ``python``. You should the be greeted with the Python interactive
-   shell, which will look similar to this::
+5. Test your Python installation by clicking *Start*, *Run...*, and
+   entering ``cmd`` to start a command prompt. When the command prompt
+   window appears, enter ``python``. You should the be greeted with
+   the Python interactive shell, which will look similar to this::
 
      Python 2.4.4 (#71, Oct 18 2006, 08:34:43) ...
      Type "help", "copyright", "credits", or "license" ...
@@ -51,13 +51,11 @@ Install Python 2.4 or Python 2.5
 Install `pywin32` extensions
 ============================
 
-**Required** 
-
 1. Visit the `pywin32 download page
    <http://sourceforge.net/project/showfiles.php?group_id=78018>`__
    and download the most recent package that ends with ``py2.4.exe``
-   (or the one that ends with ``py2.5.exe`` if you are using Python 2.5).
-   For example, at the time of this writing that file would be
+   (or the one that ends with ``py2.5.exe`` if you are using Python
+   2.5).  For example, at the time of this writing that file would be
    ``pywin32-210.win32-py2.4.exe``.
 
 2. Open the file you downloaded in step 1 to start the installation
@@ -74,14 +72,14 @@ Install `MinGW` compiler
 This section is optional for those who already have a compiler
 installed on their computer that is supported by Python 2.4.
 
-If you do not fall under that category, you must install MinGW in order for
-Schevo to build C extensions.
+If you do not fall under that category, you must install MinGW in
+order for Schevo to build C extensions.
 
 1. Visit the `MinGW download page
    <http://sourceforge.net/project/showfiles.php?group_id=2435>`__ and
-   download the latest ``MinGW-#.#.#.exe`` file that appears underneath
-   the *Current* section.  For example, at the time of this writing that
-   file would be ``MinGW-5.1.3.exe``.
+   download the latest ``MinGW-#.#.#.exe`` file that appears
+   underneath the *Current* section.  For example, at the time of this
+   writing that file would be ``MinGW-5.1.3.exe``.
 
 2. Open the file you downloaded in step 1 to start the installation
    process.
@@ -99,15 +97,15 @@ Schevo to build C extensions.
      
      * MinGW Make
      
-4. Add the following directory to your `PATH` environment variable (see
-   `Setting Environment Variables`_ below):
+4. Add the following directory to your `PATH` environment variable
+   (see `Setting Environment Variables`_ below):
 
    * ``c:\mingw\bin``
 
-5. Create or edit the ``c:\python24\lib\distutils\distutils.cfg`` 
-   (or ``c:\python25\lib\distutils\distutils.cfg`` file)
-   using Notepad or your favorite text editor.  Add the following to
-   the file and save it::
+5. Create or edit the ``c:\python24\lib\distutils\distutils.cfg`` (or
+   ``c:\python25\lib\distutils\distutils.cfg`` file) using Notepad or
+   your favorite text editor.  Add the following to the file and save
+   it::
 
      [build]
      compiler=mingw32
@@ -116,12 +114,12 @@ Schevo to build C extensions.
 Download workingenv and set up an environment for Schevo
 ========================================================
 
-1. Download `workingenv.py 
-   <http://svn.colorstudy.com/home/ianb/workingenv/workingenv.py>`__ to
-   ``c:\python24\scripts`` (or ``c:\python25\scripts``).
+1. Download `workingenv.py
+   <http://svn.colorstudy.com/home/ianb/workingenv/workingenv.py>`__
+   to ``c:\python24\scripts`` (or ``c:\python25\scripts``).
 
-2. If it doesn't exist, create a ``c:\env`` folder using Windows Explorer or a
-   command prompt.
+2. If it doesn't exist, create a ``c:\env`` folder using Windows
+   Explorer or a command prompt.
 
 3. In a command prompt, create the environment::
 
@@ -131,15 +129,15 @@ Download workingenv and set up an environment for Schevo
 Activate the Schevo environment
 ===============================
 
-In a command prompt, run these commands to activate the Schevo environment
-and change to its source directory::
+In a command prompt, run these commands to activate the Schevo
+environment and change to its source directory::
 
     c:\env\schevo\bin\activate.bat
     c:
     cd \env\schevo\src
 
-You'll see ``(schevo)`` added to your prompt.  Repeat this section every time
-you want to access the ``schevo`` working environment.
+You'll see ``(schevo)`` added to your prompt.  Repeat this section
+every time you want to access the ``schevo`` working environment.
 
 
 Installing Schevo

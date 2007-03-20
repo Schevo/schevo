@@ -10,14 +10,25 @@ all the way to turning it into a usable application.
 Movie Reviews
 =============
 
-List of articles:
+This tutorial shows you how to use Schevo to build a movie rating
+database.
 
-`SchevoTutorialMovieReviews1`:trac:
+* Session 1 (`SchevoTutorialMovieReviews1`:trac:) covers the following:
+
     * Creating a skeleton for a new Schevo app
+
     * Adding entity classes to the schema
+
     * Creating and updating Schevo databases
-    * Use of transaction methods and objects to create and update entities
+
+    * Use of transaction methods and objects to create and update
+      entities
+
     * Defining human-friendly summaries of entities
+
     * Adding sample data to a database schema
-    * Defining and following relationships that Schevo maintains for you
+
+    * Defining and following relationships that Schevo maintains for
+      you
+
     * Extending the API of a database using extension methods
