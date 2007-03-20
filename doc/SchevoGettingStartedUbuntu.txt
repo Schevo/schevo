@@ -1,0 +1,75 @@
+==========================================
+ Getting Started with Schevo Using Ubuntu
+==========================================
+
+
+Below, we describe in detail how to install Schevo for Ubuntu Linux and other
+Debian-based Linux distributions. The instructions have been tested on the
+following operating systems:
+
+* Ubuntu Linux 6.10
+* Ubuntu Linux 7.04 prerelease
+
+Users of other UNIX-derived or UNIX-like operating systems not listed above
+can use this document as a guideline.
+
+Mac users, see `SchevoGettingStartedMacOsx`:trac:.
+
+
+Install Python packages
+=======================
+
+Run the following in a terminal to install the required Python packages and
+compiler tools::
+
+    $ sudo aptitude install build-essential python2.4-dev subversion
+
+If you want to work with Python 2.5, and your distribution includes it
+(modern Ubuntu distributions do), replace ``python2.4-dev`` above with
+``python2.5-dev``.
+
+If you do not have administrator privileges, request to have them installed
+(or the equivalents on the operating system you are using).
+
+
+Download workingenv and set up an environment for Schevo
+========================================================
+
+1. Download `workingenv.py 
+   <http://svn.colorstudy.com/home/ianb/workingenv/workingenv.py>`__ to
+   your home directory.
+
+2. If it doesn't exist, create a directory named ``env`` in your home
+   directory using a terminal or your favorite file manager.
+
+3. In a terminal, create the environment::
+
+    $ python ~/workingenv.py ~/env/schevo
+
+
+Activate the Schevo environment
+===============================
+
+In a terminal, run these commands to activate the Schevo environment and
+change to its source directory::
+
+    $ source ~/env/schevo/bin/activate
+    $ cd ~/env/schevo/src
+
+You'll see ``(schevo)`` added to your prompt.  Repeat this section every time
+you want to access the ``schevo`` working environment.
+
+
+Installing Schevo
+=================
+
+In a command prompt, use *EasyInstall* to install the latest release
+of Schevo::
+
+    easy_install Schevo
+    
+
+What to do after Schevo is installed
+====================================
+
+Take a tour by choosing one of the `SchevoTutorials`:trac:.

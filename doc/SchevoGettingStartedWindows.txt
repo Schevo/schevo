@@ -1,0 +1,197 @@
+===========================================
+ Getting Started with Schevo using Windows
+===========================================
+
+
+Below, we describe in detail how to install Schevo for Microsoft Windows.
+The instructions have been tested on the following operating systems:
+
+* Microsoft Windows XP SP2 or higher.
+
+
+Install Python 2.4 or Python 2.5
+================================
+
+**Required** 
+
+1. Download the Windows installer for the version of Python you desire.
+
+    a. For Python 2.4, visit the `2.4.4 release page 
+       <http://www.python.org/download/releases/2.4.4/>`__ and download
+       the ``python-2.4.4.msi`` file.
+    
+    b. For Python 2.5, visit the `2.5 release page
+       <http://www.python.org/download/releases/2.5/>`__ and download
+       the ``python-2.5.msi`` file.
+
+2. Open the file you downloaded in step 1 to start the installation process.
+
+3. Step through the Python installer, accepting the default values for each
+   step.
+
+4. Add the following directories to your `PATH` environment variable (see
+   `Setting Environment Variables`_ below):
+
+   * ``c:\python24``  (or ``c:\python25`` if you installed Python 2.5)
+
+   * ``c:\python24\scripts``  (or ``c:\python25\scripts``)
+
+5. Test your Python installation by clicking `Start`, `Run...`, and entering
+   ``cmd`` to start a command prompt. When the command prompt window appears,
+   enter ``python``. You should the be greeted with the Python interactive
+   shell, which will look similar to this::
+
+     Python 2.4.4 (#71, Oct 18 2006, 08:34:43) ...
+     Type "help", "copyright", "credits", or "license" ...
+     >>> 
+
+   To exit the Python shell, press Ctrl-Z and press Enter.
+
+
+Install `pywin32` extensions
+============================
+
+**Required** 
+
+1. Visit the `pywin32 download page
+   <http://sourceforge.net/project/showfiles.php?group_id=78018>`__
+   and download the most recent package that ends with ``py2.4.exe``
+   (or the one that ends with ``py2.5.exe`` if you are using Python 2.5).
+   For example, at the time of this writing that file would be
+   ``pywin32-210.win32-py2.4.exe``.
+
+2. Open the file you downloaded in step 1 to start the installation
+   process.
+
+3. Step through the installer, accepting default values for each step.
+
+
+Install `MinGW` compiler
+========================
+
+**Not required** unless you are working on the code for Schevo itself.
+
+This section is optional for those who already have a compiler
+installed on their computer that is supported by Python 2.4.
+
+If you do not fall under that category, you must install MinGW in order for
+Schevo to build C extensions.
+
+1. Visit the `MinGW download page
+   <http://sourceforge.net/project/showfiles.php?group_id=2435>`__ and
+   download the latest ``MinGW-#.#.#.exe`` file that appears underneath
+   the *Current* section.  For example, at the time of this writing that
+   file would be ``MinGW-5.1.3.exe``.
+
+2. Open the file you downloaded in step 1 to start the installation
+   process.
+
+3. Step through the installer, keeping all values at their defaults.
+   When you get to the **Select Components** page, do the following:
+
+   * Choose `Custom` type of installation.
+
+   * Place a check next to these required components.
+
+     * MinGW base tools
+     
+     * g++ compiler
+     
+     * MinGW Make
+     
+4. Add the following directory to your `PATH` environment variable (see
+   `Setting Environment Variables`_ below):
+
+   * ``c:\mingw\bin``
+
+5. Create or edit the ``c:\python24\lib\distutils\distutils.cfg`` 
+   (or ``c:\python25\lib\distutils\distutils.cfg`` file)
+   using Notepad or your favorite text editor.  Add the following to
+   the file and save it::
+
+     [build]
+     compiler=mingw32
+
+
+Download workingenv and set up an environment for Schevo
+========================================================
+
+1. Download `workingenv.py 
+   <http://svn.colorstudy.com/home/ianb/workingenv/workingenv.py>`__ to
+   ``c:\python24\scripts`` (or ``c:\python25\scripts``).
+
+2. If it doesn't exist, create a ``c:\env`` folder using Windows Explorer or a
+   command prompt.
+
+3. In a command prompt, create the environment::
+
+    python c:\python24\scripts\workingenv.py --site-packages c:\env\schevo
+
+
+Activate the Schevo environment
+===============================
+
+In a command prompt, run these commands to activate the Schevo environment
+and change to its source directory::
+
+    c:\env\schevo\bin\activate.bat
+    c:
+    cd \env\schevo\src
+
+You'll see ``(schevo)`` added to your prompt.  Repeat this section every time
+you want to access the ``schevo`` working environment.
+
+
+Installing Schevo
+=================
+
+In a command prompt, use *EasyInstall* to install the latest release
+of Schevo::
+
+    easy_install Schevo
+    
+
+What to do after Schevo is installed
+====================================
+
+Take a tour by choosing one of the `SchevoTutorials`:trac:.
+
+
+Setting Environment Variables
+=============================
+
+When following the instructions below, you will often be asked to set
+environment variables.
+
+This is how you do so using Microsoft XP:
+
+1. Right-click your `My Computer` icon.
+
+2. Choose `Properties`.
+
+3. Click the `Advanced` tab.
+
+4. Click the `Environment Variables` button.
+
+5. Alter environment variables as needed in the `User variables`
+   section.
+
+   * To create a new variable, click the `New` button, enter the name
+     and value of the variable, then click `OK`.
+
+   * To edit an existing variable, click on it, click the `Edit`
+     button, alter the name and/or value of the variable, then click
+     `OK`.
+
+   * If a variable contains paths, each path must be separated by a
+     semicolon ";" character.
+
+   * If you are creating the `PATH` variable for the first time, be
+     sure to place the special value ``%PATH%`` as the first value.
+     For instance, if adding the ``c:\python24`` directory to a
+     newly-created `PATH` variable, enter ``%PATH%;c:\python24`` as
+     the value.
+
+6. Click `OK`.
+
+7. Click `OK`.
