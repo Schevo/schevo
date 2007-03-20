@@ -5,7 +5,6 @@ For copyright, license, and warranty, see bottom of file.
 
 import os
 import sys
-import unittest
 
 from schevo import database
 from schevo.lib import module

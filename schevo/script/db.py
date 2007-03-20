@@ -3,7 +3,7 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
-from schevo.script.command import Command, CommandSet
+from schevo.script.command import CommandSet
 from schevo.script import (
     db_create,
     db_inject,

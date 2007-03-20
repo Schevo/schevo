@@ -8,14 +8,14 @@ from schevo.lib import optimize
 
 from schevo import base
 from schevo.change import summarize
-from schevo.constant import CASCADE, DEFAULT, RESTRICT, UNASSIGN, UNASSIGNED
-from schevo.error import (KeyCollision, DatabaseMismatch, DeleteRestricted,
+from schevo.constant import CASCADE, DEFAULT, UNASSIGN, UNASSIGNED
+from schevo.error import (DatabaseMismatch, DeleteRestricted,
                           TransactionExpired, TransactionFieldsNotChanged, 
                           TransactionNotExecuted)
 from schevo import field
 from schevo.field import not_fget
 from schevo.fieldspec import FieldMap, FieldSpecMap
-from schevo.label import label, label_from_name
+from schevo.label import label
 from schevo.meta import schema_metaclass
 import schevo.namespace
 from schevo.namespace import NamespaceExtension

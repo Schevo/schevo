@@ -11,7 +11,6 @@ import schevo.icon
 import schevo.schema
 
 from schevo.script.command import Command
-from schevo.script.db_evolve import evolve_db
 from schevo.script import opt
 from schevo.script.path import package_path
 
@@ -83,7 +82,7 @@ class Update(Command):
             schema_source = schevo.schema.read(schema_path, version=db.version)
         except schevo.error.SchemaFileIOError:
             parser.error('Could not read schema source for version %i.'
-                         % version)
+                         % db.version)
         print 'Syncing database with new schema source...'
         db._sync(schema_source, initialize=False)
         # Import icons.

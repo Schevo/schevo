@@ -160,7 +160,7 @@ class EntityMeta(type):
                     oid = self._oid
                     try:
                         value = db._entity_field(extent_name, oid, field_name)
-                    except schevo.error.EntityDoesNotExist:
+                    except EntityDoesNotExist:
                         raise
                     except KeyError:  # XXX This needs to be more specific.
                         value = UNASSIGNED

@@ -50,7 +50,7 @@ class Plugin(object):
             if not db.SchevoIcon.find(name=name):
                 existing = db.SchevoIcon.findone(name=name)
                 if existing is not None:
-                    if tx.data != png:
+                    if existing.data != png:
                         tx = existing.t.update(data=png)
                         db.execute(tx)
                 else:

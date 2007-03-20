@@ -6,8 +6,6 @@ For copyright, license, and warranty, see bottom of file.
 import sys
 from schevo.lib import optimize
 
-import os
-## import pkg_resources
 import random
 
 import louie
@@ -1093,27 +1091,6 @@ class Database(base.Database):
 
     def _import_from_source(self, source, module_name):
         """Import a schema module from a string containing source code."""
-        # Look through source lines and find imports.
-##         for line in source.splitlines():
-##             if line.startswith('_import('):
-##                 # XXX: This algorithm could be much more elegant.
-##                 #
-##                 # Split by comma.
-##                 # "_import('Requirement', 'name', 2, ...)" ->
-##                 # ["_import('Requirement'",
-##                 #  " 'name'",
-##                 #  " 2",
-##                 #  " ...)",
-##                 #  ]
-##                 parts = line.strip().split(',')
-##                 if parts and parts[0].startswith('_import('):
-##                     part0parts = parts[0].split("'")
-##                     requirement = part0parts[1]
-##                     part1parts = parts[1].split("'")
-##                     name = part1parts[1]
-##                     part2parts = parts[2].split(')')
-##                     version = int(part2parts[0])
-##                     self._import_named_schema(requirement, name, version)
         # Now that prerequisites are loaded, load this schema.
         schema_module = module.from_string(source, module_name)
         # Remember the schema module.
@@ -1123,29 +1100,6 @@ class Database(base.Database):
         schema_module.db = self
         # Return the schema module.
         return schema_module
-
-##     def _import_named_schema(self, requirement, name, version):
-##         """Import a schema module from a named exported schema."""
-##         # Read the module source.
-##         dist = pkg_resources.get_distribution(requirement)
-##         entry_point = dist.get_entry_info('schevo.schema_export', name)
-##         if entry_point:
-##             pkg_name = entry_point.module_name
-##             __import__(pkg_name)
-##             pkg = sys.modules[pkg_name]
-##             pkg_dirname = os.path.dirname(pkg.__file__)
-##             # Import from source.
-##             schema_filename = os.path.join(
-##                 pkg_dirname, 'schema_%03i.py' % version)
-##             source = file(schema_filename, 'rU').read()
-##             schema_name = schema_counter.next_schema_name()
-##             schema_module = self._import_from_source(source, schema_name)
-##             self._imported_schemata[
-##                 (requirement, name, version)] = schema_module
-##             return schema_module
-##         else:
-##             # XXX: raise exception?
-##             return None
 
     def _initialize(self):
         """Populate the database with initial data."""

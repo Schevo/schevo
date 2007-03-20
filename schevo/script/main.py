@@ -6,7 +6,6 @@ For copyright, license, and warranty, see bottom of file.
 import pkg_resources
 
 from schevo.script.command import CommandSet
-from schevo.script import db, shell
 
 
 # Get version information from installed package.

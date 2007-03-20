@@ -10,7 +10,6 @@ import md5
 import random
 import sys
 import time
-import types
 
 from schevo import base
 from schevo.constant import ANY, RESTRICT, UNASSIGNED
