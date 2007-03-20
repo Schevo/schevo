@@ -37,6 +37,8 @@ class Plugin(object):
         icon_path = str(icon_path)
         db = self.db
         mask = os.path.join(icon_path, '*.png')
+        # XXX: Roll this up in a transaction, and get some test coverage
+        # for it.
         for filename in glob.glob(mask):
             # Strip extension.
             name, ext = os.path.splitext(os.path.basename(filename))
@@ -46,10 +48,14 @@ class Plugin(object):
             f.close()
             # Store it in the SchevoIcon extent.
             if not db.SchevoIcon.find(name=name):
-                tx = db.SchevoIcon.t.create_or_update()
-                tx.name = name
-                tx.data = png
-                icon = db.execute(tx)
+                existing = db.SchevoIcon.findone(name=name)
+                if existing is not None:
+                    if tx.data != png:
+                        tx = existing.t.update(data=png)
+                        db.execute(tx)
+                else:
+                    tx = db.SchevoIcon.t.create(name=name, data=png)
+                    db.execute(tx)
 
     def icon(self, name, use_default=True):
         icon = self.db.SchevoIcon.findone(name=name)

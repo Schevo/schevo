@@ -311,18 +311,6 @@ class TestEntityExtent(CreatesSchema):
         assert user_foo == user_foo2
         assert user_foo2.sys.rev == 0
 
-    def test_no_key_conflicts_on_create_or_update(self):
-        # Create an entity.
-        tx = db.User.t.create(name='foo', age=5)
-        user_foo = db.execute(tx)
-        # Attempting to create-or-update another user named 'foo'
-        # results in the original user, updated with the newest age.
-        tx = db.User.t.create_or_update(name='foo', age=6)
-        user_foo2 = db.execute(tx)
-        assert user_foo == user_foo2
-        assert user_foo2.sys.rev == 1
-        assert user_foo2.age == 6
-
     def test_key_conflicts_on_update(self):
         extent = db.User
         # Create an entity.

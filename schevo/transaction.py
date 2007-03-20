@@ -155,7 +155,6 @@ class Combination(Transaction):
 
 _Create_Standard = 0
 _Create_If_Necessary = 1
-_Create_Or_Update = 2
 
 class Create(Transaction):
     """Create a new entity instance."""
@@ -249,9 +248,6 @@ class Create(Transaction):
                 # Entity already exists.
                 self._oid = entity._oid
                 if style == _Create_If_Necessary:
-                    return entity
-                elif style == _Create_Or_Update:
-                    entity = db.execute(entity.t.update(**field_value_map))
                     return entity
                 else:
                     raise RuntimeError('_style is not set correctly.')

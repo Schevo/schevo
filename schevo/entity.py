@@ -298,8 +298,7 @@ class Entity(base.Entity, LabelMixin):
     #
     # XXX: _hidden_* defaults in schevo.schema.hide function are used
     # XXX: if _hide is called during Entity subclass creation.
-    _hidden_actions = set(['create_if_necessary', 'create_or_update',
-                           'generic_update'])
+    _hidden_actions = set(['create_if_necessary', 'generic_update'])
     _hidden_queries = set([])
     _hidden_views = set()
 
@@ -430,14 +429,6 @@ class Entity(base.Entity, LabelMixin):
         """Return a Create transaction that creates if necessary."""
         tx = cls._Create(*args, **kw)
         tx._style = transaction._Create_If_Necessary
-        return tx
-
-    @classmethod
-    @with_label(u'Create Or Update')
-    def t_create_or_update(cls, **kw):
-        """Return a Create transaction that creates or updates."""
-        tx = cls._Create(**kw)
-        tx._style = transaction._Create_Or_Update
         return tx
 
     @with_label(u'Delete')
