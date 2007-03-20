@@ -79,7 +79,8 @@ environment::
 Create a Schevo application
 ===========================
 
-At a shell prompt, use the ``paster`` tool to create a new Schevo
+At a shell prompt, change to a directory that you want your new
+application in, then use the ``paster`` tool to create a new Schevo
 application::
 
     $ paster create --template=schevo MovieReviews  # [1]

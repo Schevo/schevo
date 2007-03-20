@@ -58,7 +58,6 @@ In a terminal, run these commands to activate the Schevo environment
 and change to its source directory::
 
     $ source ~/env/schevo/bin/activate
-    $ cd ~/env/schevo/src
 
 You'll see ``(schevo)`` added to your prompt.  Repeat this section
 every time you want to access the ``schevo`` working environment.
