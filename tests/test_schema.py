@@ -7,8 +7,9 @@ import unittest
 
 from schevo.lib import module
 import schevo.database
+from schevo.error import SchemaError
 import schevo.schema
-from schevo.test import CreatesSchema
+from schevo.test import CreatesSchema, DocTest, raises
 
 
 BODY = """
@@ -165,6 +166,15 @@ class TestSchema(CreatesSchema):
         assert hasattr(d.t, 'tx_with_fields')
         tx = d.t.tx_with_fields()
         assert isinstance(tx, d.T.TxWithFields)
+        
+    def test_duplicate_key_and_index_declaration_is_a_schema_error(self):
+        body = '''
+            class Foo(E.Entity):
+                bar = f.integer()
+                _key(bar)
+                _index(bar)
+            '''
+        assert raises(SchemaError, DocTest, body)
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

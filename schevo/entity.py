@@ -12,7 +12,7 @@ import inspect
 from schevo import base
 from schevo.constant import UNASSIGNED
 from schevo.error import (
-    EntityDoesNotExist, ExtentDoesNotExist, FieldDoesNotExist)
+    EntityDoesNotExist, ExtentDoesNotExist, FieldDoesNotExist, SchemaError)
 from schevo.fieldspec import field_spec_from_class
 from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import (
@@ -90,8 +90,10 @@ class EntityMeta(type):
         cls.setup_key_spec()
         # Setup index spec.
         cls.setup_index_spec()
+        # Keep them from clashing.
+        cls.validate_key_and_index_specs()
         if not class_name.startswith('_'):
-            # Assign labels.
+            # Assign labels if class name is "public".
             cls.assign_labels(class_name, class_dict)
         # Remember queries for the EntityQueries namespace.
         cls._q_names = cls.get_method_names('q_')
@@ -252,6 +254,14 @@ class EntityMeta(type):
                     for entity_name in FieldClass.allow:
                         spec = relationships.setdefault(entity_name, [])
                         spec.append((class_name, field_name))
+
+    def validate_key_and_index_specs(cls):
+        """Raise a `SchemaError` if there are any shared key/index specs."""
+        key_set = set(cls._key_spec)
+        index_set = set(cls._index_spec)
+        duplicates = key_set.intersection(index_set)
+        if len(duplicates):
+            raise SchemaError('Cannot use same spec for both key and index.')
 
 
 class Entity(base.Entity, LabelMixin):
