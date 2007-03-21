@@ -57,52 +57,6 @@ Install `pywin32` extensions
 3. Step through the installer, accepting default values for each step.
 
 
-Install `MinGW` compiler
-========================
-
-**Not required** unless you are working on the code for Schevo itself.
-
-This section is optional for those who already have a compiler
-installed on their computer that is supported by Python 2.4.
-
-If you do not fall under that category, you must install MinGW in
-order for Schevo to build C extensions.
-
-1. Visit the `MinGW download page
-   <http://sourceforge.net/project/showfiles.php?group_id=2435>`__ and
-   download the latest ``MinGW-#.#.#.exe`` file that appears
-   underneath the *Current* section.  For example, at the time of this
-   writing that file would be ``MinGW-5.1.3.exe``.
-
-2. Open the file you downloaded in step 1 to start the installation
-   process.
-
-3. Step through the installer, keeping all values at their defaults.
-   When you get to the **Select Components** page, do the following:
-
-   * Choose `Custom` type of installation.
-
-   * Place a check next to these required components.
-
-     * MinGW base tools
-     
-     * g++ compiler
-     
-     * MinGW Make
-     
-4. Add the following directory to your `PATH` environment variable
-   (see `Setting Environment Variables`_ below):
-
-   * ``c:\mingw\bin``
-
-5. Create or edit the ``c:\python24\lib\distutils\distutils.cfg`` file
-   using Notepad or your favorite text editor.  Add the following to
-   the file and save it::
-
-     [build]
-     compiler=mingw32
-
-
 Download workingenv and set up an environment for Schevo
 ========================================================
 
