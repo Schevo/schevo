@@ -1,4 +1,4 @@
-__version__ = '3.0'
+__version__ = '3.1a1'
 
 from setuptools import setup, Extension, find_packages
 import sys, os
