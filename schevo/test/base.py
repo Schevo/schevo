@@ -9,6 +9,7 @@ import sys
 from schevo import database
 from schevo.lib import module
 import schevo.schema
+import schevo.trace
 from schevo.script.path import package_path
 
 from textwrap import dedent
@@ -32,6 +33,22 @@ def raises(exc_type, fn, *args, **kw):
         return True
     else:
         raise AssertionError('Call did not raise an exception')
+
+
+def tron(monitor_level=3):
+    """Turn trace monitoring on.
+
+    Automatically injected into global namespace of tests when run.
+    """
+    schevo.trace.monitor_level = monitor_level
+
+
+def troff():
+    """Turn trace monitoring off.
+
+    Automatically injected into global namespace of tests when run.
+    """
+    schevo.trace.monitor_level = 0
 
 
 _db_cache = {
@@ -71,6 +88,12 @@ class CreatesDatabase(BaseTest):
     def setUp(self):
         self.suffixes = set()
         self.open()
+        # Also set the global 'tron' and 'troff' variables in our
+        # class's module namespace for convenience.
+        modname = self.__class__.__module__
+        mod = sys.modules[modname]
+        mod.tron = tron
+        mod.troff = troff
 
     def tearDown(self):
         for suffix in list(self.suffixes):
@@ -264,8 +287,8 @@ class EvolvesSchemata(CreatesDatabase):
                     raise
             schemata.append(source)
         return schemata
-        
-        
+
+
 class DocTest(CreatesSchema):
     """Doctest-helping test class.
 
@@ -297,17 +320,17 @@ class DocTest(CreatesSchema):
     """
 
     body = ''
-    
+
     def __init__(self, body=None):
         super(DocTest, self).__init__()
         if body:
             self.body = body
         self.setUp()
-        
+
     def done(self):
         """Test case is done; free up resources."""
         self.tearDown()
-        
+
     def update(self, body):
         """Update database with new schema, keeping same schema version."""
         self.body = body
