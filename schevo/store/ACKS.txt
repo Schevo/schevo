@@ -20,9 +20,9 @@ ZODB/ZEO.
 
 Durus was developed by the MEMS Exchange software team:
 
-Anton Benard 
-David Binger 
-Roger Masse 
+Anton Benard
+David Binger
+Roger Masse
 Neil Schemenauer
 
 Neil initiated work on Durus and made it fast.

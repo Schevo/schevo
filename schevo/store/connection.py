@@ -82,7 +82,7 @@ class Connection(ConnectionBase):
 
     def set_cache_size(self, size):
         """(size:int)
-        Set the target size for the cache.        
+        Set the target size for the cache.
         """
         self.cache.set_size(size)
 

@@ -25,7 +25,7 @@ DEFAULT_PORT = 2972
 def recv(s, n):
     """(s:socket, n:int) -> str
     Call the recv() method on the socket, repeating as required until n bytes
-    are received.  
+    are received.
     """
     data = []
     while n > 0:
@@ -376,7 +376,7 @@ class StorageServer:
         if client_protocol != self.protocol:
             raise ClientError("Protocol not supported.")
 
-def wait_for_server(host=DEFAULT_HOST, port=DEFAULT_PORT, maxtries=30, 
+def wait_for_server(host=DEFAULT_HOST, port=DEFAULT_PORT, maxtries=30,
     sleeptime=2, address=None):
     # Wait for the server to bind to the port.
     server_address = SocketAddress.new(address or (host, port))

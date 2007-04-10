@@ -6,7 +6,7 @@ For copyright, license, and warranty, see bottom of file.
 from schevo.test import CreatesSchema
 
 
-class TestDatabaseNamespaces(CreatesSchema):
+class BaseDatabaseNamespaces(CreatesSchema):
 
     body = '''
 
@@ -25,6 +25,16 @@ class TestDatabaseNamespaces(CreatesSchema):
         tx = db.t.create_foo()
         foo = db.execute(tx)
         assert foo.bar == 'baz'
+
+
+class TestDatabaseNamespaces1(BaseDatabaseNamespaces):
+
+    format = 1
+
+
+class TestDatabaseNamespaces2(BaseDatabaseNamespaces):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

@@ -12,7 +12,7 @@ from schevo.test import CreatesSchema
 from schevo.transaction import Transaction
 
 
-class TestHiddenBases(CreatesSchema):
+class BaseHiddenBases(CreatesSchema):
 
     body = '''
 
@@ -73,7 +73,7 @@ class TestHiddenBases(CreatesSchema):
         assert tx._field_spec.keys() == ['beta', 'gamma']
 
 
-class TestSameNameSubclasses(CreatesSchema):
+class BaseSameNameSubclasses(CreatesSchema):
 
     body = '''
 
@@ -103,25 +103,55 @@ class TestSameNameSubclasses(CreatesSchema):
         assert plural(db.Something) == u'Somethingys'
 
 
-class TestSubclassTransactionCorrectness(CreatesSchema):
+class BaseSubclassTransactionCorrectness(CreatesSchema):
 
     body = '''
-    
+
     class _Super(E.Entity):
         pass
-        
+
     class First(E._Super):
         pass
-        
+
     class Second(E._Super):
         pass
     '''
-    
+
     def test_tx_correctness(self):
         tx = db.First.t.create()
         assert tx.sys.extent_name == 'First'
         tx = db.Second.t.create()
         assert tx.sys.extent_name == 'Second'
+
+
+class TestHiddenBases1(BaseHiddenBases):
+
+    format = 1
+
+
+class TestHiddenBases2(BaseHiddenBases):
+
+    format = 2
+
+
+class TestSameNameSubclasses1(BaseSameNameSubclasses):
+
+    format = 1
+
+
+class TestSameNameSubclasses2(BaseSameNameSubclasses):
+
+    format = 2
+
+
+class TestSubclassTransactionCorrectness1(BaseSubclassTransactionCorrectness):
+
+    format = 1
+
+
+class TestSubclassTransactionCorrectness2(BaseSubclassTransactionCorrectness):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

@@ -25,7 +25,7 @@ class Storage(object):
 
     def begin(self):
         """
-        Begin a commit.  
+        Begin a commit.
         """
         raise NotImplementedError
 

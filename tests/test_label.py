@@ -8,7 +8,7 @@ from schevo import label
 from schevo import transaction
 
 
-class TestDecoration(CreatesSchema):
+class BaseDecoration(CreatesSchema):
 
     body = '''
 
@@ -459,6 +459,16 @@ class TestDecoration(CreatesSchema):
 
     def test_builtin_decoration(self):
         assert label.label('some string') == 'some string'
+
+
+class TestDecoration1(BaseDecoration):
+
+    format = 1
+
+
+class TestDecoration2(BaseDecoration):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

@@ -52,7 +52,7 @@ class AlphaAlpha(E.Entity):
 class AlphaBravo(E.Entity):
     """Has a reference to an AlphaAlpha, such that when that
     AlphaAlpha is deleted, this AlphaBravo will also be deleted."""
-    
+
     alpha_alpha = f.entity('AlphaAlpha', on_delete=CASCADE)
 
 
@@ -60,7 +60,7 @@ class AlphaCharlie(E.Entity):
     """Has a reference to an AlphaAlpha, such that when that
     AlphaAlpha is deleted, the operation will fail because the
     deletion of this AlphaCharlie is restricted."""
-    
+
     alpha_alpha = f.entity('AlphaAlpha', on_delete=RESTRICT)
 
 
@@ -68,7 +68,7 @@ class AlphaDelta(E.Entity):
     """Has a reference to an AlphaAlpha, such that when that
     AlphaAlpha is deleted, this field on this AlphaDelta will be set
     to UNASSIGNED."""
-    
+
     alpha_alpha = f.entity('AlphaAlpha', on_delete=UNASSIGN, required=False)
 
 
@@ -85,7 +85,7 @@ class AlphaEcho(E.Entity):
 class Bravo(E.Entity):
     """Contains one of every class of field possible."""
 
-    hashed_value = f.hashedValue(required=False)
+    hashed_value = f.hashed_value(required=False)
     string = f.string(required=False)
     memo = f.memo(required=False)
     password = f.password(required=False)
@@ -136,7 +136,7 @@ class DeltaBravo(E.Entity):
 class DeltaCharlie(E.Entity):
     """An extent that has a custom query."""
 
-    hashed_value = f.hashedValue()
+    hashed_value = f.hashed_value()
 
     @extentmethod
     def q_hashes(extent, **kw):
@@ -159,7 +159,7 @@ class DeltaCharlie(E.Entity):
 
 class EchoAlpha(E.Entity):
     """A plain extent that has a default view like any other."""
-    
+
     unicode = f.unicode(required=False)
     integer = f.integer(required=False)
     float = f.float(required=False)
@@ -317,7 +317,7 @@ class Hotel(E.Entity):
 
 
 class Avatar(E.Entity):
-    
+
     realm = f.entity('Realm')
     user = f.entity('User')
     name = f.unicode()
@@ -349,7 +349,7 @@ class Batch_Job(E.Entity):
 
 
 class Realm(E.Entity):
-    
+
     name = f.unicode()
 
     _key(name)
@@ -361,10 +361,10 @@ class Realm(E.Entity):
 
 
 class User(E.Entity):
-    
+
     name = f.unicode()
     age = f.integer(required=False)
-    
+
     _key(name)
 
     _index(age)

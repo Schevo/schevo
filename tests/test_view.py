@@ -9,7 +9,7 @@ from schevo.label import label
 from schevo.test import CreatesSchema
 
 
-class TestView(CreatesSchema):
+class BaseView(CreatesSchema):
 
     body = '''
 
@@ -104,7 +104,17 @@ class TestView(CreatesSchema):
         assert ea_view.f.unicode.readonly
         assert ea_view.f.integer.readonly
         assert ea_view.f.float.readonly
-        
+
+
+class TestView1(BaseView):
+
+    format = 1
+
+
+class TestView2(BaseView):
+
+    format = 2
+
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
 #

@@ -1,44 +1,33 @@
-"""Transaction field reordering tests.
+"""Schema counter singleton.
 
 For copyright, license, and warranty, see bottom of file.
 """
 
-from schevo.test import CreatesSchema
+import sys
+from schevo.lib import optimize
 
 
-class BaseTransaction(CreatesSchema):
+class schema_counter(object):
+    """Schema counter singleton.
 
-    body = '''
+    This is a class instead of a global, because globals won't work
+    because of the binding done by optimize.bind_all.
+    """
 
-    class Something(E.Entity):
+    _current = 0
 
-        field1 = f.string()
-        field2 = f.integer()
+    @classmethod
+    def next(cls):
+        c = cls._current
+        cls._current += 1
+        return c
 
-        class _Create(T.Create):
-
-            field3 = f.memo()
-            field2 = f.integer()
-    '''
-
-    def test_reorder_by_reassignment(self):
-        # The Create transaction for a Something entity first should
-        # have ``field1``, since that is implied by
-        # create/delete/update. Then, ``field3`` should be next,
-        # because ``field2`` was recreated afterwards, thus overriding
-        # the original position of ``field2``.
-        tx = db.Something.t.create()
-        assert list(tx.f) == ['field1', 'field3', 'field2']
+    @classmethod
+    def next_schema_name(cls):
+        return 'schevo-db-schema-%i' % cls.next()
 
 
-class TestTransaction1(BaseTransaction):
-
-    format = 1
-
-
-class TestTransaction2(BaseTransaction):
-
-    format = 2
+optimize.bind_all(sys.modules[__name__])  # Last line of module.
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

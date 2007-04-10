@@ -33,7 +33,7 @@ preamble = textwrap.dedent(
     from warnings import warn as _warn
     _warn('See http://schevo.org/lists/archives/schevo-devel/'
     '2006-March/000568.html', DeprecationWarning)
-    _import('Schevo', 'icon', 1)      
+    _import('Schevo', 'icon', 1)
     """
     )
 # /XXX

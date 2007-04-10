@@ -10,7 +10,7 @@ from schevo import base
 from schevo.change import summarize
 from schevo.constant import CASCADE, DEFAULT, UNASSIGN, UNASSIGNED
 from schevo.error import (DatabaseMismatch, DeleteRestricted,
-                          TransactionExpired, TransactionFieldsNotChanged, 
+                          TransactionExpired, TransactionFieldsNotChanged,
                           TransactionNotExecuted)
 from schevo import field
 from schevo.field import not_fget
@@ -19,6 +19,7 @@ from schevo.label import label
 from schevo.meta import schema_metaclass
 import schevo.namespace
 from schevo.namespace import NamespaceExtension
+from schevo.trace import log
 
 
 class Transaction(base.Transaction):
@@ -87,7 +88,7 @@ class Transaction(base.Transaction):
         # The default implementation is to return the inverse of this
         # transaction.
         return Inverse(self)
-    
+
     def _update_all_fields(self, name, value):
         """Update the attribute `name` to `value` on all fields."""
         for field in self._field_map.values():
@@ -198,11 +199,14 @@ class Create(Transaction):
         pass
 
     def _execute(self, db):
-        # Attempt to resolve entity fields to the current database.
+        field_map = self._field_map
+        # If any fields contain values that are entities not in `db`,
+        # attempt to find each equivalent entity in `db` based on the
+        # information contained in the foreign entity.
         msg = '"%s" field of "%s" cannot be resolved to the current database'
-        for field_name, field in self._field_map.iteritems():
+        for field_name, field in field_map.iteritems():
             entity = field._value
-            if isinstance(entity, base.Entity) and entity.sys.db is not db:
+            if isinstance(entity, base.Entity) and entity._db is not db:
                 resolved = False
                 if entity._default_key is not None:
                     extent_name = entity.sys.extent.name
@@ -219,20 +223,25 @@ class Create(Transaction):
         # Before execute callback.
         self._before_execute(db)
         # Validate individual fields.
-        for field in self._field_map.itervalues():
+        for field in field_map.itervalues():
             if field.fget is None:
                 field.validate(field._value)
-        style = self._style
-        extent_name = self._extent_name
-        field_value_map = self._field_map.value_map()
         # Strip out unwanted fields.
+        field_dump_map = field_map.dump_map()
+        field_related_entity_map = field_map.related_entity_map()
         fget_fields = self._fget_fields
         field_spec = self._EntityClass._field_spec
-        for name in field_value_map.keys():
+        for name in field_dump_map.keys():
             if name in fget_fields or name not in field_spec:
-                del field_value_map[name]
+                del field_dump_map[name]
+                if name in field_related_entity_map:
+                    del field_related_entity_map[name]
+        # Proceed with execution based on the create style requested.
+        extent_name = self._extent_name
+        style = self._style
         if style == _Create_Standard:
-            oid = db._create_entity(extent_name, field_value_map)
+            oid = db._create_entity(
+                extent_name, field_dump_map, field_related_entity_map)
         else:
             oid = None
             extent = db.extent(extent_name)
@@ -241,6 +250,7 @@ class Create(Transaction):
                 msg = '%s does not have a default key.' % (extent_name,)
                 raise RuntimeError(msg)
             criteria = {}
+            field_value_map = field_map.value_map()
             for name in default_key:
                 criteria[name] = field_value_map[name]
             entity = extent.findone(**criteria)
@@ -252,7 +262,8 @@ class Create(Transaction):
                 else:
                     raise RuntimeError('_style is not set correctly.')
             else:
-                oid = db._create_entity(extent_name, field_value_map)
+                oid = db._create_entity(
+                    extent_name, field_dump_map, field_related_entity_map)
         self._oid = oid
         entity = db._entity(extent_name, oid)
         # After execute callback.
@@ -355,10 +366,16 @@ class Delete(Transaction):
             other = EntityClass(oid)
             others.append((EntityClass.__name__, oid, other))
             field_map = other.sys.field_map(not_fget)
-            field_value_map = dict(field_map.value_map())
-            new_value_map = dict((name, UNASSIGNED) for name in field_names)
-            field_value_map.update(new_value_map)
-            db._update_entity(other._extent.name, oid, field_value_map)
+            field_dump_map = dict(field_map.dump_map())
+            field_related_entity_map = dict(field_map.related_entity_map())
+            new_dump_map = dict((name, UNASSIGNED) for name in field_names)
+            new_related_entity_map = dict(
+                (name, frozenset()) for name in field_names)
+            field_dump_map.update(new_dump_map)
+            field_related_entity_map.update(new_related_entity_map)
+            db._update_entity(
+                other._extent.name, oid, field_dump_map,
+                field_related_entity_map)
         # Delete entities in a deterministic (sorted) fashion.
         for name, oid, other in sorted(others):
             tx = other.t.delete()
@@ -408,13 +425,14 @@ class Update(Transaction):
 
     def _execute(self, db):
         entity = self._entity
+        field_map = self._field_map
         if entity._rev != self._rev:
             raise TransactionExpired(
                 'Original entity revision was %i, is now %i'
                 % (self._rev, entity._rev))
         if self._require_changes:
             nothing_changed = True
-            for field in self._field_map.itervalues():
+            for field in field_map.itervalues():
                 if field.was_changed():
                     nothing_changed = False
                     break
@@ -423,19 +441,23 @@ class Update(Transaction):
                 raise TransactionFieldsNotChanged(msg)
         self._before_execute(db, entity)
         # Validate individual fields.
-        for field in self._field_map.itervalues():
+        for field in field_map.itervalues():
             if field.fget is None:
                 field.validate(field._value)
         extent_name = self._extent_name
         oid = self._oid
         # Strip out unwanted fields.
-        field_value_map = self._field_map.value_map()
+        field_dump_map = field_map.dump_map()
+        field_related_entity_map = field_map.related_entity_map()
         fget_fields = self._fget_fields
         field_spec = self._EntityClass._field_spec
-        for name in field_value_map.keys():
+        for name in field_dump_map.keys():
             if name in fget_fields or name not in field_spec:
-                del field_value_map[name]
-        db._update_entity(extent_name, oid, field_value_map)
+                del field_dump_map[name]
+                if name in field_related_entity_map:
+                    del field_related_entity_map[name]
+        db._update_entity(
+            extent_name, oid, field_dump_map, field_related_entity_map)
         entity = db._entity(extent_name, oid)
         self._after_execute(db, entity)
         return entity

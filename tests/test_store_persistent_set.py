@@ -337,6 +337,6 @@ class TestPersistentSet_Set(Base):
 
 
 class TestPersistentSet_PersistentSet(Base):
-    
+
     set_type = PersistentSet
     other_type = PersistentSet

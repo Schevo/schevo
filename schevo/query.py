@@ -572,7 +572,7 @@ class Max(Query):
         self.query = query
         self.field_name = field_name
         self.FieldClass = FieldClass
-    
+
     def __call__(self):
         def generator():
             field_name = self.field_name

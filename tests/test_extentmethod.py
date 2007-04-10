@@ -6,7 +6,7 @@ For copyright, license, and warranty, see bottom of file.
 from schevo.test import CreatesSchema
 
 
-class TestExtentMethod(CreatesSchema):
+class BaseExtentMethod(CreatesSchema):
 
     body = '''
 
@@ -21,6 +21,16 @@ class TestExtentMethod(CreatesSchema):
         extent = db.Hotel
         result = db.Hotel.x.return_extent()
         assert result is extent
+
+
+class TestExtentMethod1(BaseExtentMethod):
+
+    format = 1
+
+
+class TestExtentMethod2(BaseExtentMethod):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

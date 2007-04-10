@@ -6,10 +6,10 @@ For copyright, license, and warranty, see bottom of file.
 from schevo.test import CreatesSchema, raises
 
 
-class TestBank(CreatesSchema):
-    
+class BaseBank(CreatesSchema):
+
     body = '''
-    
+
     class Account(E.Entity):
         """Bank account."""
 
@@ -162,7 +162,17 @@ class TestBank(CreatesSchema):
         tx.to_account = family
         tx.amount = 0.01
         assert raises(Exception, db.execute, tx)
-        
+
+
+class TestBank1(BaseBank):
+
+    format = 1
+
+
+class TestBank2(BaseBank):
+
+    format = 2
+
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
 #

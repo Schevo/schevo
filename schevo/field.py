@@ -8,14 +8,18 @@ from schevo.lib import optimize
 import datetime
 import md5
 import random
+import string
 import sys
 import time
+from warnings import warn
 
 from schevo import base
+from schevo.base import Entity as EntityActual
 from schevo.constant import ANY, RESTRICT, UNASSIGNED
 import schevo.error
 import schevo.fieldspec
 import schevo.namespace
+from schevo.placeholder import Placeholder
 
 
 # Filters for calls to field_map methods.
@@ -28,6 +32,20 @@ def not_fget(field):
 
 def not_hidden(field):
     return not field.hidden
+
+
+def lowercase_from_camelcase(name):
+    """Return a lowercase, underscore-separated name based on a CamelCase one.
+
+    For example, if 'ClassName' is given as input, 'class_name' is returned.
+    """
+    new_name = ''
+    for char in name:
+        if char in string.uppercase:
+            if new_name != '':
+                new_name += '_'
+        new_name += char.lower()
+    return new_name
 
 
 class FieldMeta(type):
@@ -43,18 +61,27 @@ class FieldMeta(type):
     def __init__(cls, class_name, bases, class_dict):
         type.__init__(cls, class_name, bases, class_dict)
         # Create a field constructor.
-        def_name = class_name[0].lower() + class_name[1:]
+        def_name = lowercase_from_camelcase(class_name)
+        deprecated_def_name = class_name[0].lower() + class_name[1:]
         class def_class(schevo.fieldspec.FieldDefinition):
             BaseFieldClass = cls
+        class deprecated_def_class(def_class):
+            _deprecated_name = True
+            _preferred_name = def_name
         def_class.__name__ = def_name
+        deprecated_def_class.__name__ = deprecated_def_name
         cls._def_class = def_class
+        cls._deprecated_def_class = def_class
         cls._def_name = def_name
+        cls._deprecated_def_name = deprecated_def_name
         # Only if this global schema definition variable exists.
         if schevo.namespace.SCHEMADEF is not None:
             # Add this class to the field classes namespace.
             schevo.namespace.SCHEMADEF.F._set(cls.__name__, cls)
             # Add a field constructor to the field constructors namespace.
             schevo.namespace.SCHEMADEF.f._set(def_name, def_class)
+            schevo.namespace.SCHEMADEF.f._set(
+                deprecated_def_name, deprecated_def_class)
 
 
 class Field(base.Field):
@@ -97,13 +124,16 @@ class Field(base.Field):
     label: Descriptive label for the field that can be used for
     reporting, the GUI field label, the column heading, etc.
 
+    min_size: Minimum size allowed, or None for no limit.
+
     max_size: Maximum size allowed, or None for no limit.
 
-    min_size: Minimum size allowed, or None for no limit.
+    min_value: Minimum value allowed, or None for no limit.
 
     max_value: Maximum value allowed, or None for no limit.
 
-    min_value: Minimum value allowed, or None for no limit.
+    may_store_entities: True if the field's value may store references
+    to entities.
 
     notice: A tuple of (notice type, notice text) describing a notice
     for this field, or None for no notice.
@@ -141,10 +171,11 @@ class Field(base.Field):
     fget = None
     hidden = False
     label = None
-    max_size = None
     min_size = None
-    max_value = None
+    max_size = None
     min_value = None
+    max_value = None
+    may_store_entities = False
     notice = None
     preferred_values = None
     readonly = False
@@ -175,7 +206,7 @@ class Field(base.Field):
         """Create a Field instance for an instance with a given value.
 
         instance: usually an Entity, Transaction or Query instance.
-        
+
         value: optional initial value, without validation checking.
 
         rev: revision of the instance containing the value, if
@@ -199,6 +230,11 @@ class Field(base.Field):
         else:
             # Otherwise a field is created with an initial rev of -1.
             self._rev = -1
+
+    def _entities_in_value(self):
+        """Return a set or frozenset of Placeholders for entities contained in
+        the field's value."""
+        return frozenset()
 
     def _initialize(self, value):
         """Initialize the field with a value."""
@@ -264,13 +300,22 @@ class Field(base.Field):
         new_field = FieldClass(None, None)
         new_field.__dict__.update(self.__dict__)
         return new_field
-        
+
+    def _dump(self):
+        """Return a value suitable for storage in a database."""
+        return self._value
+
     def get(self):
         """Return the field value."""
         if self.fget is not None:
             return self.fget[0](self._instance)
         else:
             return self._value
+
+    def _restore(self, db):
+        """Restore field's true value by converting it from the value stored
+        in the database."""
+        pass
 
     def reversible(self, value=None):
         """Return a reversible string representation of the field value, or
@@ -582,14 +627,14 @@ class Blob(Field):
             return Field.__str__(self)
         else:
             return '(Binary data)'
-        
+
     def __unicode__(self):
         v = self.get()
         if v is UNASSIGNED:
             return Field.__unicode__(self)
         else:
             return u'(Binary data)'
-        
+
 
 class Image(Blob):
     """Image field class."""
@@ -904,8 +949,8 @@ class Boolean(Field):
 # --------------------------------------------------------------------
 
 
-class Entity(Field):
-    """Entity instance field class.
+class _EntityBase(Field):
+    """Private base class for fields that may store entity references.
 
     allow_create: set to True if UI should give users the option of
     creating new instances when displaying this field.
@@ -929,6 +974,7 @@ class Entity(Field):
     allow_create = True
     allow_update = False
     allow = set()
+    may_store_entities = True
     on_delete = {}
     on_delete_default = RESTRICT
 
@@ -991,6 +1037,25 @@ class Entity(Field):
             else:
                 return value
 
+    def _dump(self):
+        """Return a value suitable for storage in a database."""
+        value = self._value
+        if isinstance(value, EntityActual):
+            value = Placeholder(value)
+        return value
+
+    def _entities_in_value(self):
+        value = self._value
+        if isinstance(value, EntityActual):
+            return frozenset([Placeholder(value)])
+        return frozenset()
+
+    def _restore(self, db):
+        value = self._value
+        if isinstance(value, Placeholder):
+            value = value.restore(db)
+        self._value = value
+
     def reversible(self, value=None):
         if value is None:
             value = self.get()
@@ -998,7 +1063,7 @@ class Entity(Field):
             return u''
         else:
             return u'%s-%i' % (value.sys.extent.name, value.sys.oid)
-        
+
     def reversible_valid_values(self, db):
         """Returns a list of (reversible, value) tuples for the valid
         values of this field."""
@@ -1052,6 +1117,62 @@ class Entity(Field):
         if not isinstance(value, base.Entity):
             msg = '%s value must be an entity instance.' % self._name
             self._raise(TypeError, msg)
+
+
+class Entity(_EntityBase):
+    """Entity instance field class."""
+    pass
+
+
+class EntityList(_EntityBase):
+    """List of Entity instances field class."""
+
+    def convert(self, value, db=None):
+        if isinstance(value, list):
+            new_values = []
+            for item in value:
+                new_values.append(_EntityBase.convert(self, item, db))
+            value = new_values
+        else:
+            value = _EntityBase.convert(self, value, db)
+        return value
+
+    def _dump(self):
+        value = self._value
+        if isinstance(value, list):
+            value = [Placeholder(entity) for entity in value]
+        return value
+
+    def _entities_in_value(self):
+        value = self._value
+        if isinstance(value, list):
+            return frozenset(Placeholder(entity) for entity in value)
+        return frozenset()
+
+    def _restore(self, db):
+        value = self._value
+        if isinstance(value, list):
+            value = [placeholder.restore(db) for placeholder in value]
+        self._value = value
+
+    def reversible(self, value=None):
+        return None
+
+    def validate(self, value):
+        """Validate the value, raising an error on failure."""
+        if isinstance(value, list):
+            for item in value:
+                _EntityBase.validate(self, item)
+        else:
+            _EntityBase.validate(self, value)
+
+    def verify(self, value):
+        """Verify the value, raising an error on failure."""
+        if isinstance(value, list):
+            for item in value:
+                _EntityBase.verify(self, item)
+        else:
+            _EntityBase.verify(self, value)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

@@ -134,7 +134,7 @@ A:
     This is basically the same as changing a class name.  A useful trick
     is to assign to ``sys.modules`` directly.  For example, in your update
     DB script you could do something like::
-   
+
        import newmodule
        sys.modules["oldmodule"] = newmodule
 

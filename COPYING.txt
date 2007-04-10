@@ -148,7 +148,7 @@ such a program is covered only if its contents constitute a work based
 on the Library (independent of the use of the Library in a tool for
 writing it).  Whether that is true depends on what the Library does
 and what the program that uses the Library does.
- 
+
   1. You may copy and distribute verbatim copies of the Library's
 complete source code as you receive it, in any medium, provided that
 you conspicuously and appropriately publish on each copy an
@@ -242,7 +242,7 @@ compelled to copy the source along with the object code.
   5. A program that contains no derivative of any portion of the
 Library, but is designed to work with the Library by being compiled or
 linked with it, is called a "work that uses the Library".  Such a
-work, in isolation, is not a derivative work of the Library, and 
+work, in isolation, is not a derivative work of the Library, and
 therefore falls outside the scope of this License.
 
   However, linking a "work that uses the Library" with the Library

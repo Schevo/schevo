@@ -33,7 +33,7 @@ class Command(object):
 
     def help(self):
         pass
-    
+
     def main(self, arg0, args):
         if ((self.requires_args and not args)
             or (args and (args[0] in ('--help')))
@@ -60,7 +60,7 @@ class CommandSet(Command):
         for command_name, command in sorted(commands.items()):
             print format % (command_name, command.description)
         print
-        
+
     def main(self, arg0, args):
         if not Command.main(self, arg0, args):
             # Replace arg0 with the command specified and take it off
@@ -72,7 +72,7 @@ class CommandSet(Command):
                 return 1
             command = self.commands[command_name]
             return command()(*args)
-    
+
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
 #

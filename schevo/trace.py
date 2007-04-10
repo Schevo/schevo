@@ -54,7 +54,7 @@ def print_history(max_level):
         for m in messages:
             print >>TRACE_TO, m,
         print >>TRACE_TO
-        
+
 
 @do_not_optimize
 def log(level, *messages):

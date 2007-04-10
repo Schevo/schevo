@@ -420,7 +420,7 @@ class BTree(Persistent):
         return self.root.get_count()
 
     def items_backward(self):
-        """() -> generator 
+        """() -> generator
         Generate all items in reverse order.
         """
         for item in reversed(self.root):

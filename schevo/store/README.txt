@@ -46,7 +46,7 @@ To stop the running durus server, run "durus -s --stop".
 This demonstrates transactional behavior, but not persistence, since
 the temporary file is removed as soon as the durus server is stopped.
 
-To see how persistence works, do the same thing, except add 
+To see how persistence works, do the same thing, except add
 "--file test.durus" to the command that starts the server.  Make
 changes to attributes of root, run "connection.commit()", and
 "durus -s --stop", and the changes to root will be stored in
@@ -88,7 +88,7 @@ Note that the ClientStorage constructor supports the "address" keyword
 that you can use to specify the address to use.  The value must be either
 a (host, port) tuple or a string giving a path to use for a unix domain
 socket. If you provide the address you should be sure to start the
-storage server the same way.  The "durus" command line tool supports 
+storage server the same way.  The "durus" command line tool supports
 options to specify the address.
 
 The connection instance has a get_root() method that you can use to
@@ -112,9 +112,9 @@ actually store an instance x of A in the storage, though, you need to
 commit a reference to x in some object that is already stored in the
 database.  The root object is always there, for example, so you can do
 something like this:
-    
+
     # Assume mymodule defines A as a subclass of Persistent.
-    from mymodule import A 
+    from mymodule import A
     x = A()
     root = connection.get_root() # connection set as shown above.
     root["sample"] = x           # root is dict-like

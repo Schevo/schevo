@@ -180,7 +180,7 @@ For copyright, license, and warranty, see bottom of file.
 ##     assert 'bar' in W
 ##     assert TR1[0] >= TW1[1]              # Read 1 started after write 1.
 ##     assert TW2[0] >= TR1[1]              # Write 2 started after read 1.
-    
+
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
 #

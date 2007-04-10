@@ -5,10 +5,11 @@ For copyright, license, and warranty, see bottom of file.
 
 from schevo.constant import UNASSIGNED
 from schevo import error
+from schevo.placeholder import Placeholder
 from schevo.test import CreatesSchema, raises
 
 
-class TestOnDelete(CreatesSchema):
+class BaseOnDelete(CreatesSchema):
 
     body = '''
 
@@ -92,7 +93,31 @@ class TestOnDelete(CreatesSchema):
     class Boo(E.Entity):
         """The parent of two children, one of which references the
         other.  We want the cascade to succeed on both children in
-        spite of the field reference that has the default RESTRICT."""
+        spite of the field reference that has the default RESTRICT.
+
+        The relationships created upon a creation of a Boo entity
+        can be visualized as follows::
+
+                        .---------------.
+                        | Boo[1]        | <-----------------.
+                        |               | <-----.           |
+                        | .name = 'BOO' |       |           |
+                        '---------------'       |           |
+                                                |CASCADE    |
+                        .---------------.       |           |
+                        | Bar[1]        |       |           |
+                    .-> |               |       |           |CASCADE
+                    |   | .boo = Boo[1]---------'           |
+                    |   | .baz = Baz[1]---------.           |
+                    |   '---------------'       |           |
+                    |                           |           |
+            RESTRICT|   .---------------.       |RESTRICT   |
+                    |   | Baz[1]        |       |           |
+                    |   |               | <-----'           |
+                    |   | .boo = Boo[1]---------------------'
+                    '-----.bar = Bar[1] |
+                        '---------------'
+        """
 
         name = f.unicode()
 
@@ -155,7 +180,7 @@ class TestOnDelete(CreatesSchema):
 
         faz = f.entity(('Faz', CASCADE))
         far = f.entity('Far')
-        
+
     '''
 
     def _alpha_alpha(self):
@@ -186,14 +211,37 @@ class TestOnDelete(CreatesSchema):
         assert alpha_bravo not in db.AlphaBravo
 
     def test_cascade_complex(self):
+        # Create the complex structure.
         boo = db.execute(db.Boo.t.create(name='BOO'))
         assert len(db.Boo) == 1
         assert len(db.Bar) == 1
         assert len(db.Baz) == 1
+        bar = db.Bar[1]
+        baz = db.Baz[1]
+        assert bar.boo == boo
+        assert bar.baz == baz
+        assert baz.boo == boo
+        assert baz.bar == bar
+        assert bar.m.bazs() == [baz]
+        assert baz.m.bars() == [bar]
+        assert boo.m.bars() == [bar]
+        assert boo.m.bazs() == [baz]
+        assert boo.sys.count() == 2
+        assert bar.sys.count() == 1
+        assert baz.sys.count() == 1
+        self.internal_cascade_complex_1()
+        # Delete it.
         db.execute(boo.t.delete())
         assert len(db.Boo) == 0
         assert len(db.Bar) == 0
         assert len(db.Baz) == 0
+        self.internal_cascade_complex_2()
+
+    def internal_cascade_complex_1(self):
+        raise NotImplementedError()
+
+    def internal_cascade_complex_2(self):
+        raise NotImplementedError()
 
 ##     def test_cascade_complex_hierarchy(self):
 ##         foo = db.execute(db.Foo.t.create(name='FOO'))
@@ -243,6 +291,168 @@ class TestOnDelete(CreatesSchema):
         db.execute(tx)
         assert alpha_bravo not in db.AlphaBravo
         assert alpha_echo not in db.AlphaEcho
+
+
+class TestOnDelete1(BaseOnDelete):
+
+    format = 1
+
+    def internal_cascade_complex_1(self):
+        root = db._root
+        schevo = root['SCHEVO']
+        extent_name_id = schevo['extent_name_id']
+        extents = schevo['extents']
+        Boo_extent_id = extent_name_id['Boo']
+        Bar_extent_id = extent_name_id['Bar']
+        Baz_extent_id = extent_name_id['Baz']
+        Boo_extent = extents[Boo_extent_id]
+        Bar_extent = extents[Bar_extent_id]
+        Baz_extent = extents[Baz_extent_id]
+        Boo_field_name_id = Boo_extent['field_name_id']
+        Bar_field_name_id = Bar_extent['field_name_id']
+        Baz_field_name_id = Baz_extent['field_name_id']
+        assert len(Boo_extent['entities']) == 1
+        assert len(Bar_extent['entities']) == 1
+        assert len(Baz_extent['entities']) == 1
+        # Check for Boo[1] having backlinks to Bar[1].boo and Baz[1].boo
+        Boo1 = Boo_extent['entities'][1]
+        assert Boo1['link_count'] == 2
+        Bar_boo_field_id = Bar_field_name_id['boo']
+        Baz_boo_field_id = Baz_field_name_id['boo']
+        Boo1_links_keys = set(Boo1['links'].keys())
+        expected_Boo1_links_keys = set([
+            (Bar_extent_id, Bar_boo_field_id),
+            (Baz_extent_id, Baz_boo_field_id),
+            ])
+        assert Boo1_links_keys == expected_Boo1_links_keys
+        assert Boo1['links'][(Bar_extent_id, Bar_boo_field_id)].keys() == [1]
+        assert Boo1['links'][(Baz_extent_id, Baz_boo_field_id)].keys() == [1]
+        # Check for Bar[1] having backlink to Baz[1].bar
+        Bar1 = Bar_extent['entities'][1]
+        assert Bar1['link_count'] == 1
+        Baz_bar_field_id = Baz_field_name_id['bar']
+        Bar1_links_keys = set(Bar1['links'].keys())
+        expected_Bar1_links_keys = set([
+            (Baz_extent_id, Baz_bar_field_id),
+            ])
+        assert Bar1_links_keys == expected_Bar1_links_keys
+        assert Bar1['links'][(Baz_extent_id, Baz_bar_field_id)].keys() == [1]
+        # Check for Baz[1] having backlink to Bar[1].bar
+        Baz1 = Baz_extent['entities'][1]
+        assert Baz1['link_count'] == 1
+        Bar_baz_field_id = Bar_field_name_id['baz']
+        Baz1_links_keys = set(Baz1['links'].keys())
+        expected_Baz1_links_keys = set([
+            (Bar_extent_id, Bar_baz_field_id),
+            ])
+        assert Baz1_links_keys == expected_Baz1_links_keys
+        assert Baz1['links'][(Bar_extent_id, Bar_baz_field_id)].keys() == [1]
+        # Check for Bar[1].boo and Bar[1].baz having correct related entity
+        # structures.
+        Bar1_fields = Bar1['fields']
+        Bar_boo_field_id = Bar_field_name_id['boo']
+        Bar1_boo = Bar1_fields[Bar_boo_field_id]
+        assert Bar1_boo == (Boo_extent_id, 1)
+        Bar_baz_field_id = Bar_field_name_id['baz']
+        Bar1_baz = Bar1_fields[Bar_baz_field_id]
+        assert Bar1_baz == (Baz_extent_id, 1)
+
+    def internal_cascade_complex_2(self):
+        root = db._root
+        schevo = root['SCHEVO']
+        extent_name_id = schevo['extent_name_id']
+        extents = schevo['extents']
+        Boo_extent_id = extent_name_id['Boo']
+        Bar_extent_id = extent_name_id['Bar']
+        Baz_extent_id = extent_name_id['Baz']
+        Boo_extent = extents[Boo_extent_id]
+        Bar_extent = extents[Bar_extent_id]
+        Baz_extent = extents[Baz_extent_id]
+        assert len(Boo_extent['entities']) == 0
+        assert len(Bar_extent['entities']) == 0
+        assert len(Baz_extent['entities']) == 0
+
+
+class TestOnDelete2(BaseOnDelete):
+
+    format = 2
+
+    def internal_cascade_complex_1(self):
+        root = db._root
+        schevo = root['SCHEVO']
+        extent_name_id = schevo['extent_name_id']
+        extents = schevo['extents']
+        Boo_extent_id = extent_name_id['Boo']
+        Bar_extent_id = extent_name_id['Bar']
+        Baz_extent_id = extent_name_id['Baz']
+        Boo_extent = extents[Boo_extent_id]
+        Bar_extent = extents[Bar_extent_id]
+        Baz_extent = extents[Baz_extent_id]
+        Boo_field_name_id = Boo_extent['field_name_id']
+        Bar_field_name_id = Bar_extent['field_name_id']
+        Baz_field_name_id = Baz_extent['field_name_id']
+        assert len(Boo_extent['entities']) == 1
+        assert len(Bar_extent['entities']) == 1
+        assert len(Baz_extent['entities']) == 1
+        # Check for Boo[1] having backlinks to Bar[1].boo and Baz[1].boo
+        Boo1 = Boo_extent['entities'][1]
+        assert Boo1['link_count'] == 2
+        Bar_boo_field_id = Bar_field_name_id['boo']
+        Baz_boo_field_id = Baz_field_name_id['boo']
+        Boo1_links_keys = set(Boo1['links'].keys())
+        expected_Boo1_links_keys = set([
+            (Bar_extent_id, Bar_boo_field_id),
+            (Baz_extent_id, Baz_boo_field_id),
+            ])
+        assert Boo1_links_keys == expected_Boo1_links_keys
+        assert Boo1['links'][(Bar_extent_id, Bar_boo_field_id)].keys() == [1]
+        assert Boo1['links'][(Baz_extent_id, Baz_boo_field_id)].keys() == [1]
+        # Check for Bar[1] having backlink to Baz[1].bar
+        Bar1 = Bar_extent['entities'][1]
+        assert Bar1['link_count'] == 1
+        Baz_bar_field_id = Baz_field_name_id['bar']
+        Bar1_links_keys = set(Bar1['links'].keys())
+        expected_Bar1_links_keys = set([
+            (Baz_extent_id, Baz_bar_field_id),
+            ])
+        assert Bar1_links_keys == expected_Bar1_links_keys
+        assert Bar1['links'][(Baz_extent_id, Baz_bar_field_id)].keys() == [1]
+        # Check for Baz[1] having backlink to Bar[1].bar
+        Baz1 = Baz_extent['entities'][1]
+        assert Baz1['link_count'] == 1
+        Bar_baz_field_id = Bar_field_name_id['baz']
+        Baz1_links_keys = set(Baz1['links'].keys())
+        expected_Baz1_links_keys = set([
+            (Bar_extent_id, Bar_baz_field_id),
+            ])
+        assert Baz1_links_keys == expected_Baz1_links_keys
+        assert Baz1['links'][(Bar_extent_id, Bar_baz_field_id)].keys() == [1]
+        # Check for Bar[1].boo and Bar[1].baz having correct related entity
+        # structures.
+        Bar1_related_entities = Bar1['related_entities']
+        Bar_boo_field_id = Bar_field_name_id['boo']
+        Bar1_related_boos = Bar1_related_entities[Bar_boo_field_id]
+        expected_Bar1_related_boos = frozenset([Placeholder(db.Boo[1])])
+        assert Bar1_related_boos == expected_Bar1_related_boos
+        Bar_baz_field_id = Bar_field_name_id['baz']
+        Bar1_related_bazs = Bar1_related_entities[Bar_baz_field_id]
+        expected_Bar1_related_bazs = frozenset([Placeholder(db.Baz[1])])
+        assert Bar1_related_bazs == expected_Bar1_related_bazs
+
+    def internal_cascade_complex_2(self):
+        root = db._root
+        schevo = root['SCHEVO']
+        extent_name_id = schevo['extent_name_id']
+        extents = schevo['extents']
+        Boo_extent_id = extent_name_id['Boo']
+        Bar_extent_id = extent_name_id['Bar']
+        Baz_extent_id = extent_name_id['Baz']
+        Boo_extent = extents[Boo_extent_id]
+        Bar_extent = extents[Bar_extent_id]
+        Baz_extent = extents[Baz_extent_id]
+        assert len(Boo_extent['entities']) == 0
+        assert len(Bar_extent['entities']) == 0
+        assert len(Baz_extent['entities']) == 0
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

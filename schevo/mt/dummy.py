@@ -1,32 +1,22 @@
-"""Tests for _export_all.
+"""Object that acts like a MROW lock, but doesn't actually perform any locking.
 
 For copyright, license, and warranty, see bottom of file.
 """
 
-from schevo.test import CreatesSchema
+import sys
+from schevo.lib import optimize
 
 
-## class TestExportAll(CreatesSchema):
+class dummy_lock(object):
+    """Dummy class for read_lock and write_lock objects in a database,
+    so that code can be written to be multi-thread-ready but still be
+    run in cases where the schevo.mt plugin is not installed."""
 
-##     body = '''
-
-##     _import('Schevo', 'icon', 1)
-##     '''
-
-##     def test_existence(self):
-##         assert db.extent_names() == ['SchevoIcon']
-##         assert not db.SchevoIcon.hidden
+    def release(self):
+        pass
 
 
-## class TestExportAllHidden(CreatesSchema):
-
-##     body = '''
-
-##     _import('Schevo', 'icon', 1, hidden=True)
-##     '''
-
-##     def test_existence(self):
-##         assert db.SchevoIcon.hidden
+optimize.bind_all(sys.modules[__name__])  # Last line of module.
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

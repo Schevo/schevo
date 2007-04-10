@@ -2,6 +2,9 @@
 $URL: svn+ssh://svn/repos/trunk/durus/test/utest_btree.py $
 $Id: utest_btree.py 27868 2006-01-25 14:55:43Z dbinger $
 """
+
+import os
+
 from schevo.store.btree import BTree, BNode
 from schevo.store.connection import Connection
 from schevo.store.file_storage import TempFileStorage
@@ -189,36 +192,37 @@ class TestCoverage(object):
         assert not bt.has_key(2)
         assert bt.keys() == []
 
-class TestSlow(object):
+if not 'SKIP_SLOW' in os.environ:
+    class TestSlow(object):
 
-    def test_slow(self):
-        bt = BTree()
-        print 'bt = BTree()'
-        d = {}
-        number = 0
-        limit = 10000
-        for k in xrange(limit*10):
-            number = randint(0, limit)
-            if number in bt:
-                assert number in d
-                if randint(0, 1) == 1:
-                    del bt[number]
-                    del d[number]
-                    print 'del bt[%s]' % number
-            else:
-                if number in d:
-                    print number
-                    print number in bt
-                    print number in d
-                    assert number not in d
-                bt[number] = 1
-                d[number] = 1
-                print 'bt[%s] = 1' % number
-            if k % limit == 0:
-                d_items = d.items()
-                d_items.sort()
-                assert d_items == bt.items()
-                assert len(d_items) == len(bt)
+        def test_slow(self):
+            bt = BTree()
+            print 'bt = BTree()'
+            d = {}
+            number = 0
+            limit = 10000
+            for k in xrange(limit*10):
+                number = randint(0, limit)
+                if number in bt:
+                    assert number in d
+                    if randint(0, 1) == 1:
+                        del bt[number]
+                        del d[number]
+                        print 'del bt[%s]' % number
+                else:
+                    if number in d:
+                        print number
+                        print number in bt
+                        print number in d
+                        assert number not in d
+                    bt[number] = 1
+                    d[number] = 1
+                    print 'bt[%s] = 1' % number
+                if k % limit == 0:
+                    d_items = d.items()
+                    d_items.sort()
+                    assert d_items == bt.items()
+                    assert len(d_items) == len(bt)
 
 class TestDurus(object):
 

@@ -28,7 +28,7 @@ class InvalidObjectReference(DurusError):
         is the object for which the reference is invalid.
       connection: Connection
         the connection that attempted to store it.
-    
+
     obj._p_connection != connection
     """
 

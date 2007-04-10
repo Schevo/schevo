@@ -9,7 +9,7 @@ from schevo.label import label, plural
 from schevo.test import CreatesSchema
 
 
-class TestLinks(CreatesSchema):
+class BaseLinks(CreatesSchema):
 
     # XXX: Todo: test_links
 
@@ -79,21 +79,21 @@ class TestLinks(CreatesSchema):
             (4, DEFAULT),
             (5, DEFAULT),
             ]
-        
-            
+
+
     class Goauld(E.Entity):
         """Fictional characters from a TV series, to test plural usage
         on entity m namespace."""
-    
+
         something = f.entity('Something')
-        
+
         _label = u"Goa\u2032uld"
         _plural = u"Goa\u2032ulds"
-    
-    
+
+
     class Something(E.Entity):
         pass
-        
+
     '''
 
     def test_many(self):
@@ -120,7 +120,7 @@ class TestLinks(CreatesSchema):
         alphas = bravo.m.foxtrot_alphas('foxtrot_any')
         assert len(alphas) == 1
         assert db.FoxtrotAlpha[4] in alphas
-        
+
     def test_many_pluralization(self):
         assert label(db.Goauld) == u"Goa\u2032uld"
         assert plural(db.Goauld) == u"Goa\u2032ulds"
@@ -192,6 +192,16 @@ class TestLinks(CreatesSchema):
             rset = set(extent.relationships)
             eset = set(expected_relationships)
             assert rset == eset
+
+
+class TestLinks1(BaseLinks):
+
+    format = 1
+
+
+class TestLinks2(BaseLinks):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

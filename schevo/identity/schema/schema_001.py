@@ -122,7 +122,7 @@ class SchevoIdUser(E.Entity):
     display_name = f.unicode(required=False)
     password = f.password()
     created = f.datetime(default=datetime.datetime.now)
-    
+
     _key(name)
 
     _initial = [
@@ -162,7 +162,7 @@ preamble = textwrap.dedent(
     from warnings import warn as _warn
     _warn('See http://schevo.org/lists/archives/schevo-devel/'
     '2006-March/000568.html', DeprecationWarning)
-    _import('Schevo', 'identity', 1)      
+    _import('Schevo', 'identity', 1)
     """
     )
 # /XXX

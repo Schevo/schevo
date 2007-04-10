@@ -8,7 +8,7 @@ from schevo import error
 from schevo.test import CreatesSchema
 
 
-class TestDefaultValues(CreatesSchema):
+class BaseDefaultValues(CreatesSchema):
 
     body = '''
 
@@ -38,6 +38,16 @@ class TestDefaultValues(CreatesSchema):
         for charlie, (beta, gamma) in zip(charlies, expected):
             assert charlie.beta == beta
             assert charlie.gamma == gamma
+
+
+class TestDefaultValues1(BaseDefaultValues):
+
+    format = 1
+
+
+class TestDefaultValues2(BaseDefaultValues):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

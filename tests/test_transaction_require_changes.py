@@ -7,7 +7,7 @@ from schevo.test import CreatesSchema, raises
 from schevo import error
 
 
-class TestTransactionRequireChanges(CreatesSchema):
+class BaseTransactionRequireChanges(CreatesSchema):
 
     body = '''
 
@@ -36,13 +36,23 @@ class TestTransactionRequireChanges(CreatesSchema):
         # No error is raised when changes are made.
         b = db.execute(b.t.update(bar=2))
         assert b.bar == 2
-        
+
     def test_do_not_require_changes(self):
         """Update transaction subclasses that set _require_changes to
         False succeed if no changes have been made to any fields."""
         a = db.execute(db.Alpha.t.create(foo=1))
         a = db.execute(a.t.update())
         assert a.foo == 1
+
+
+class TestTransactionRequireChanges1(BaseTransactionRequireChanges):
+
+    format = 1
+
+
+class TestTransactionRequireChanges2(BaseTransactionRequireChanges):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

@@ -2,10 +2,14 @@
  Schevo Tutorial: Movie Reviews
 ================================
 
-In this tutorial, we will show you how to create a skeleton Schevo
-application and a simple database schema. As you update the schema, we
-will show you how to explore the database using the Python
-interpreter.  Here is what the final schema will look like:
+---------------
+ Installment 1
+---------------
+
+In this installment of this tutorial, we will show you how to create a
+skeleton Schevo application and a simple database schema. As you update the
+schema, we will show you how to explore the database using the Python
+interpreter. Here is what the final schema will look like:
 
 .. code-block:: python
 
@@ -28,32 +32,32 @@ interpreter.  Here is what the final schema will look like:
     class Actor(E.Entity):
 
         name = f.unicode()
-    
+
         _key(name)
 
         def x_movies(self):
-            return [casting.movie 
+            return [casting.movie
                     for casting in self.m.movie_castings()]
 
 
     class Director(E.Entity):
 
         name = f.unicode()
-    
+
         _key(name)
 
 
     class Movie(E.Entity):
 
         title = f.unicode()
-        description = f.memo()
         release_date = f.date()
         director = f.entity('Director')
+        description = f.memo(required=False)
 
         _key(title)
 
         def x_actors(self):
-            return [casting.actor 
+            return [casting.actor
                     for casting in self.m.movie_castings()]
 
         def __unicode__(self):
@@ -66,6 +70,35 @@ interpreter.  Here is what the final schema will look like:
         actor = f.entity('Actor')
 
         _key(movie, actor)
+
+
+    E.Actor._sample = [
+        ('Keanu Reeves', ),
+        ('Winona Ryder', ),
+        ]
+
+    E.Director._sample = [
+        ('Richard Linklater', ),
+        ('Stephen Herek', ),
+        ('Tim Burton', ),
+        ]
+
+    E.Movie._sample = [
+        ('A Scanner Darkly', '2006-07-28', ('Richard Linklater', ),
+            DEFAULT),
+        ("Bill & Ted's Excellent Adventure", '1989-02-17',
+            ('Stephen Herek', ), DEFAULT),
+        ('Edward Scissorhands', '1990-12-14', ('Tim Burton', ),
+            DEFAULT),
+        ]
+
+    E.MovieCasting._sample = [
+        (('A Scanner Darkly', ), ('Keanu Reeves', )),
+        (('A Scanner Darkly', ), ('Winona Ryder', )),
+        (("Bill & Ted's Excellent Adventure", ), ('Keanu Reeves', )),
+        (('Edward Scissorhands', ), ('Winona Ryder', )),
+        ]
+
 
 If you have not done so already, set up a Schevo environment as
 described in `SchevoGettingStarted`:trac:.
@@ -137,12 +170,12 @@ classes you'll add to your schema::
     >>> schema += '''
     ...     class SchevoIcon(E.Entity):     # [1]
     ...         """Stores icons for Schevo database and application objects."""
-    ... 
+    ...
     ...         _hidden = True              # [2]
-    ...     
+    ...
     ...         name = f.unicode()          # [3]
     ...         data = f.image()            # [4]
-    ... 
+    ...
     ...         _key(name)                  # [5]
     ...     '''
 
@@ -200,11 +233,11 @@ Add the following class to the database schema::
 
     >>> schema += '''
     ...     class Movie(E.Entity):
-    ... 
+    ...
     ...         title = f.unicode()
     ...         release_date = f.date()
     ...         description = f.memo(required=False)    # [1], [2]
-    ... 
+    ...
     ...         _key(title)                             # [3]
     ...     '''
 
@@ -229,7 +262,7 @@ Save the ``schema_001.py`` file. At a shell prompt, use the ``schevo``
 tool to create a new database with the application's schema::
 
     $ schevo db create --app=moviereviews sample.db
-    
+
 That's it!
 
 At this point, the ``sample.db`` file contains your new database,
@@ -335,11 +368,11 @@ Exit the Python session, then edit ``schema_001.py`` again and add the
 
     >>> schema += '''
     ...     class Movie(E.Entity):
-    ... 
+    ...
     ...         title = f.unicode()
     ...         release_date = f.date()
     ...         description = f.memo(required=False)
-    ... 
+    ...
     ...         _key(title)
     ...
     ...         def __unicode__(self):
@@ -405,63 +438,63 @@ schema by assigning ``_sample`` data lists to each entity class::
 
     >>> schema += '''
     ...     class Actor(E.Entity):
-    ... 
+    ...
     ...         name = f.unicode()
-    ... 
+    ...
     ...         _key(name)
-    ... 
-    ... 
+    ...
+    ...
     ...     class Director(E.Entity):
-    ... 
+    ...
     ...         name = f.unicode()
-    ... 
+    ...
     ...         _key(name)
-    ... 
-    ... 
+    ...
+    ...
     ...     class Movie(E.Entity):
-    ... 
+    ...
     ...         title = f.unicode()
     ...         release_date = f.date()
     ...         director = f.entity('Director')
     ...         description = f.memo(required=False)
-    ... 
+    ...
     ...         _key(title)
-    ... 
+    ...
     ...         def __unicode__(self):
     ...             return u'%s (%i)' % (self.title, self.release_date.year)
-    ... 
-    ... 
+    ...
+    ...
     ...     class MovieCasting(E.Entity):
-    ... 
+    ...
     ...         movie = f.entity('Movie', CASCADE)
     ...         actor = f.entity('Actor')
-    ... 
+    ...
     ...         _key(movie, actor)
-    ... 
+    ...
     ...         def __unicode__(self):
     ...             return u'%s :: %s' (self.movie, self.actor)
-    ... 
-    ... 
+    ...
+    ...
     ...     E.Actor._sample = [
     ...         ('Keanu Reeves', ),
     ...         ('Winona Ryder', ),
     ...         ]
-    ... 
+    ...
     ...     E.Director._sample = [
     ...         ('Richard Linklater', ),
     ...         ('Stephen Herek', ),
     ...         ('Tim Burton', ),
     ...         ]
-    ... 
+    ...
     ...     E.Movie._sample = [
-    ...         ('A Scanner Darkly', '2006-07-28', ('Richard Linklater', ), 
+    ...         ('A Scanner Darkly', '2006-07-28', ('Richard Linklater', ),
     ...             DEFAULT),
-    ...         ("Bill & Ted's Excellent Adventure", '1989-02-17', 
+    ...         ("Bill & Ted's Excellent Adventure", '1989-02-17',
     ...             ('Stephen Herek', ), DEFAULT),
-    ...         ('Edward Scissorhands', '1990-12-14', ('Tim Burton', ), 
+    ...         ('Edward Scissorhands', '1990-12-14', ('Tim Burton', ),
     ...             DEFAULT),
     ...         ]
-    ... 
+    ...
     ...     E.MovieCasting._sample = [
     ...         (('A Scanner Darkly', ), ('Keanu Reeves', )),
     ...         (('A Scanner Darkly', ), ('Winona Ryder', )),
@@ -479,7 +512,7 @@ then open the database in a Python session::
 
     $ schevo db create --app=moviereviews --delete --sample sample.db
     $ schevo shell sample.db
-    
+
 For the doctest, let us do the equivalent::
 
     >>> t.done()
@@ -549,13 +582,13 @@ model. Add a new method called ``x_movies`` to the bottom of the
 
     >>> schema += '''
     ...     class Actor(E.Entity):
-    ... 
+    ...
     ...         name = f.unicode()
-    ... 
+    ...
     ...         _key(name)
     ...
     ...         def x_movies(self):
-    ...             return [casting.movie 
+    ...             return [casting.movie
     ...                     for casting in self.m.movie_castings()]
     ...     '''
 
@@ -563,16 +596,16 @@ Add a new method to the ``Movie`` class::
 
     >>> schema += '''
     ...     class Movie(E.Entity):
-    ... 
+    ...
     ...         title = f.unicode()
     ...         release_date = f.date()
     ...         director = f.entity('Director')
     ...         description = f.memo(required=False)
-    ... 
+    ...
     ...         _key(title)
-    ... 
+    ...
     ...         def x_actors(self):
-    ...             return [casting.actor 
+    ...             return [casting.actor
     ...                     for casting in self.m.movie_castings()]
     ...
     ...         def __unicode__(self):

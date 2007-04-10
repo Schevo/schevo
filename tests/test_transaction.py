@@ -4,14 +4,14 @@ For copyright, license, and warranty, see bottom of file.
 """
 
 from schevo.test import CreatesSchema, raises
+from schevo.constant import UNASSIGNED
 from schevo import error
 from schevo import field
 from schevo.label import label
+from schevo.placeholder import Placeholder
 from schevo import transaction
-from schevo.constant import UNASSIGNED
 
-
-class TestTransaction(CreatesSchema):
+class BaseTransaction(CreatesSchema):
 
     body = '''
 
@@ -628,7 +628,7 @@ class TestTransaction(CreatesSchema):
         assert result1.sys.rev == 1
         assert result1.name == 'bar'
         assert result1 == result2
-        
+
     def test_update_cannot_skip_revisions(self):
         tx = db.User.t.create(name='foo')
         user = db.execute(tx)
@@ -652,6 +652,19 @@ class TestTransaction(CreatesSchema):
         assert result.code == 'F'
         assert result.name == 'Female'
         assert result.count == 0
+
+    def test_update_entities(self):
+        male = db.execute(db.Gender.t.create(code='M', name='Male'))
+        female = db.execute(db.Gender.t.create(code='F', name='Female'))
+        p = db.execute(db.Person.t.create(gender=male, name='Some person'))
+        assert p.gender == male
+        self.internal_update_entities_1(expected=male)
+        db.execute(p.t.update(gender=female))
+        assert p.gender == female
+        self.internal_update_entities_1(expected=female)
+
+    def internal_update_entities_1(self, expected):
+        raise NotImplementedError()
 
     def test_delete_simple(self):
         # Create something that we can delete.
@@ -777,7 +790,7 @@ class TestTransaction(CreatesSchema):
         assert len(db.User) == 2
         assert db.User[1].name == 'foo'
         assert db.User[2].name == 'bar'
-        
+
     def test_nested_rollback(self):
         assert len(db.User) == 0
         # Execute a transaction that fails.
@@ -797,7 +810,7 @@ class TestTransaction(CreatesSchema):
         # Executing the transaction again is not allowed.
         assert raises(error.TransactionAlreadyExecuted, db.execute, tx)
         assert len(db.User) == 1
-        
+
     def test_sys_executed(self):
         """You can tell if a transaction has been executed yet by
         checking its sys.executed flag."""
@@ -1081,7 +1094,7 @@ class TestTransaction(CreatesSchema):
         assert delete.sys.count == realm.sys.count
         update = realm.t.update()
         assert update.sys.count == realm.sys.count
-        
+
     def test_callable_wrapper(self):
         exe = db.execute
         assert len(db.User) == 0
@@ -1096,7 +1109,56 @@ class TestTransaction(CreatesSchema):
             exe(db.User.t.create(name='bar'))
         exe(fn2)
         assert len(db.User) == 2
-        
+
+
+class TestTransaction1(BaseTransaction):
+
+    format = 1
+
+    def internal_update_entities_1(self, expected):
+        person_entity = db.Person.findone(name='Some person')
+        root = db._root
+        schevo = root['SCHEVO']
+        extent_name_id = schevo['extent_name_id']
+        extents = schevo['extents']
+        Gender_extent_id = extent_name_id['Gender']
+        Person_extent_id = extent_name_id['Person']
+        Gender_extent = extents[Gender_extent_id]
+        Person_extent = extents[Person_extent_id]
+        Gender_field_name_id = Gender_extent['field_name_id']
+        Person_field_name_id = Person_extent['field_name_id']
+        # Check for p.gender having correct field values.
+        p = Person_extent['entities'][person_entity.sys.oid]
+        p_fields = p['fields']
+        Person_gender_field_id = Person_field_name_id['gender']
+        p_gender = p_fields[Person_gender_field_id]
+        assert p_gender == (Gender_extent_id, expected.sys.oid)
+
+
+class TestTransaction2(BaseTransaction):
+
+    format = 2
+
+    def internal_update_entities_1(self, expected):
+        person_entity = db.Person.findone(name='Some person')
+        root = db._root
+        schevo = root['SCHEVO']
+        extent_name_id = schevo['extent_name_id']
+        extents = schevo['extents']
+        Gender_extent_id = extent_name_id['Gender']
+        Person_extent_id = extent_name_id['Person']
+        Gender_extent = extents[Gender_extent_id]
+        Person_extent = extents[Person_extent_id]
+        Gender_field_name_id = Gender_extent['field_name_id']
+        Person_field_name_id = Person_extent['field_name_id']
+        # Check for p.gender having correct related entity structures.
+        p = Person_extent['entities'][person_entity.sys.oid]
+        p_related_entities = p['related_entities']
+        Person_gender_field_id = Person_field_name_id['gender']
+        p_related_genders = p_related_entities[Person_gender_field_id]
+        expected_p_related_genders = frozenset([Placeholder(expected)])
+        assert p_related_genders == expected_p_related_genders
+
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
 #

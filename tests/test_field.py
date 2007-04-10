@@ -11,7 +11,7 @@ import sys
 from schevo.constant import UNASSIGNED
 from schevo import field
 from schevo import fieldspec
-from schevo.test import BaseTest, CreatesSchema, raises
+from schevo.test import BaseTest, raises
 
 
 class TestField(BaseTest):
@@ -61,7 +61,7 @@ class Base:
 
     bad_values_default = []
     convert_values_default = []
-    FieldClass = None 
+    FieldClass = None
     good_values_default = []
     str_values_default = []
     min_max_values = []
@@ -188,7 +188,7 @@ class TestString(Base, BaseTest):
         ('test', 5, None, False, False),
         ('test_test', None, 8, False, False),
         ]
-    
+
 
 class TestUnicode(Base, BaseTest):
 
@@ -258,7 +258,7 @@ class TestInteger(Base, BaseTest):
         (100, -200, 200, True),
         (300, -200, 200, False),
         ]
-                          
+
 
 class TestFloat(Base, BaseTest):
 
@@ -342,7 +342,7 @@ class TestFloat(Base, BaseTest):
 class TestDate(Base, BaseTest):
 
     class FieldClass(field.Date): pass
-    
+
     good_values_default = [
         datetime.date(2004, 5, 5),
         datetime.date(1765, 4, 3),
@@ -384,14 +384,14 @@ class TestDate(Base, BaseTest):
         (datetime.date(2004, 1, 1), datetime.date(2004, 2, 2), None, False),
         (datetime.date(2004, 1, 1), None, datetime.date(2004, 2, 2), True),
         (datetime.date(2004, 3, 3), None, datetime.date(2004, 2, 2), False),
-        (datetime.date(2004, 3, 3), 
-         datetime.date(2004, 2, 2), datetime.date(2004, 4, 4), 
+        (datetime.date(2004, 3, 3),
+         datetime.date(2004, 2, 2), datetime.date(2004, 4, 4),
          True),
-        (datetime.date(2004, 1, 1), 
-         datetime.date(2004, 2, 2), datetime.date(2004, 4, 4), 
+        (datetime.date(2004, 1, 1),
+         datetime.date(2004, 2, 2), datetime.date(2004, 4, 4),
          False),
-        (datetime.date(2004, 5, 5), 
-         datetime.date(2004, 2, 2), datetime.date(2004, 4, 4), 
+        (datetime.date(2004, 5, 5),
+         datetime.date(2004, 2, 2), datetime.date(2004, 4, 4),
          False),
         ]
 
@@ -399,7 +399,7 @@ class TestDate(Base, BaseTest):
 class TestDatetime(Base, BaseTest):
 
     class FieldClass(field.Datetime): pass
-    
+
     good_values_default = [
         datetime.datetime(2004, 5, 5, 22, 32, 5),
         datetime.datetime(1765, 4, 3, 10, 11, 12),
@@ -426,28 +426,28 @@ class TestDatetime(Base, BaseTest):
         ]
     min_max_values = [
         # (value, min, max, is_valid),
-        (datetime.datetime(2004, 5, 5), None, None, 
+        (datetime.datetime(2004, 5, 5), None, None,
          True),
-        (datetime.datetime(2004, 3, 3), 
-         datetime.datetime(2004, 2, 2), None, 
+        (datetime.datetime(2004, 3, 3),
+         datetime.datetime(2004, 2, 2), None,
          True),
-        (datetime.datetime(2004, 1, 1), 
-         datetime.datetime(2004, 2, 2), None, 
+        (datetime.datetime(2004, 1, 1),
+         datetime.datetime(2004, 2, 2), None,
          False),
-        (datetime.datetime(2004, 1, 1), None, 
-         datetime.datetime(2004, 2, 2), 
+        (datetime.datetime(2004, 1, 1), None,
+         datetime.datetime(2004, 2, 2),
          True),
-        (datetime.datetime(2004, 3, 3), None, 
-         datetime.datetime(2004, 2, 2), 
+        (datetime.datetime(2004, 3, 3), None,
+         datetime.datetime(2004, 2, 2),
          False),
-        (datetime.datetime(2004, 3, 3), 
-         datetime.datetime(2004, 2, 2), datetime.datetime(2004, 4, 4), 
+        (datetime.datetime(2004, 3, 3),
+         datetime.datetime(2004, 2, 2), datetime.datetime(2004, 4, 4),
          True),
-        (datetime.datetime(2004, 1, 1), 
-         datetime.datetime(2004, 2, 2), datetime.datetime(2004, 4, 4), 
+        (datetime.datetime(2004, 1, 1),
+         datetime.datetime(2004, 2, 2), datetime.datetime(2004, 4, 4),
          False),
-        (datetime.datetime(2004, 5, 5), 
-         datetime.datetime(2004, 2, 2), datetime.datetime(2004, 4, 4), 
+        (datetime.datetime(2004, 5, 5),
+         datetime.datetime(2004, 2, 2), datetime.datetime(2004, 4, 4),
          False),
         ]
 
@@ -536,72 +536,6 @@ class TestPassword(object):
         f = field.Password(None, None)
         f.set('some-password')
         assert unicode(f) == u'(Hidden)'
-
-
-class TestEntity(CreatesSchema):
-    
-    body = '''
-
-    class Foo(E.Entity):
-        
-        thing = f.string()
-        
-        _sample_unittest = [
-            ('a', ),
-            ('b', ),
-            ('c', ),
-            ]
-        
-    class Bar(E.Entity):
-        
-        stuff = f.integer()
-        
-        _sample_unittest = [
-            (1, ),
-            (2, ),
-            (3, ),
-            ]
-        
-    class Baz(E.Entity):
-        
-        foo = f.entity('Foo')
-        bar = f.entity('Bar')
-        foobar = f.entity('Foo', 'Bar', required=False)
-    '''
-
-    def test_allow(self):
-        tx = db.Baz.t.create()
-        assert tx.f.foo.allow == set(['Foo'])
-        assert tx.f.bar.allow == set(['Bar'])
-        assert tx.f.foobar.allow == set(['Foo', 'Bar'])
-        
-    def test_convert(self):
-        tx = db.Baz.t.create()
-        f = tx.f.foo
-        assert f.convert('Foo-1', db) == db.Foo[1]
-        assert f.convert(u'Foo-1', db) == db.Foo[1]
-        
-    def test_reversible_valid_values(self):
-        tx = db.Baz.t.create()
-        assert tx.f.foo.reversible_valid_values(db) == [
-            ('Foo-1', db.Foo[1]),
-            ('Foo-2', db.Foo[2]),
-            ('Foo-3', db.Foo[3]),
-            ]
-        assert tx.f.bar.reversible_valid_values(db) == [
-            ('Bar-1', db.Bar[1]),
-            ('Bar-2', db.Bar[2]),
-            ('Bar-3', db.Bar[3]),
-            ]
-        assert tx.f.foobar.reversible_valid_values(db) == [
-            ('', UNASSIGNED),
-            ('Bar-1', db.Bar[1]),
-            ('Bar-2', db.Bar[2]),
-            ('Bar-3', db.Bar[3]),
-            ('Foo-1', db.Foo[1]),
-            ('Foo-2', db.Foo[2]),
-            ('Foo-3', db.Foo[3]),
-            ]
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

@@ -13,7 +13,7 @@ from schevo.test import CreatesSchema, raises
 from schevo.transaction import Transaction
 
 
-class TestEntityExtent(CreatesSchema):
+class BaseEntityExtent(CreatesSchema):
 
     body = '''
 
@@ -88,7 +88,7 @@ class TestEntityExtent(CreatesSchema):
         def t_trigger_key_collision(extent):
             return T.Trigger_Key_Collision()
 
-        
+
     class Account(E.Entity):
         """Bank account."""
 
@@ -751,7 +751,7 @@ class TestEntityExtent(CreatesSchema):
         assert name_ages == sorted(name_ages)
         name_ages = [(u.name, u.age) for u in db.User.by('-name', '-age')]
         assert name_ages == list(reversed(sorted(name_ages)))
-        
+
     def test_extent_iter(self):
         # Create several users with random names and ages.
         tx = self.LotsOfUsers()
@@ -762,7 +762,7 @@ class TestEntityExtent(CreatesSchema):
             count += 1
             assert count == user.sys.oid
         assert count == total
-        
+
     def test_entity_equality(self):
         """Entity instances referring to the same entity always have the same
         OID, revision, and field values, and are also equal."""
@@ -787,6 +787,16 @@ class TestEntityExtent(CreatesSchema):
         extents.sort()
         extent_names = [e.name for e in extents]
         assert extent_names == expected
+
+
+class TestEntityExtent1(BaseEntityExtent):
+
+    format = 1
+
+
+class TestEntityExtent2(BaseEntityExtent):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

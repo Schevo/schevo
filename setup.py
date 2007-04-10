@@ -7,11 +7,11 @@ import textwrap
 
 setup(
     name="Schevo",
-    
+
     version=__version__,
-    
+
     description="Next-generation DBMS",
-    
+
     long_description=textwrap.dedent("""
     Schevo is a next-generation DBMS that focuses on the following:
 
@@ -42,7 +42,7 @@ setup(
       Schevo to ensure that your database is left in a consistent state at all
       times.
 
-    * **User Interface Generation**. 
+    * **User Interface Generation**.
 
       User interface code takes advantage of the richness of your database
       schema. Use a full-featured database navigator to interact with your
@@ -52,7 +52,7 @@ setup(
     The latest development version is available in a `Subversion
     repository <http://schevo.org/svn/trunk/Schevo#egg=Schevo-dev>`__.
     """),
-    
+
     classifiers=[
     'Development Status :: 4 - Beta',
     'Environment :: Console',
@@ -63,16 +63,16 @@ setup(
     'Topic :: Database :: Database Engines/Servers',
     'Topic :: Software Development :: Libraries :: Application Frameworks',
     ],
-    
+
     keywords='database dbms',
-    
+
     author='Orbtech, L.L.C. and contributors',
     author_email='schevo@googlegroups.com',
 
     url='http://schevo.org/wiki/Schevo',
-    
+
     license='LGPL',
-    
+
     platforms=['UNIX', 'Windows'],
 
     packages=find_packages(exclude=['doc', 'tests']),
@@ -80,24 +80,24 @@ setup(
     include_package_data=True,
 
     zip_safe=False,
-    
+
     install_requires=[
     'Louie >= 1.0',
     'PasteScript == dev, >= 1.1.1dev-r6221',
     ],
-    
+
     tests_require=[
     'nose >= 0.9.0',
     ],
     test_suite='nose.collector',
-    
+
     extras_require={
     },
-    
+
     dependency_links = [
     'http://schevo.org/files/thirdparty/',
     ],
-    
+
     ext_modules = [
     Extension('schevo.store._persistent', ['schevo/store/_persistent.c']),
     ],

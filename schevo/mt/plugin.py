@@ -3,7 +3,7 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
-from schevo.database import dummy_lock
+from schevo.mt.dummy import dummy_lock
 from schevo.mt import mrow
 
 
@@ -16,7 +16,7 @@ def install(db):
 class Plugin(object):
     """A plugin giving a Schevo database a multiple-reader, one-writer
     locking mechanism.
-    
+
     Usage::
 
       from schevo.database import open

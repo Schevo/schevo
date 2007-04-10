@@ -13,12 +13,12 @@ from schevo.test import CreatesSchema
 from schevo.field import not_expensive, not_fget, not_hidden
 
 
-class TestFieldMaps(CreatesSchema):
+class BaseFieldMaps(CreatesSchema):
 
     body = '''
 
     class Foo(E.Entity):
-        
+
         aaa = f.unicode()
         bbb = f.unicode(hidden=True)
         @f.unicode(hidden=True)
@@ -61,7 +61,7 @@ class TestFieldMaps(CreatesSchema):
         expected = 'aaa',
         keys = fkeys(not_fget, not_hidden)
         assert expected == keys
-        
+
     def test_extent_field_spec(self):
         extent = db.Foo
         def fkeys(*filters):
@@ -91,7 +91,16 @@ class TestFieldMaps(CreatesSchema):
         expected = 'aaa',
         keys = fkeys(not_fget, not_hidden)
         assert expected == keys
-        
+
+
+class TestFieldMaps1(BaseFieldMaps):
+
+    format = 1
+
+
+class TestFieldMaps2(BaseFieldMaps):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

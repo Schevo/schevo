@@ -1,0 +1,67 @@
+================================
+ Schevo Tutorial: Movie Reviews
+================================
+
+---------------
+ Installment 2
+---------------
+
+In this installment of this tutorial, we will show you how to ...
+
+Here is what the final schema will look like:
+
+.. code-block:: python
+
+    """Schema for MovieReviews."""
+
+    from schevo.schema import *
+    schevo.schema.prep(locals())
+
+    ...
+
+If you have not done so already, follow the steps in
+`SchevoTutorialMovieReviews1`:trac:.
+
+This tutorial is also a doctest, so let us set up doctest
+environment::
+
+    >>> from schevo.test import DocTest
+
+
+Where we left off
+=================
+
+In the previous installment of this tutorial, we left off with a
+schema that provided structures to store movies, where each movie had
+one and only one director, and zero or more actors.  We also included
+some sample data.
+
+The schema is embodied in an example database schema included with
+Schevo. Let us use that as a starting point::
+
+    >>> import schevo.schema
+    >>> schema = schevo.schema.read(
+    ...     location = 'schevo.example.moviereviews.schema',
+    ...     version = 1,
+    ...     )
+    >>> t = DocTest(schema)
+
+
+Rating movies
+=============
+
+
+Average rating for a movie
+==========================
+
+
+Favorite movies
+===============
+
+
+Summary
+=======
+
+This tutorial has covered the following:
+
+* ...

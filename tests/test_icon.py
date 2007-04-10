@@ -19,7 +19,7 @@ SPROCKET_PNG = file(os.path.join(TEST_ICONS, 'db.Sprocket.png'), 'rb').read()
 CONFIGURE_PNG = file(os.path.join(TEST_ICONS, 'configure.png'), 'rb').read()
 
 
-class TestFsIconMap(CreatesSchema):
+class BaseFsIconMap(CreatesSchema):
 
     body = '''
 
@@ -45,6 +45,16 @@ class TestFsIconMap(CreatesSchema):
     def test_file_does_not_exist(self):
         loopsegment_png = db._icon('db.LoopSegment')
         assert loopsegment_png == DEFAULT_PNG
+
+
+class TestFsIconMap1(BaseFsIconMap):
+
+    format = 1
+
+
+class TestFsIconMap2(BaseFsIconMap):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

@@ -165,6 +165,7 @@ class EntityMeta(type):
                     except KeyError:  # XXX This needs to be more specific.
                         value = UNASSIGNED
                     field._value = value
+                    field._restore(db)
                     return field.get()
             setattr(cls, field_name, property(fget=get_field_value))
         cls._fget_fields = tuple(fget_fields)
@@ -273,7 +274,7 @@ class Entity(base.Entity, LabelMixin):
 
     # The actual class/extent name to use for this Entity type.
     _actual_name = None
-    
+
     # The database instance associated with this Entity type.
     _db = None
 
@@ -650,6 +651,7 @@ class EntitySys(NamespaceExtension):
         """Return field_map for the entity, filtered by optional
         callable objects specified in `filters`."""
         e = self._entity
+        db = e._db
         stored_values = e._db._entity_fields(e._extent.name, e._oid)
         entity_field_map = e._field_spec.field_map(e, stored_values)
         # Remove fields that should not be included.
@@ -658,13 +660,14 @@ class EntitySys(NamespaceExtension):
             new_fields = [field for field in new_fields if filt(field)]
         entity_field_map = FieldMap(
             (field.name, field) for field in new_fields)
-        # Update fields that have fget callables.
         for field in entity_field_map.itervalues():
             if field.fget is not None:
+                # Update fields that have fget callables.
                 value = field.fget[0](e)
             else:
-                value = field._value
-            field._value = field.convert(value)
+                # Allow fields to restore themselves from a stored
+                # value.
+                field._restore(db)
         return entity_field_map
 
     def links(self, other_extent_name=None, other_field_name=None):
@@ -743,19 +746,6 @@ class EntityViews(NamespaceExtension):
     def __iter__(self):
         return (k for k in self._d.iterkeys()
                 if k not in self._e._hidden_views)
-
-
-class EntityRef(object):
-    """Reference to an Entity via its extent name and OID."""
-
-    def __init__(self, extent_name, oid):
-        """Create an EntityRef instance.
-
-        - `extent_name`: The name of the extent.
-        - `oid`: The OID of the entity.
-        """
-        self.extent_name = extent_name
-        self.oid = oid
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

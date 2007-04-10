@@ -7,18 +7,18 @@ import louie
 
 from schevo.change import CREATE, DELETE, UPDATE, Distributor, normalize
 from schevo.constant import UNASSIGNED
-from schevo.database import TransactionExecuted
 from schevo import error
+from schevo.signal import TransactionExecuted
 from schevo.test import CreatesSchema, raises
 from schevo.transaction import Transaction
 
 
 BODY = '''
 class User(E.Entity):
-    
+
     name = f.unicode()
     age = f.integer(required=False)
-    
+
     _key(name)
 
     _index(age)
@@ -141,7 +141,7 @@ class Transfer(T.Transaction):
 '''
 
 
-class TestChangeset(CreatesSchema):
+class BaseChangeset(CreatesSchema):
     """Upon execution of a transaction, a list of changes that it made
     becomes available regarding Create, Delete, and Update operations
     that occurred in each extent.
@@ -197,7 +197,7 @@ class TestChangeset(CreatesSchema):
         assert summary.creates == dict(User=set([oid]))
         assert summary.deletes == dict()
         assert summary.updates == dict()
-        
+
     def test_delete(self):
         tx = db.User.t.create(name='foo')
         user = db.execute(tx)
@@ -345,7 +345,7 @@ class TestDistributor(CreatesSchema):
     body = BODY
 
     class Watcher(object):
-        
+
         def __init__(self):
             self.received = []
 
@@ -439,6 +439,16 @@ class TestDistributor(CreatesSchema):
             (CREATE, 'User', oid),
             (DELETE, 'User', oid),
             ]
+
+
+class TestChangeset1(BaseChangeset):
+
+    format = 1
+
+
+class TestChangeset2(BaseChangeset):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

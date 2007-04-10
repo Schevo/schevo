@@ -50,7 +50,7 @@ class Person(E.Entity):
 # Declare this out of order to test sorting.
 class Animal(E.Entity):
 
-    name = f.customString()
+    name = f.custom_string()
     wild = f.boolean()
 
 
@@ -77,14 +77,14 @@ def t_tx_with_fields():
 """
 
 
-class TestSchema(CreatesSchema):
+class BaseSchema(CreatesSchema):
 
     body = BODY
 
     def test_entity_dict(self):
         E = db.schema.E
         assert len(E) == 4
-        
+
     def test_entity_entity(self):
         E = db.schema.E
         assert 'Entity' not in E
@@ -166,7 +166,7 @@ class TestSchema(CreatesSchema):
         assert hasattr(d.t, 'tx_with_fields')
         tx = d.t.tx_with_fields()
         assert isinstance(tx, d.T.TxWithFields)
-        
+
     def test_duplicate_key_and_index_declaration_is_a_schema_error(self):
         body = '''
             class Foo(E.Entity):
@@ -180,7 +180,7 @@ class TestSchema(CreatesSchema):
             class Foo(E.Entity):
                 bar = f.integer()
                 _key(bar)
-                
+
             class Foo(E.Foo):
                 _index('bar')
             '''
@@ -189,11 +189,21 @@ class TestSchema(CreatesSchema):
             class Foo(E.Entity):
                 bar = f.integer()
                 _index(bar)
-                
+
             class Foo(E.Foo):
                 _key('bar')
             '''
         assert raises(SchemaError, DocTest, body)
+
+
+class TestSchema1(BaseSchema):
+
+    format = 1
+
+
+class TestSchema2(BaseSchema):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

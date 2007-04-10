@@ -11,7 +11,7 @@ class _HistoryIndex (dict):
     A substitute offset index used in HistoryFileStorage.
     This keeps a history of updates and provides methods for
     moving backward and forward in that history.
-    
+
     """
     def __init__(self, other_dict):
         dict.__init__(self)
@@ -48,7 +48,7 @@ class _HistoryIndex (dict):
 class HistoryFileStorage (FileStorage2):
     """
     This variant of storage allows stepping forward and backward
-    among the transaction records.  
+    among the transaction records.
     """
     def __init__(self, filename=None, readonly=True, repair=False):
         assert readonly and not repair

@@ -8,7 +8,7 @@ from schevo.test import CreatesSchema
 from schevo.constant import UNASSIGNED
 
 
-class TestPopulateSimple(CreatesSchema):
+class BasePopulateSimple(CreatesSchema):
 
     body = '''
 
@@ -34,7 +34,7 @@ class TestPopulateSimple(CreatesSchema):
         assert db.Foo.as_datalist() == db.Foo._EntityClass._sample_unittest
 
 
-class TestPopulateComplex(CreatesSchema):
+class BasePopulateComplex(CreatesSchema):
 
     body = '''
 
@@ -117,7 +117,7 @@ class TestPopulateComplex(CreatesSchema):
             db.Multi._EntityClass._sample_unittest)
 
 
-class TestPopulateHidden(CreatesSchema):
+class BasePopulateHidden(CreatesSchema):
 
     body = '''
 
@@ -148,6 +148,41 @@ class TestPopulateHidden(CreatesSchema):
         assert db.Foo[2].bar == 4
         assert db.Foo[2].baz is UNASSIGNED
         assert db.Foo[2].bof == 5.6
+
+
+BasePopulateHidden
+BasePopulateComplex
+BasePopulateSimple
+
+
+class TestPopulateSimple1(BasePopulateSimple):
+
+    format = 1
+
+
+class TestPopulateSimple2(BasePopulateSimple):
+
+    format = 2
+
+
+class TestPopulateComplex1(BasePopulateComplex):
+
+    format = 1
+
+
+class TestPopulateComplex2(BasePopulateComplex):
+
+    format = 2
+
+
+class TestPopulateHidden1(BasePopulateHidden):
+
+    format = 1
+
+
+class TestPopulateHidden2(BasePopulateHidden):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C. and contributors.

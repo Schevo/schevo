@@ -8,10 +8,10 @@ schevo.schema.prep(locals())
 # class definition:
 #
 ## class SchevoIcon(E.Entity):
-## 
+##
 ##     _hidden = True
-## 
+##
 ##     name = f.unicode()
 ##     data = f.image()
-## 
+##
 ##     _key(name)

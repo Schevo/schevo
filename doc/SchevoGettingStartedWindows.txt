@@ -17,7 +17,7 @@ Install Python
    `2.4.4 release page
    <http://www.python.org/download/releases/2.4.4/>`__ and downloading
    the ``python-2.4.4.msi`` file.
-    
+
 2. Open the ``msi`` file to start the installation process.
 
 3. Step through the Python installer, accepting the default values for
@@ -37,7 +37,7 @@ Install Python
 
      Python 2.4.4 (#71, Oct 18 2006, 08:34:43) ...
      Type "help", "copyright", "credits", or "license" ...
-     >>> 
+     >>>
 
    To exit the Python shell, press Ctrl-Z and press Enter.
 
@@ -91,7 +91,7 @@ In a command prompt, use *EasyInstall* to install the latest release
 of Schevo::
 
     easy_install Schevo
-    
+
 
 What to do after Schevo is installed
 ====================================

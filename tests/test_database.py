@@ -7,17 +7,12 @@ from schevo import error
 from schevo.test import CreatesDatabase, raises
 
 
-class TestDatabase(CreatesDatabase):
+class BaseDatabase(CreatesDatabase):
     """Subclass and set self.db to the database instance to test."""
 
     def test_schevo_key_in_root(self):
         """A Durus database has a `SCHEVO` key in its root."""
         assert 'SCHEVO' in self.connection.get_root()
-
-    def test_format_1(self):
-        """A newly-created database will be in database format version
-        1."""
-        assert self.db.format == 1
 
     def test_empty(self):
         """A database should start out with very little."""
@@ -71,7 +66,8 @@ class TestDatabase(CreatesDatabase):
         db = self.db
         db._create_extent('Some_Extent', ['name', 'age'], [])
         fields = dict(name='Foo', age=33)
-        oid = db._create_entity('Some_Extent', fields)
+        related_entities = dict()
+        oid = db._create_entity('Some_Extent', fields, related_entities)
         db._commit()
         # OID starts out at 1 and rev starts out as 0.
         assert oid == 1
@@ -87,10 +83,11 @@ class TestDatabase(CreatesDatabase):
         db = self.db
         db._create_extent('Some_Extent', ['name', 'age'], [])
         fields = dict(name='Foo', age=33)
-        oid = db._create_entity('Some_Extent', fields)
+        related_entities = dict()
+        oid = db._create_entity('Some_Extent', fields, related_entities)
         db._commit()
         fields = dict(name='Bar')
-        db._update_entity('Some_Extent', oid, fields)
+        db._update_entity('Some_Extent', oid, fields, related_entities)
         db._commit()
         # Rev increments.
         assert db._entity_rev('Some_Extent', oid) == 1
@@ -104,7 +101,8 @@ class TestDatabase(CreatesDatabase):
         db = self.db
         db._create_extent('Some_Extent', ['name', 'age'], [])
         fields = dict(name='Foo', age=33)
-        oid = db._create_entity('Some_Extent', fields)
+        related_entities = dict()
+        oid = db._create_entity('Some_Extent', fields, related_entities)
         db._commit()
         db._delete_entity('Some_Extent', oid)
         db._commit()
@@ -115,9 +113,27 @@ class TestDatabase(CreatesDatabase):
         assert db._extent_len('Some_Extent') == 0
         # Creating a new entity never uses a deleted oid.
         fields = dict(name='Foo', age=33)
-        oid2 = db._create_entity('Some_Extent', fields)
+        oid2 = db._create_entity('Some_Extent', fields, related_entities)
         db._commit()
         assert oid2 == oid + 1
+
+
+class TestDatabase1(BaseDatabase):
+
+    format = 1
+
+    def test_format_1(self):
+        """A newly-created database will be in database format version 1."""
+        assert self.db.format == 1
+
+
+class TestDatabase2(BaseDatabase):
+
+    format = 2
+
+    def test_format_2(self):
+        """A newly-created database will be in database format version 2."""
+        assert self.db.format == 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

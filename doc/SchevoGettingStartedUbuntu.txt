@@ -63,7 +63,7 @@ In a command prompt, use *EasyInstall* to install the latest release
 of Schevo::
 
     easy_install Schevo
-    
+
 
 What to do after Schevo is installed
 ====================================

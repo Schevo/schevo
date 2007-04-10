@@ -94,6 +94,10 @@ class AmbiguousFieldDefinition(SchemaError):
     """A field defition's attributes were ambiguous."""
 
 
+class UnsupportedFieldType(SchemaError):
+    """The field type is not supported by the database engine in use."""
+
+
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
 #
 # Schevo

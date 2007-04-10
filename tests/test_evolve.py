@@ -22,7 +22,7 @@ def fix(schema):
     return BOILERPLATE + dedent(schema)
 
 
-class TestEvolveIntraVersion(CreatesDatabase):
+class BaseEvolveIntraVersion(CreatesDatabase):
     """Test evolution of schema within the same version, as occurs
     during app development."""
 
@@ -325,7 +325,7 @@ class TestEvolveIntraVersion(CreatesDatabase):
         db.execute(db.Foo.t.create(bar='baz'))
 
 
-class TestEvolveInterVersion(CreatesDatabase):
+class BaseEvolveInterVersion(CreatesDatabase):
     """Test evolution of schema from version to version, as occurs
     with upgrading deployed production apps."""
 
@@ -652,7 +652,7 @@ class TestEvolveInterVersion(CreatesDatabase):
         e2 = db.Foo[e2_oid]
         assert e1.baz == 'abc'
         assert e2.baz == 'def'
-        
+
     def test_rename_field_broken(self):
         schema1 = fix("""
         class Foo(E.Entity):
@@ -692,7 +692,7 @@ class TestEvolveInterVersion(CreatesDatabase):
         e2 = db.Foo[e2_oid]
         assert e1.baz == 'abc'
         assert e2.baz == 'def'
-        
+
     def test_rename_field_reused(self):
         schema1 = fix("""
         class Foo(E.Entity):
@@ -713,7 +713,7 @@ class TestEvolveInterVersion(CreatesDatabase):
         e2 = db.Foo[e2_oid]
         assert e1.baz == 'abc'
         assert e2.baz == 'def'
-        
+
     def test_rename_extent(self):
         schema1 = fix("""
         class Foo(E.Entity):
@@ -735,7 +735,7 @@ class TestEvolveInterVersion(CreatesDatabase):
         assert e1.bar == 'abc'
         assert e2.bar == 'def'
         assert db.extent_names() == ['Baz']
-        
+
     def test_rename_extent_broken(self):
         schema1 = fix("""
         class Foo(E.Entity):
@@ -962,6 +962,26 @@ class TestEvolveInterVersion(CreatesDatabase):
         assert db.x.get_bar() == 43
         self.evolve(schema3, version=3)
         assert db.x.get_bar() == 44
+
+
+class TestEvolveIntraVersion1(BaseEvolveIntraVersion):
+
+    format = 1
+
+
+class TestEvolveIntraVersion2(BaseEvolveIntraVersion):
+
+    format = 2
+
+
+class TestEvolveInterVersion1(BaseEvolveInterVersion):
+
+    format = 1
+
+
+class TestEvolveInterVersion2(BaseEvolveInterVersion):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

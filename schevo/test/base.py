@@ -9,6 +9,7 @@ import sys
 from schevo import database
 from schevo.lib import module
 import schevo.schema
+import schevo.trace
 from schevo.script.path import package_path
 
 from textwrap import dedent
@@ -34,8 +35,24 @@ def raises(exc_type, fn, *args, **kw):
         raise AssertionError('Call did not raise an exception')
 
 
+def tron(monitor_level=3):
+    """Turn trace monitoring on.
+
+    Automatically injected into global namespace of tests when run.
+    """
+    schevo.trace.monitor_level = monitor_level
+
+
+def troff():
+    """Turn trace monitoring off.
+
+    Automatically injected into global namespace of tests when run.
+    """
+    schevo.trace.monitor_level = 0
+
+
 _db_cache = {
-    # (schema_source, suffix): (db, fp, connection),
+    # (format, schema_source, suffix): (db, fp, connection),
     }
 _cached_dbs = set(
     # db,
@@ -68,13 +85,27 @@ class CreatesDatabase(BaseTest):
     """A mixin to provide test directory and Durus database creation
     and deletion per-method."""
 
+    format = None
+
     def setUp(self):
         self.suffixes = set()
         self.open()
+        # Also set the global 'tron' and 'troff' variables in our
+        # class's module namespace for convenience.
+        modname = self.__class__.__module__
+        mod = sys.modules[modname]
+        mod.tron = tron
+        mod.troff = troff
 
     def tearDown(self):
         for suffix in list(self.suffixes):
             self.close(suffix)
+
+    def db_contents(self, suffix=''):
+        value = ''
+        if hasattr(self, 'fpv' + suffix):
+            value = getattr(self, 'fpv' + suffix)
+        return value
 
     def close(self, suffix=''):
         """Close the database."""
@@ -91,6 +122,16 @@ class CreatesDatabase(BaseTest):
         delattr(mod, db_name)
         self.suffixes.remove(suffix)
 
+    def convert_format(self, suffix, format):
+        # Get the contents of the database from the fpv attribute.
+        contents = self.db_contents(suffix)
+        # Turn it into a fresh StringIO.
+        fp = StringIO(contents)
+        # Convert it to the requested format.
+        database.convert_format(fp, format)
+        # Turn it back into a fpv attribute.
+        setattr(self, 'fpv' + suffix, fp.getvalue())
+
     def evolve(self, schema_source, version):
         db = self.reopen()
         database.evolve(db, schema_source, version)
@@ -102,11 +143,10 @@ class CreatesDatabase(BaseTest):
         May be called more than once in a series of open/close calls.
         """
         # Create database.
-        value = ''
-        if hasattr(self, 'fpv' + suffix):
-            value = getattr(self, 'fpv' + suffix)
-        fp = StringIO(value)
-        db = database.open(fp=fp, schema_source=schema_source)
+        contents = self.db_contents(suffix)
+        fp = StringIO(contents)
+        db = database.open(
+            fp=fp, schema_source=schema_source, format_for_new=self.format)
         db_name = 'db' + suffix
         setattr(self, db_name, db)
         setattr(self, 'fp' + suffix, fp)
@@ -131,10 +171,17 @@ class CreatesDatabase(BaseTest):
         """
         return self._open()
 
-    def reopen(self, suffix=''):
-        """Close and reopen self.db and return its new incarnation."""
+    def reopen(self, suffix='', format=None):
+        """Close and reopen self.db and return its new incarnation.
+
+        - `suffix`: The suffix to append to the name of variables; for testing
+          multiple databases open at once.
+        - `format`: The format to convert to before reopening.
+        """
         setattr(self, 'fpv' + suffix, getattr(self, 'fp' + suffix).getvalue())
         self.close(suffix)
+        if format is not None:
+            self.convert_format(suffix, format)
         db = self._open(suffix)
         delattr(self, 'fpv' + suffix)
         return db
@@ -154,6 +201,7 @@ class CreatesSchema(CreatesDatabase):
     _use_db_cache = True
 
     def _open(self, suffix=''):
+        format = self.format
         if self.body:
             schema = self.schema = PREAMBLE + dedent(self.body)
         else:
@@ -163,10 +211,10 @@ class CreatesSchema(CreatesDatabase):
         ex_name = 'ex' + suffix
         fpv_name = 'fpv' + suffix
         if (use_db_cache
-            and (schema, suffix) in _db_cache
+            and (format, schema, suffix) in _db_cache
             and not hasattr(self, fpv_name)
             ):
-            db, fp, connection = _db_cache[(schema, suffix)]
+            db, fp, connection = _db_cache[(format, schema, suffix)]
             setattr(self, 'fp' + suffix, fp)
             setattr(self, 'connection' + suffix, connection)
             if not hasattr(self, db_name):
@@ -180,7 +228,7 @@ class CreatesSchema(CreatesDatabase):
             if use_db_cache:
                 fp = getattr(self, 'fp' + suffix)
                 connection = getattr(self, 'connection' + suffix)
-                _db_cache[(schema, suffix)] = (db, fp, connection)
+                _db_cache[(format, schema, suffix)] = (db, fp, connection)
                 _cached_dbs.add(db)
         # Also set the module-level global.
         modname = self.__class__.__module__
@@ -203,16 +251,17 @@ class EvolvesSchemata(CreatesDatabase):
     _use_db_cache = True
 
     def _open(self, suffix=''):
+        format = self.format
         use_db_cache = self._use_db_cache
         db_name = 'db' + suffix
         ex_name = 'ex' + suffix
         fpv_name = 'fpv' + suffix
         schema = self.schemata[-1]
         if (use_db_cache
-            and (schema, suffix) in _db_cache
+            and (format, schema, suffix) in _db_cache
             and not hasattr(self, fpv_name)
             ):
-            db, fp, connection = _db_cache[(schema, suffix)]
+            db, fp, connection = _db_cache[(format, schema, suffix)]
             setattr(self, 'fp' + suffix, fp)
             setattr(self, 'connection' + suffix, connection)
             if not hasattr(self, db_name):
@@ -231,7 +280,7 @@ class EvolvesSchemata(CreatesDatabase):
             if use_db_cache:
                 fp = getattr(self, 'fp' + suffix)
                 connection = getattr(self, 'connection' + suffix)
-                _db_cache[(schema, suffix)] = (db, fp, connection)
+                _db_cache[(format, schema, suffix)] = (db, fp, connection)
                 _cached_dbs.add(db)
         # Also set the module-level global.
         modname = self.__class__.__module__
@@ -264,14 +313,14 @@ class EvolvesSchemata(CreatesDatabase):
                     raise
             schemata.append(source)
         return schemata
-        
-        
+
+
 class DocTest(CreatesSchema):
     """Doctest-helping test class.
 
     Call directly to override body for one test::
 
-      >>> from schevo.test.base import DocTest
+      >>> from schevo.test import DocTest
       >>> t = DocTest('''
       ...     class Foo(E.Entity):
       ...         bar = f.integer()
@@ -297,17 +346,18 @@ class DocTest(CreatesSchema):
     """
 
     body = ''
-    
-    def __init__(self, body=None):
+
+    def __init__(self, body=None, format=None):
         super(DocTest, self).__init__()
         if body:
             self.body = body
+        self.format = format
         self.setUp()
-        
+
     def done(self):
         """Test case is done; free up resources."""
         self.tearDown()
-        
+
     def update(self, body):
         """Update database with new schema, keeping same schema version."""
         self.body = body

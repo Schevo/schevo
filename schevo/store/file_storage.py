@@ -408,7 +408,7 @@ class FileStorage2(FileStorage):
 
        1) the number of bytes in rest of the record (u64)
        2) a zlib compressed pickle of a dictionary.  The dictionary maps
-          oids to file offsets for all transactions that preceed the  
+          oids to file offsets for all transactions that preceed the
           index in the file.
 
      A transaction record consists of:

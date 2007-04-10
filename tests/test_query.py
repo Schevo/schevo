@@ -10,7 +10,7 @@ from schevo.label import label
 from schevo.test import CreatesSchema, raises
 
 
-class TestQuery(CreatesSchema):
+class BaseQuery(CreatesSchema):
 
     # XXX: tests for schevo.query.Links
 
@@ -36,7 +36,7 @@ class TestQuery(CreatesSchema):
     class DeltaCharlie(E.Entity):
         """An extent that has a custom query."""
 
-        hashed_value = f.hashedValue()
+        hashed_value = f.hashed_value()
 
         @extentmethod
         def q_hashes(extent, **kw):
@@ -113,7 +113,7 @@ class TestQuery(CreatesSchema):
         q = qmethod(integer=12, string='foo')
         results = list(sorted(q()))
         assert len(results) == 0
-    
+
     def test_exact_query(self):
         # This is based on test_by_example_query, but uses the find query
         # instead, which is more specific than the by_example query.
@@ -195,7 +195,7 @@ class TestQuery(CreatesSchema):
         q = hashes()
         assert isinstance(q.f.compare_with, field.String)
         assert list(q.f) == ['compare_with']
-        
+
     def test_parameterized_query_defaults_and_names(self):
         q = db.DeltaAlpha.q.exact()
         assert q.string is UNASSIGNED
@@ -215,7 +215,17 @@ class TestQuery(CreatesSchema):
         assert q.match_names == ['string', 'float', 'entity']
         assert len(q.queries) == 3
         assert raises(error.FieldDoesNotExist, q.remove_match, 'integer')
-        
+
+
+class TestQuery1(BaseQuery):
+
+    format = 1
+
+
+class TestQuery2(BaseQuery):
+
+    format = 2
+
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
 #

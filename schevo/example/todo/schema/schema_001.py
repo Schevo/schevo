@@ -75,7 +75,7 @@ class Priority(E.Entity):
     @f.integer(label=u'# Done Items')
     def done(self):
         return len([item for item in self.m.items() if item.done])
-    
+
     _key(code)
     _key(name)
 
@@ -88,7 +88,7 @@ class Priority(E.Entity):
     def __str__(self):
         return '%s %s' % (self.code, self.name)
 
-    
+
 class Topic(E.Entity):
     """Subject area for todo items."""
 

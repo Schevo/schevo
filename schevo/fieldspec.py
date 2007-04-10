@@ -6,6 +6,8 @@ For copyright, license, and warranty, see bottom of file.
 import sys
 from schevo.lib import optimize
 
+from warnings import warn
+
 from schevo.constant import UNASSIGNED
 from schevo.label import label_from_name
 from schevo.lib.odict import odict
@@ -15,6 +17,21 @@ class FieldMap(odict):
     """Field Mapping based on Ordered Dictionary."""
 
     __slots__ = ['_keys']
+
+    def dump_map(self):
+        """Return a dictionary of field_name:dumped_value pairs."""
+        d = odict()
+        for name, field in self.items():
+            d[name] = field._dump()
+        return d
+
+    def related_entity_map(self):
+        """Return a dictionary of field_name:related_entity_set pairs."""
+        d = odict()
+        for name, field in self.items():
+            if field.may_store_entities:
+                d[name] = field._entities_in_value()
+        return d
 
     def update_values(self, other):
         """Update field values based on field values in other FieldMap."""
@@ -26,13 +43,16 @@ class FieldMap(odict):
                     f.set(field.get())
 
     def value_map(self):
+        """Return a dictionary of field_name:field_value pairs."""
         d = odict()
         for name, field in self.items():
             # Do not use field.get() here because we want the value to
             # be stored in the database, not the value that is exposed
             # to users.
-            value = field._value
-            d[name] = value
+            #
+            # XXX: Is this comment and implementation accurate
+            # anymore, now that we use dump_map for that purpose?
+            d[name] = field._value
         return d
 
 
@@ -58,7 +78,7 @@ class FieldSpecMap(odict):
                                    value=values.get(name, UNASSIGNED)))
                  for name, FieldClass in self.iteritems()]
         return FieldMap(pairs)
-    
+
 
 def field_spec_from_class(cls, class_dict, slots=False):
     field_spec = FieldSpecMap()
@@ -110,8 +130,20 @@ class FieldDefinition(object):
 
     __do_not_optimize__ = True
 
+    # The field class that this field definition class is based on.
     BaseFieldClass = None
+
+    # "Global", class-level counter used for sorting after a series of
+    # fields are defined.
     _counter = 0
+
+    # Whether or not the name of this field definition class is
+    # deprecated.  If it is deprecated, the user is given a DeprecationWarning
+    # about the use of this name.
+    _deprecated_name = False
+
+    # If this class's name is deprecated, the preferred class name.
+    _preferred_name = None
 
     def __init__(self, *args, **kw):
         self.name = None  # Set by field_spec_from_class().
@@ -126,6 +158,14 @@ class FieldDefinition(object):
         self.FieldClass = _Field
         self.counter = FieldDefinition._counter
         FieldDefinition._counter += 1
+        # Warn about name deprecation if this class's name is deprecated.
+        if self._deprecated_name:
+            msg = (
+                '%r is a deprecated field definition name. '
+                'Please replace with %r in your schemata.'
+                % (self.__class__.__name__, self._preferred_name)
+                )
+            warn(msg, DeprecationWarning, 2)
 
     def __call__(self, fn):
         """For use as a decorator."""

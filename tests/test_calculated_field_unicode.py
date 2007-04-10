@@ -8,10 +8,10 @@ from textwrap import dedent
 from schevo.test import CreatesSchema, PREAMBLE
 
 
-class TestQuery(CreatesSchema):
+class BaseCalculatedUnicode(CreatesSchema):
 
     body = '''
-    
+
     class Thing(E.Entity):
         image = f.image()
         password = f.password()
@@ -39,6 +39,16 @@ class TestQuery(CreatesSchema):
         assert unicode(thing_view.f.password) == u'(Hidden)'
         assert unicode(thing_view.f.calc_image) == u'(Binary data)'
         assert unicode(thing_view.f.calc_password) == u'(Hidden)'
+
+
+class TestCalculatedUnicode1(BaseCalculatedUnicode):
+
+    format = 1
+
+
+class TestCalculatedUnicode2(BaseCalculatedUnicode):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

@@ -20,9 +20,9 @@ class odict(dict):
 
     def __init__(self, seq=None):
         """dict() -> new empty dictionary.
-        
+
         dict(seq) -> new dictionary initialized as if via::
-        
+
             d = {}
             for k, v in seq:
                 d[k] = v
@@ -114,7 +114,7 @@ class odict(dict):
     def pop(self, key, *failobj):
         """D.pop(k[,d]) -> v, remove specified key and return the
         corresponding value
-        
+
         If key is not found, d is returned if given, otherwise
         KeyError is raised
         """

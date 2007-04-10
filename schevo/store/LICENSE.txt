@@ -40,7 +40,7 @@ LOSS AS A RESULT OF MODIFYING, DISTRIBUTING, OR OTHERWISE USING
 Durus-3.5, OR ANY DERIVATIVE THEREOF, EVEN IF ADVISED OF THE
 POSSIBILITY THEREOF.
 
-6. This License Agreement will automatically terminate upon a material 
+6. This License Agreement will automatically terminate upon a material
 breach of its terms and conditions.
 
 7. This License Agreement shall be governed by the federal

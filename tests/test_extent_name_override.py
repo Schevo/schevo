@@ -7,7 +7,7 @@ For copyright, license, and warranty, see bottom of file.
 from schevo.test import CreatesSchema
 
 
-class TestOverride(CreatesSchema):
+class BaseOverride(CreatesSchema):
 
     body = '''
 
@@ -25,6 +25,16 @@ class TestOverride(CreatesSchema):
         expected = ['Base', 'BaseThree', 'BaseTwo']
         result = db.extent_names()
         assert result == expected
+
+
+class TestOverride1(BaseOverride):
+
+    format = 1
+
+
+class TestOverride2(BaseOverride):
+
+    format = 2
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C. and contributors.

@@ -1,0 +1,292 @@
+=====================================
+ Schevo Internal Database Structures
+=====================================
+
+
+This document explains the data structures a Schevo database uses
+internally.
+
+
+Structural overview
+===================
+
+At the root of the Durus connection a key called 'SCHEVO' contains the
+following structures::
+
+  'SCHEVO': PersistentDict{
+      'format': <db-format>,
+      'version': <schema-version>,
+      'schema_source': <schema-module-source>,
+      'extent_name_id': PersistentDict{
+          <extent-name>: <extent-id>,
+          ...,
+          },
+      'extents': PersistentDict{
+          <extent-id>: PersistentDict{
+              'entities': BTree{
+                  <entity-oid>: PersistentDict{
+                      'rev': <entity-rev>,
+                      'fields': PersistentDict{
+                          <field-id>: <stored-value>,
+                          ...,
+                          },
+                      'link_count': <count-of-links>,
+                      'links': PersistentDict{
+                          (<referrer-extent-id>, <referrer-field-id>): BTree{
+                              <referrer-oid>: None,
+                              ...,
+                              },
+                          },
+                      'related_entities': PersistentDict{       [2+]
+                          <field-id>: <related-entity-set>,
+                          ...,
+                          },
+                      },
+                  ...,
+                  },
+              'entity_field_ids': (<field-id>, ...),
+              'field_id_name': PersistentDict{
+                  <field-id>: <field-name>,
+                  ...,
+                  },
+              'field_name_id': PersistentDict{
+                  <field-name>: <field-id>,
+                  ...,
+                  },
+              'id': <id-of-extent>,
+              'indices': <indices>,
+              'index_map': <index-map>,
+              'len': <length-of-extent>,
+              'name': <name-of-extent>,
+              'normalized_index_map': <normalized-index-map>,
+              'next_oid': <next-oid-of-extent>,
+              },
+          ...,
+          },
+      }
+
+``[2]`` indicates that the structure is only present in databases of format
+2 or higher.
+
+
+Indices
+=======
+
+Specification in schema
+-----------------------
+
+The distinction between a "key" and an "index" is that a key is the
+minimal amount of information that will uniquely identify an entity,
+whereas an index is a structure used to increase the efficiency of
+lookup and sorting operations.
+
+Implementation-wise, the specification of a key results in a unique
+index.
+
+Keys are specified in the same way as they always have been, using the
+following syntax::
+
+    _key(field1, [..., fieldn])
+
+Indices are specified in a similar manner, using the following
+syntax to create a non-unique index::
+
+    _index(field1, [..., fieldn])
+
+Of note is that the field order now becomes important, since each type
+of index will also be used for obtaining ordered lists of entity OIDs,
+not just for find operations and key collision checking.  Therefore,
+the following becomes valid and creates two separate index structures,
+although for key collision checking in effect either one may be used::
+
+    _key(field1, field2)
+    _index(field2, field1)
+
+If an index is specified that is a superset of a key, it becomes
+unique.  Therefore, in the above example, the index specified is a
+unique index.
+
+Additionally, the index specified in this example becomes a unique
+index::
+
+    _key(field1, field2)
+    _index(field3, field2, field1)
+
+
+Internal structures
+-------------------
+
+The main top-level structure of an extent index is `indices`, which
+is structured as follows::
+
+    dict{
+      index-spec: (unique, index-tree),
+      ...,
+      }
+
+`unique` is a boolean that is True if each leaf in the index must have
+only zero or one `oid` keys as described below.
+
+`index-spec` is a tuple of field IDs in the order given by the
+`_key` and `_index` specifications in the schema.
+
+`index-tree` is the following structure, where `field-value` are the
+values of the first field specified in the `index-spec`::
+
+    BTree{
+      field-value: index-tree | oid-tree,
+    }
+
+If the `index-tree` itself is a branch, then for each `field-value`
+there will be another `index-tree` for the next field in the index
+spec.
+
+If the `index-tree` is instead a leaf, then for each `field-value`
+there will be an `oid-tree`, which is the following structure::
+
+    BTree{
+      oid: None,
+      ...,
+      }
+
+Each `oid` in the `oid-tree` corresponds to an entity whose fields
+specified in the `index-spec` have values that match all of the
+`field-value` keys in each traversed `index-tree`.
+
+The next top-level structure of an extent index is `index-map`, which
+maps several `partial-index-spec` to lists of actual `index-spec` that
+are stored in `indices`::
+
+    dict{
+      partial-index-spec: [index-spec-1, ..., index-spec-n],
+    }
+
+`partial-index-spec` is a tuple of field IDs, sorted by the order
+defined in its corresponding `index-spec`.  For instance, if you have
+two `index-spec` of (123, 456, 789) and (123, 456, 234), then a
+`partial-index-spec` of (123, 456) would map to both of those
+`index-spec`.
+
+Of note is that `partial-index-spec` could actually be a full
+`index-spec` that exists in `indices`.  For instance, given two
+`index-spec` of (123, 456, 789) and (123, 456), a `partial-index-spec`
+of (123, 456) would map to both of those `index-spec`.
+
+The final top-level structure of an extent index is
+`normalized-index-map`, which is the same as `index-map` except that
+each `partial-index-spec` is normalized by sorting by field ID.
+
+
+Traversal of indices (`find` method)
+------------------------------------
+
+If no arguments, just return a list of all OIDs.
+
+The arguments to a `find` operation are a dictionary of field name and
+field value.
+
+Transform those arguments by converting field names to field IDs.
+
+Sort a tuple of field IDs.  This becomes the normalized
+`partial-index-spec`.
+
+Get the most specific `index-spec` from `normalized-index-map` using
+that `partial-index-spec` as the key.
+
+If `partial-index-spec` was not found, revert to brute-force find. An
+optimization of this would be to trim that `partial-index-spec` in
+some way and look for an index that matches that.  In this manner, you
+can use the index to obtain a subset of entities in which to perform a
+brute-force find.
+
+Access the top-level `index-tree` from `indices`.
+
+In a loop:
+
+  Pop the first field ID off of the `index-spec`.  Pop the value for
+  that field off of the arguments to `find`.
+
+  Look up that field value in the current `index-tree`; if there are
+  no more field IDs in `index-spec` this will be an `oid-tree`,
+  otherwise it will be another `index-tree`.
+
+  If not found, return an empty list as the result of `find`.
+
+  If there are more arguments to `find`, continue the loop.
+
+  If there are no more arguments to `find`, and there are no more
+  fields in `index-spec`, we are at a leaf; return the keys of the
+  `oid-tree` as the result of `find`.
+
+  If there are no more arguments to `find`, but there are more fields
+  in `index-spec`, we are at a branch; traverse each branch
+  recursively until leaves are reached.  Return the resulting set of
+  matching OIDs.
+
+
+Obtaining ordered OID lists (`by` method)
+-----------------------------------------
+
+The arguments to a `by` operation are a list of field names,
+optionally with a hyphen prefix to indicate reverse sort order.
+
+Transform the field names to field IDs, ignoring sort order for the
+time being.
+
+Create an `index-spec` based on these field IDs.
+
+Access the appropriate `index-tree` in `indices`:
+
+  First, look for a direct match in `indices` for the `index-spec`.
+
+  If that fails, look for `index-spec` in `index-map`.  If no match is
+  found, raise an `IndexNotFound` exception.  Otherwise, use the first
+  spec in the resulting list as `index-spec` and use that to get the
+  `index-tree`.
+
+Create an empty list to store results.
+
+Recursively, starting with the first field:
+
+  If we are at a branch (more fields need to be traversed):
+
+    If the current field being traversed is to be sorted ascending,
+    iterate over the keys of the `index-tree` and recurse to the next
+    level.
+
+    If the current field being traversed is to be sorted descending,
+    iterate over the keys of the `index-tree` in reverse order and
+    recurse to the next level.
+
+  If we are at a leaf (no more fields to traverse):
+
+    Get the list of keys in the `oid-tree`.  Append those to the
+    results list.
+
+Return the results list.
+
+
+Temporarily relaxing uniqueness constraints
+-------------------------------------------
+
+A transaction can relax the uniqueness constraint of a unique index by
+calling `db.relax_index(*spec)`.
+
+While a unique index is relaxed, the database will keep track of
+changes made to that index by the transaction and its subtransactions.
+
+When the transaction calls the corresponding
+`db.enforce_index(*spec)`, the database will look at all the changes
+made to that index.  If any non-unique values are found as a result of
+those changes, the transaction will fail with an `KeyCollision`
+exception and the changes made by that transaction will be rolled
+back.
+
+If a transaction calls `relax_index` without later explicitly calling
+`enforce_index`, the database will automatically call `enforce_index`
+at the end of the transaction that called `relax_index`.
+
+If a transaction calls `relax_index` on an index, and a subtransaction
+calls `relax_index` on the same index, the call to `enforce_index`
+will be a no-op in the subtransaction as the outer transaction still
+expects the index to be relaxed.

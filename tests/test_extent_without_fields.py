@@ -8,7 +8,7 @@ from textwrap import dedent
 from schevo.test import CreatesSchema, PREAMBLE
 
 
-class TestExtentWithoutFields(CreatesSchema):
+class BaseExtentWithoutFields(CreatesSchema):
 
     body = '''
 
@@ -49,7 +49,17 @@ class TestExtentWithoutFields(CreatesSchema):
         assert entity.calc == entity.sys.oid
         entity = exe(db.Subclassed.t.create())
         assert entity.calc == entity.sys.oid
-        
+
+
+class TestExtentWithoutFields1(BaseExtentWithoutFields):
+
+    format = 1
+
+
+class TestExtentWithoutFields2(BaseExtentWithoutFields):
+
+    format = 2
+
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
 #
