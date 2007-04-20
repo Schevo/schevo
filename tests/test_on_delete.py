@@ -149,7 +149,7 @@ class BaseOnDelete(CreatesSchema):
 
     class Foo(E.Entity):
         """We want cascades to succeed in a deep hierarchy as well.
-        
+
         The relationships created upon a creation of a Moo entity
         can be visualized as follows::
 
@@ -168,7 +168,7 @@ class BaseOnDelete(CreatesSchema):
                     |              .---------------.                  |
             RESTRICT|              | Faz[1]        |                  |
                     |          .-> |               |                  |
-                    |          |   | .foo = Foo[1]--------------------'  
+                    |          |   | .foo = Foo[1]--------------------'
                     |          |   '---------------'
                     |   CASCADE|
                     |          |   .---------------.
@@ -233,7 +233,7 @@ class BaseOnDelete(CreatesSchema):
                    |   | Maz[1]        |                   |
                    |   |               |                   |
                    '-----.mar = Mar[1] |                   |
-                       | .moo = Moo[1]---------------------' 
+                       | .moo = Moo[1]---------------------'
                        '---------------'
         """
 
