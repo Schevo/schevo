@@ -181,6 +181,29 @@ class BaseOnDelete(CreatesSchema):
         faz = f.entity(('Faz', CASCADE))
         far = f.entity('Far')
 
+
+    class Moo(E.Entity):
+        """We want cascades to succeed in a deep hierarchy as well."""
+
+        name = f.unicode()
+
+        class _Create(T.Create):
+
+            def _after_execute(self, db, moo):
+                mar = db.execute(db.Mar.t.create(moo=moo))
+                maz = db.execute(db.Maz.t.create(mar=mar, moo=moo))
+
+
+    class Mar(E.Entity):
+
+        moo = f.entity(('Moo', CASCADE))
+
+
+    class Maz(E.Entity):
+
+        mar = f.entity(('Mar', CASCADE))
+        moo = f.entity(('Moo', CASCADE))
+
     '''
 
     def _alpha_alpha(self):
@@ -243,7 +266,7 @@ class BaseOnDelete(CreatesSchema):
     def internal_cascade_complex_2(self):
         raise NotImplementedError()
 
-##     def test_cascade_complex_hierarchy(self):
+##     def test_cascade_complex_hierarchy_foo(self):
 ##         foo = db.execute(db.Foo.t.create(name='FOO'))
 ##         assert len(db.Foo) == 1
 ##         assert len(db.Far) == 1
@@ -254,6 +277,16 @@ class BaseOnDelete(CreatesSchema):
 ##         assert len(db.Far) == 0
 ##         assert len(db.Faz) == 0
 ##         assert len(db.Fee) == 0
+
+    def test_cascade_complex_hierarchy_moo(self):
+        moo = db.execute(db.Moo.t.create(name='MOO'))
+        assert len(db.Moo) == 1
+        assert len(db.Mar) == 1
+        assert len(db.Maz) == 1
+        db.execute(moo.t.delete())
+        assert len(db.Moo) == 0
+        assert len(db.Mar) == 0
+        assert len(db.Maz) == 0
 
     def test_restrict(self):
         alpha_alpha = self._alpha_alpha()
