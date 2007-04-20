@@ -377,7 +377,11 @@ class Delete(Transaction):
                 other._extent.name, oid, field_dump_map,
                 field_related_entity_map)
         # Delete entities in a deterministic (sorted) fashion.
-        for name, oid, other in sorted(others):
+        for extent_name, oid, other in sorted(others):
+            if not db._extent_contains_oid(extent_name, oid):
+                # A nested transaction or cascade deleted this entity
+                # before we could.
+                continue
             tx = other.t.delete()
             tx._deletes.update(deletes)
             tx._known_deletes.extend(self._known_deletes)
