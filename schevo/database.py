@@ -107,8 +107,9 @@ def inject(filename, schema_source, version):
     fs.close()
 
 
-def open(filename=None, schema_source=None, initialize=True, label='',
-         fp=None, cache_size=100000, format_for_new=None):
+def open(filename=None, schema_source=None, schema_version=None,
+         initialize=True, label='', fp=None, cache_size=100000,
+         format_for_new=None):
     """Return an open database by opening an existing database or creating
     a new one.
 
@@ -118,6 +119,8 @@ def open(filename=None, schema_source=None, initialize=True, label='',
     - `filename`: Filename of database to create or open, or None if using `fp`.
     - `schema_source`: Schema source to create a new database with, or None
       if not creating a new database.
+    - `schema_version`: Schema version to create a new database with, if
+      skipping evolution from version 1.
     - `initialize`: If True, will create initial values in the database if
       creating a new database.
     - `label`: The label of the database, to be used for a return value when
@@ -152,7 +155,8 @@ def open(filename=None, schema_source=None, initialize=True, label='',
     if label:
         db.label = label
     # Synchronize it with the given schema source.
-    db._sync(schema_source, initialize)
+    db._sync(
+        schema_source, schema_version=schema_version, initialize=initialize)
     # Install icon support and finalize opening of database.
     icon.install(db)
     db._on_open()

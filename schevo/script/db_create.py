@@ -36,10 +36,10 @@ def _parser():
                  metavar='PATH',
                  default=None,
                  )
-    p.add_option('-i', '--import', dest='import_from',
-                 help='Import XML data previously exported to FILE.',
-                 metavar='FILE',
-                 default=None,
+    p.add_option('-e', '--evolve-from-version', dest='evolve_from_version',
+                 help='Begin database evolution at VERSION.',
+                 metavar='VERSION',
+                 default='latest',
                  )
     p.add_option('-p', '--sample', dest='create_sample_data',
                  help='Create sample data.',
@@ -100,33 +100,39 @@ class Create(Command):
                 os.remove(db_filename)
         # Create the database.
         if os.path.isfile(db_filename):
-            parser.error('Use "schevo db update" command to update an '
-                         'existing database.')
-        print 'Creating new database...'
-        if options.import_from is not None:
-            print 'Importing data from %r...' % options.import_from
-            # Open the XML import file.
-            try:
-                import_file = open(options.import_from, 'r')
-            except IOError:
-                parser.error('Could not open XML data file %r'
-                             % options.import_from)
-            db = schevo.database.open(
-                db_filename, schema_source, initialize=False)
-            from schevoxml import ImporterTransaction
-            tx = ImporterTransaction(import_file)
-            db.execute(tx)
-            import_file.close()
-        else:
-            db = schevo.database.open(db_filename, schema_source)
-        # Evolve if necessary.
+            parser.error(
+                'Use "schevo db update" or "schevo db evolve" commands to '
+                'update or evolve an existing database.')
         final_version = options.schema_version.lower()
         if final_version != 'latest':
             try:
                 final_version = int(final_version)
             except ValueError:
-                parser.error('Please specify a version number or "latest".')
-        if final_version != 1:
+                parser.error(
+                    'Please specify a version number or "latest" '
+                    'for the --version option.')
+        else:
+            final_version = schevo.schema.latest_version(schema_path)
+        evolve_from_version = options.evolve_from_version.lower()
+        if evolve_from_version != 'latest':
+            try:
+                evolve_from_version = int(evolve_from_version)
+            except ValueError:
+                parser.error(
+                    'Please specify a version number or "latest" '
+                    'for the --evolve-from-version option.')
+        else:
+            evolve_from_version = schevo.schema.latest_version(schema_path)
+        if evolve_from_version > final_version:
+            # Respect the version number given by --version over the
+            # version number given by --evolve-from-version.
+            evolve_from_version = final_version
+        print 'Creating new database at version %r.' % evolve_from_version
+        db = schevo.database.open(
+            db_filename, schema_source=schema_source, 
+            schema_version=evolve_from_version)
+        # Evolve if necessary.
+        if final_version > evolve_from_version:
             print 'Evolving database...'
             evolve_db(parser, schema_path, db, final_version)
         # Import icons.

@@ -7,8 +7,16 @@ from textwrap import dedent
 
 from schevo.constant import UNASSIGNED
 from schevo import error
-from schevo.test import CreatesDatabase, raises
+from schevo.test import CreatesDatabase, EvolvesSchemata, raises
 from schevo.test import raises
+
+
+# Make sure we can import the testschema_evolve1 package.
+import os
+import sys
+tests_path = os.path.dirname(os.path.abspath(__file__))
+if tests_path not in sys.path:
+    sys.path.insert(0, tests_path)
 
 
 BOILERPLATE = """
@@ -964,6 +972,48 @@ class BaseEvolveInterVersion(CreatesDatabase):
         assert db.x.get_bar() == 44
 
 
+class BaseEvolvesSchemataNoSkip(EvolvesSchemata):
+    
+    schemata = 'testschema_evolve'
+    
+    schema_version = 2
+    
+    sample_data = '''
+        E.Foo._sample_unittest = [
+            (u'fob', ),
+            ]
+        '''
+        
+    skip_evolution = False
+    
+    def test(self):
+        assert db.version == 2
+        names = set(foo.name for foo in db.Foo)
+        expected = set([u'one', u'two', u'three', u'five', u'fob'])
+        assert names == expected
+
+
+class BaseEvolvesSchemataSkip(EvolvesSchemata):
+
+    schemata = 'testschema_evolve'
+    
+    schema_version = 2
+    
+    sample_data = '''
+        E.Foo._sample_unittest = [
+            (u'fob', ),
+            ]
+        '''
+        
+    skip_evolution = True
+    
+    def test(self):
+        assert db.version == 2
+        names = set(foo.name for foo in db.Foo)
+        expected = set([u'one', u'two', u'three', u'four', u'fob'])
+        assert names == expected
+
+
 class TestEvolveIntraVersion1(BaseEvolveIntraVersion):
 
     format = 1
@@ -980,6 +1030,26 @@ class TestEvolveInterVersion1(BaseEvolveInterVersion):
 
 
 class TestEvolveInterVersion2(BaseEvolveInterVersion):
+
+    format = 2
+
+
+class TestEvolvesSchemataNoSkip1(BaseEvolvesSchemataNoSkip):
+    
+    format = 1
+
+
+class TestEvolvesSchemataNoSkip2(BaseEvolvesSchemataNoSkip):
+
+    format = 2
+
+
+class TestEvolvesSchemataSkip1(BaseEvolvesSchemataSkip):
+
+    format = 1
+
+
+class TestEvolvesSchemataSkip2(BaseEvolvesSchemataSkip):
 
     format = 2
 

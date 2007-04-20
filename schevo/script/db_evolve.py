@@ -87,6 +87,8 @@ class Evolve(Command):
             parser.error('DBFILE must be an existing database.')
         db = schevo.database.open(db_filename)
         print 'Current database version is %i.' % db.version
+        if final_version == 'latest':
+            final_version = schevo.schema.latest_version(schema_path)
         evolve_db(parser, schema_path, db, final_version)
         # Import icons.
         if icon_path and os.path.exists(icon_path):
@@ -104,26 +106,25 @@ start = Evolve
 
 
 def evolve_db(parser, schema_path, db, final_version):
-    if isinstance(final_version, int) and final_version <= db.version:
+    if final_version <= db.version:
         db.close()
         parser.error('Version specified is <= current database version.')
+    latest_version = schevo.schema.latest_version(schema_path)
+    if final_version == db.version:
+        print 'Database is already at latest version.'
+        return 0
     # Read schemata necessary for evolution.
     version = db.version + 1
     schemata_source = {}
-    while version <= final_version or final_version == 'latest':
+    while version <= final_version:
         try:
             source = schevo.schema.read(schema_path, version=version)
         except schevo.error.SchemaFileIOError:
-            if final_version == 'latest':
-                break
             parser.error('Could not read version %i' % version)
         schemata_source[version] = source
         print 'Read schema source for version %i.' % version
         version += 1
     versions = sorted(schemata_source.keys())
-    if final_version == 'latest' and not versions:
-        print 'Database is already at latest version.'
-        return 0
     # Evolve database.
     for version in versions:
         print 'Evolving database to version %i...' % version

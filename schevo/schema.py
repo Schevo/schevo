@@ -312,6 +312,16 @@ _null_db = _NullDatabase()
 # ----------------------------------------------------------------------------
 # Functions useful for dealing with schema files:
 
+def latest_version(location):
+    """Return the latest version number available at the given location,
+    or None if no schemata could be found."""
+    version = 0
+    while os.path.exists(schema_filepath(location, version+1)):
+        version += 1
+    if version == 0:
+        return None
+    return version
+
 def name(version):
     """Return canonical name for schema version."""
     return 'schema_%03i' % version
@@ -328,17 +338,20 @@ def path(location):
 
 def read(location, version):
     """Return text contents of the schema file version at location."""
-    schema_path = path(location)
-    schema_filename = name(version) + '.py'
-    schema_filepath = os.path.join(schema_path, schema_filename)
+    filepath = schema_filepath(location, version)
     try:
-        schema_file = file(schema_filepath, 'rU')
+        schema_file = file(filepath, 'rU')
         schema_source = schema_file.read()
     except IOError:
         raise schevo.error.SchemaFileIOError(
-            'Could not open schema file %r' % schema_filepath)
+            'Could not open schema file %r' % filepath)
     schema_file.close()
     return schema_source
+
+def schema_filepath(location, version):
+    """Return the path of a specific schema version contained within 
+    the given location."""
+    return os.path.join(path(location), name(version) + '.py')
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

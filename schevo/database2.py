@@ -1144,13 +1144,17 @@ class Database(base.Database):
         """
         pass
 
-    def _sync(self, schema_source=None, initialize=True, commit=True,
-              evolving=False):
+    def _sync(self, schema_source=None, schema_version=None, 
+              initialize=True, commit=True, evolving=False):
         """Synchronize the database with a schema definition.
 
         - `schema_source`: String containing the source code for a
           schema.  If `None`, the schema source contained in the
           database itself will be used.
+          
+        - `schema_version`: If set, the schema version to use for a
+          newly-created database.  If set to something other than None
+          for an existing database, raises a ValueError.
 
         - `initialize`: True if a new database should be populated
           with initial values defined in the schema.
@@ -1254,11 +1258,21 @@ schevo.schema.prep(locals())
                 setattr(self, e_name, extent)
             # Initialize a new database.
             if SCHEVO['version'] == 0:
-                SCHEVO['version'] = 1
+                if schema_version is None:
+                    schema_version = 1
+                SCHEVO['version'] = schema_version
                 # Populate with initial data, unless overridden such as
                 # when importing from an XML file.
                 if initialize:
                     self._initialize()
+            elif schema_version is not None:
+                # Do not allow schema_version to differ from existing version if
+                # opening an existing database.
+                print SCHEVO['version'], schema_version
+                if SCHEVO['version'] != schema_version:
+                    raise ValueError(
+                        'Existing database; schema_version must be set to None '
+                        'or to the current version of the database.')
         except:
             if locked:
                 schevo.schema.import_lock.release()
