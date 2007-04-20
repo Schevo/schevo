@@ -148,7 +148,36 @@ class BaseOnDelete(CreatesSchema):
 
 
     class Foo(E.Entity):
-        """We want cascades to succeed in a deep hierarchy as well."""
+        """We want cascades to succeed in a deep hierarchy as well.
+        
+        The relationships created upon a creation of a Moo entity
+        can be visualized as follows::
+
+                                   .---------------.
+                                   | Foo[1]        | <----------------.
+                                   |               | <-----.          |
+                                   | .name = 'FOO' |       |          |
+                                   '---------------'       |          |
+                                                           |CASCADE   |
+                                   .---------------.       |          |
+                                   | Far[1]        |       |          |
+                    .------------> |               |       |          |CASCADE
+                    |              | .foo = Foo[1]---------'          |
+                    |              '---------------'                  |
+                    |                                                 |
+                    |              .---------------.                  |
+            RESTRICT|              | Faz[1]        |                  |
+                    |          .-> |               |                  |
+                    |          |   | .foo = Foo[1]--------------------'  
+                    |          |   '---------------'
+                    |   CASCADE|
+                    |          |   .---------------.
+                    |          |   | Fee[1]        |
+                    |          |   |               |
+                    |          '-----.faz = Faz[1] |
+                    '----------------.far = Far[1] |
+                                   '---------------'
+        """
 
         name = f.unicode()
 
@@ -183,7 +212,30 @@ class BaseOnDelete(CreatesSchema):
 
 
     class Moo(E.Entity):
-        """We want cascades to succeed in a deep hierarchy as well."""
+        """We want cascades to succeed in a deep hierarchy as well.
+
+        The relationships created upon a creation of a Moo entity
+        can be visualized as follows::
+
+                       .---------------.
+                       | Moo[1]        | <-----------------.
+                       |               | <-----.           |
+                       | .name = 'MOO' |       |           |
+                       '---------------'       |           |
+                                               |CASCADE    |
+                       .---------------.       |           |
+                       | Mar[1]        |       |           |
+                   .-> |               |       |           |CASCADE
+                   |   | .moo = Moo[1]---------'           |
+                   |   '---------------'                   |
+                   |                                       |
+            CASCADE|   .---------------.                   |
+                   |   | Maz[1]        |                   |
+                   |   |               |                   |
+                   '-----.mar = Mar[1] |                   |
+                       | .moo = Moo[1]---------------------' 
+                       '---------------'
+        """
 
         name = f.unicode()
 
