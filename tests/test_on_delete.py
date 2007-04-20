@@ -150,7 +150,7 @@ class BaseOnDelete(CreatesSchema):
     class Foo(E.Entity):
         """We want cascades to succeed in a deep hierarchy as well.
 
-        The relationships created upon a creation of a Moo entity
+        The relationships created upon a creation of a Foo entity
         can be visualized as follows::
 
                                    .---------------.
