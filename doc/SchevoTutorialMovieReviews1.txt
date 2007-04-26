@@ -117,14 +117,14 @@ application in, then use the ``paster`` tool to create a new Schevo
 application::
 
     $ paster create --template=schevo MovieReviews  # [1]
-    $ cd moviereviews                               # [2]
+    $ cd MovieReviews                               # [2]
     $ python setup.py develop                       # [3]
 
 1. Create a new Schevo application called "MovieReviews". A directory
-   called ``moviereviews`` will be created with the new application
+   called ``MovieReviews`` will be created with the new application
    inside.
 
-2. Change into the ``moviereviews`` directory.
+2. Change into the ``MovieReviews`` directory.
 
 3. Install it into your Python environment in development mode.
 
