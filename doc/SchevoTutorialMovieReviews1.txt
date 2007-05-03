@@ -382,7 +382,7 @@ Exit the Python session, then edit ``schema_001.py`` again and add the
 At a shell prompt, update the existing database using the new schema,
 then open a Python session again::
 
-    $ schevo update --app=moviereviews sample.db
+    $ schevo db update --app=moviereviews sample.db
     $ schevo shell sample.db
 
 For the doctest, let us perform the equivalent operation:
