@@ -108,6 +108,23 @@ environment::
 
     >>> from schevo.test import DocTest
 
+For those not familiar with doctests, please note the following:
+
+* Because of the way doctests are designed, you should be able to
+  follow this tutorial by entering Python statements *exactly* as
+  shown.
+
+* Typically, you won't do this though; doctests are designed to be
+  automatically tested for correctness, but aren't necessarily what
+  one would do in a real-world situation.
+
+* When you see code that creates a new `DocTest` instance (e.g. ``t =
+  DocTest(schema)``), you can ignore it.
+
+* When you see code that is adding to the `schema` variable
+  (e.g. ``schema += ''' [some text] '''``), you should just add the
+  text in the multi-line string to your ``schema_001.py`` file.
+
 
 Create a Schevo application
 ===========================
