@@ -92,7 +92,6 @@ class Create(Command):
             schema_path = package_path(options.schema_path)
         if schema_path is None:
             parser.error('Please specify either the --app or --schema option.')
-        schema_source = schevo.schema.read(schema_path, version=1)
         # Delete the database file if one exists.
         if options.delete_existing_database:
             if os.path.isfile(db_filename):
@@ -128,6 +127,8 @@ class Create(Command):
             # version number given by --evolve-from-version.
             evolve_from_version = final_version
         print 'Creating new database at version %r.' % evolve_from_version
+        schema_source = schevo.schema.read(
+            schema_path, version=evolve_from_version)
         db = schevo.database.open(
             db_filename, schema_source=schema_source, 
             schema_version=evolve_from_version)
