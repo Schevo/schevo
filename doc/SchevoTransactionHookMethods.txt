@@ -1,0 +1,132 @@
+When overriding the default implementations of Create, Delete, and Update
+transactions for entity classes in a schema, there are hooks that make it
+easy to change specific behavior.
+
+Subclassing in general
+======================
+
+Define each subclass as an inner class of the entity class that you are 
+overriding.  Begin the class name with an underscore, then the name of
+the transaction you are overriding.  Inherit from the name of the transaction
+in the ``T`` namespace.  For example::
+
+    class Foo(E.Entity):
+
+        bar = f.unicode()
+        count = f.integer()
+		
+        class _Create(T.Create):
+            ...
+		    
+        class _Delete(T.Delete):
+            ...
+		    
+        class _Update(T.Update):
+            ...
+
+
+Overriding hook methods
+-----------------------
+
+When implementing the hooks listed below, remember that you can raise
+an exception at any point to veto an operation.  Any changes to the database
+made by the transaction will be reversed, and control will return to the
+parent transaction execution, if one exists.
+
+
+Adding and overriding fields
+----------------------------
+
+Subclasses of Create, Delete, and Update transactions that are defined as
+inner classes of an entity class inherit the field definitions from the
+entity class.
+
+When a field with a new name is defined in a transaction subclass, it is
+added to the end of the existing field definitions.  For example, the
+Update class here has three fields, ``bar``, ``count``, and ``baz``::
+
+    class Foo(E.Entity):
+
+        bar = f.unicode()
+        count = f.integer()
+	
+        class _Update(T.Update):
+	    
+            baz = f.entity('Baz')
+
+When a field with an existing name is defined, it replaces the old field
+definition and is added to the end.  For example, the Update class here has
+two fields, ``count`` and ``bar``::
+
+    class Foo(E.Entity):
+
+        bar = f.unicode()
+        count = f.integer()
+
+        class _Update(T.Update):
+    
+            bar = f.entity('Bar')
+
+To change the properties of a field without changing the order of it,
+make those changes in the ``_setup`` method by using the ``f`` namespace::
+
+    class Foo(E.Entity):
+
+        bar = f.unicode()
+        count = f.integer()
+
+        class _Update(T.Update):
+
+            def _setup(self):
+                self.f.count.hidden = True
+		    
+		    
+Available hook methods
+======================
+
+
+Create subclasses
+-----------------
+
+``_setup(self)``
+    Called during ``__init__`` after setting fields based on keyword
+    arguments, before setting default values for fields that weren't assigned
+    a value.
+    
+``_before_execute(self, db)``
+    Called during transaction execution, before the create operation takes
+    place.
+    
+``_after_execute(self, db, entity)``
+    Called during transaction execution, after the create operation takes
+    place.  The newly-created entity is passed in.
+
+
+Delete subclasses
+-----------------
+
+``_setup(self)``
+    Called at end of ``__init__``.
+
+``_before_execute(self, db, entity)``
+    Called during transaction execution, before the delete operation takes
+    place.  The entity about to be deleted is passed in.
+    
+``_after_execute(self, db)``
+    Called during transaction execution, after the delete operation has
+    taken place.
+
+
+Update subclasses
+-----------------
+
+``_setup(self)``
+    Called at end of ``__init__``.
+
+``_before_execute(self, db, entity)``
+    Called during transaction execution, before the update operation takes
+    place.  The entity about to be updated is passed in.
+
+``_after_execute(self, db, entity)``
+    Called during transaction execution, after the update operation has
+    taken place.  The entity that was just updated is passed in.
