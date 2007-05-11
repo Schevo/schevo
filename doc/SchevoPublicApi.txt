@@ -3,30 +3,9 @@
 ===============
 
 
-(Note: This document is far from complete and is regularly updated and
-reorganized.  This notice will be removed when the document has
-matured and stabilized.)
-
-Document Status: draft, in development
-
 .. sectnum::
 
 .. contents::
-
-
-.. Doctest setup
-
-   >>> import os
-   >>> from schevo.test import CreatesSchema
-   >>> tester = CreatesSchema()
-   >>> db = None
-   >>> def new_db(schema_source):
-   ...     global db
-   ...     if db is not None:
-   ...         tester.tearDown()
-   ...     tester.schema = schema_source
-   ...     tester.setUp()
-   ...     db = tester.db
 
 
 Overview
@@ -52,6 +31,14 @@ structures defined by the database's schema definition.
 .. _Durus: http://www.mems-exchange.org/software/durus/
 
 .. _internal database structures: reference-database.html
+
+
+Doctest Setup
+=============
+
+This document also functions as a doctest::
+
+    >>> from schevo.test import DocTest
 
 
 sys Namespaces
@@ -142,7 +129,7 @@ of subqueries, from which it obtains results during its execution.
 For the purposes of example, let us assume that we are working with
 the following schema for this section::
 
-  >>> new_db("""
+  >>> t = DocTest("""
   ... from schevo.schema import *
   ... schevo.schema.prep(locals())
   ...
@@ -158,7 +145,7 @@ the following schema for this section::
   ...     def __unicode__(self):
   ...         return u'%s, born on %s' % (self.name, self.birthdate)      
   ...
-  ...     _sample = [
+  ...     _sample_unittest = [
   ...         ('Robert Jones', '1965-02-03'),
   ...         ('Roberto Gonzales', '1976-04-05'),
   ...         ('Roberta Smith', '1987-06-07'),
@@ -171,7 +158,7 @@ the following schema for this section::
   ...     
   ...     _key(name)
   ... 
-  ...     _sample = [
+  ...     _sample_unittest = [
   ...         ('Bank',),
   ...         ('Grocery Store',),
   ...         ('Library',),
@@ -190,7 +177,7 @@ the following schema for this section::
   ...             self.when,
   ...             )
   ...
-  ...     _sample = [
+  ...     _sample_unittest = [
   ...         (('Robert Jones',), ('Library',), '2004-01-01'),
   ...         (('Roberto Gonzales',), ('Library',), '2004-01-04'),
   ...         (('Robert Jones',), ('Grocery Store',), '2004-01-02'),
@@ -201,6 +188,7 @@ the following schema for this section::
   ...         (('Rance Thomas',), ('Grocery Store',), '2004-01-08'),
   ...         ]
   ... """)
+  >>> db = t.db
 
 Both schema modules and database engines expose all available Query
 classes in its ``Q`` namespace.  For brevity, we will use an alias::
@@ -283,9 +271,9 @@ Create the birthdate query::
   People where Birthdate < 1980-01-01
   >>> for person in sorted(person_birthdate()): #doctest: +NORMALIZE_WHITESPACE
   ...     print person
+  Rance Thomas, born on 1954-12-01  
   Robert Jones, born on 1965-02-03
   Roberto Gonzales, born on 1976-04-05
-  Rance Thomas, born on 1954-12-01  
 
 Combine the results of these queries using an intersection, so that
 we get the Person entities that match both queries::
@@ -487,7 +475,7 @@ sequence of the names in that namespace, in no defined order.
 Example::
 
   >>> tuple(sorted(db.Person.q))
-  ('default',)
+  ('by_example', 'exact')
   >>> tuple(sorted(db.Person[1].t))
   ('delete', 'update')
 
