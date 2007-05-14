@@ -12,8 +12,6 @@ For copyright, license, and warranty, see bottom of file.
 """
 
 __all__ = [
-##     '_export_all',
-##     '_import',
     '_hide',
     '_key',
     '_index',
@@ -28,8 +26,8 @@ __all__ = [
     'with_label',
     ]
 
+from glob import glob
 import os
-## import pkg_resources
 import sys
 
 import schevo
@@ -95,65 +93,6 @@ def _index(*args):
     clsLocals = inspect.currentframe(1).f_locals
     spec = clsLocals.setdefault('_index_spec_additions', [])
     spec.append(args)
-
-
-## def _import(requirement, name, version, *args, **kw):
-##     """Import an external schema in the schema currently being loaded.
-
-##     1. Makes sure the package ``requirement`` is satisfied.
-
-##     2. Loads the schema called ``name`` whose version is ``version``.
-##        This is dereferenced to a specific schema module using entry
-##        points defined by the requirement.
-
-##     3. Calls the ``_export`` function defined in that schema, passing
-##        it the global namespace of the schema that called _import,
-##        plus ``*args`` and ``**kw``.
-
-##     Implementation note: If the ``_globals`` keyword argument is
-##     defined, it will be used instead of the calling frame's globals.
-##     This is for use in backwards-compatibility functions such as
-##     `schevo.icon.schema.use`.
-##     """
-##     # Get the distribution that has the schema.
-##     dist = pkg_resources.require(requirement)[0]
-##     # Find the module name of the schema.
-##     entry_map = dist.get_entry_map('schevo.schema_export')
-##     entry_point = entry_map[name]
-##     pkgname = entry_point.module_name
-##     # Append the schema version to it.
-##     modname = '%s.schema_%03i' % (pkgname, version)
-##     # Get the module from _imported_schemata, since it's already been
-##     # imported by the database before _import is actually called.
-##     mod = schevo.namespace.SCHEMADB._imported_schemata[
-##         (requirement, name, version)]
-##     # Call upon the module to export.
-##     globals = kw.get('_globals', None)
-##     if not globals:
-##         globals = inspect.currentframe(1).f_globals
-##     mod._export(globals, *args, **kw)
-
-
-## def _export_all(namespace_to, namespace_from, **kw):
-##     """Exports all entity classes defined in ``namespace_from`` to
-##     ``namespace_to`` by creating subclasses.
-
-##     Various keyword arguments are supported:
-
-##     - ``hidden``: If set to True, then all subclasses created are set
-##       as hidden.
-##     """
-##     hidden = kw.get('hidden', False)
-##     for name, obj in namespace_from.iteritems():
-##         if (isinstance(obj, type)
-##             and issubclass(obj, schevo.entity.Entity)
-##             and not name.startswith('_')
-##             ):
-##             class Subclass(obj):
-##                 _actual_name = name
-##                 if hidden:
-##                     _hidden = True
-##             namespace_to[name] = Subclass
 
 
 # 'import_lock' is a lock that is acquired during a schema import,
@@ -322,9 +261,9 @@ def latest_version(location):
         return None
     return version
 
-def name(version):
+def name(version, prefix='schema'):
     """Return canonical name for schema version."""
-    return 'schema_%03i' % version
+    return '%s_%03i' % (prefix, version)
 
 def path(location):
     """If location is a module or package, return its path; otherwise,
@@ -348,10 +287,55 @@ def read(location, version):
     schema_file.close()
     return schema_source
 
-def schema_filepath(location, version):
+def schema_filepath(location, version, prefix=None):
     """Return the path of a specific schema version contained within 
     the given location."""
-    return os.path.join(path(location), name(version) + '.py')
+    if prefix is None:
+        prefix = schema_filename_prefix(location)
+    return os.path.join(path(location), name(version, prefix) + '.py')
+
+
+def schema_filename_prefix(location):
+    """Return the schema filename prefix used at `location`.
+
+    Raises `SchemaFileIOError` if duplicates are found.
+    """
+    # Find the prefix of the first version of the schema.
+    suffix = '_001.py'
+    suffixlen = len(suffix)
+    globspec = os.path.join(path(location), '*' + suffix)
+    matches = glob(globspec)
+    if len(matches) == 0:
+        raise schevo.error.SchemaFileIOError(
+            'Could not find a version 1 schema at %r.'
+            % location)
+    elif len(matches) > 1:
+        raise schevo.error.SchemaFileIOError(
+            'Found more than one version 1 schemata at %r.'
+            % location)
+    prefix = os.path.basename(matches[0])[:-suffixlen]
+    # Make sure same prefix is used for rest of schemata.
+    version = 2
+    while True:
+        # Look for files matching this suffix.
+        suffix = '_%03i.py' % version
+        globspec = os.path.join(path(location), '*' + suffix)
+        matches = glob(globspec)
+        if len(matches) == 0:
+            break
+        if len(matches) > 1:
+            raise schevo.error.SchemaFileIOError(
+                'Found more than one version %i schemata at %r.'
+                % (version, location))
+        prefix2 = os.path.basename(matches[0])[:-suffixlen]
+        if prefix2 != prefix:
+            raise schevo.error.SchemaFileIOError(
+                'Filename at version %i does not match version 1 prefix %r '
+                'at %r.'
+                % (version, prefix, location))
+        version += 1
+    # Everything checks out.
+    return prefix
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

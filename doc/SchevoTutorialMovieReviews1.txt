@@ -123,7 +123,7 @@ For those not familiar with doctests, please note the following:
 
 * When you see code that is adding to the `schema` variable
   (e.g. ``schema += ''' [some text] '''``), you should just add the
-  text in the multi-line string to your ``schema_001.py`` file.
+  text in the multi-line string to your schema file.
 
 
 Create a Schevo application
@@ -150,9 +150,14 @@ The default database schema
 ---------------------------
 
 In your favorite text editor, open the file
-``moviereviews/schema/schema_001.py``. This is the filename convention
-that Schevo uses when creating and evolving databases. The ``001``
-represents the version number of the schema.
+``moviereviews/schema/moviereviews_001.py``. This is the filename
+convention that Schevo uses when creating and evolving databases. The
+``001`` represents the version number of the schema.  
+
+The prefix, while typically the same as the name of the top-level
+package of your project (in this case, `moviereviews`), can be
+anything you like, although only one prefix may be used in a schema
+package.
 
 
 Namespace preparation
@@ -275,8 +280,9 @@ Add the following class to the database schema::
 Create a database
 =================
 
-Save the ``schema_001.py`` file. At a shell prompt, use the ``schevo``
-tool to create a new database with the application's schema::
+Save the ``moviereviews_001.py`` file. At a shell prompt, use the
+``schevo`` tool to create a new database with the application's
+schema::
 
     $ schevo db create --app=moviereviews sample.db
 
@@ -380,8 +386,8 @@ Suppose in a user interface we would like to include the year the
 movie was released whenever a summary of a movie entity is to be
 displayed.
 
-Exit the Python session, then edit ``schema_001.py`` again and add the
-``__unicode__`` method to the ``Movie`` class::
+Exit the Python session, then edit ``moviereviews_001.py`` again and
+add the ``__unicode__`` method to the ``Movie`` class::
 
     >>> schema += '''
     ...     class Movie(E.Entity):
