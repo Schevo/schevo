@@ -1,0 +1,274 @@
+============================
+ 'schevo' Command-line Tool
+============================
+
+
+.. sectnum::
+
+.. contents::
+
+
+Introduction
+============
+
+Schevo includes a command line tool, invoked by running ``schevo``
+along with a list of options, subcommands, and required arguments.
+
+The command-line tool helps you work with several aspects of Schevo
+databases and applications.
+
+
+Obtaining help
+==============
+
+To get help for the `schevo` tool itself, give it the ``-h`` or
+``--help`` option::
+
+    $ schevo -h
+    Schevo 3.1
+
+    Available commands:
+
+       db: Perform actions on Schevo databases.
+    shell: Start a Python shell with an open database.
+
+You can obtain help about a subcommand by specifying the
+subcommand(s), then giving the help option::
+
+    $ schevo db -h
+    $ schevo db create -h
+    $ schevo shell -h
+
+
+Command reference
+=================
+
+For your convenience, we include a detailed reference for all of the
+`schevo` subcommands that are included with Schevo itself.
+
+For subcommands that are made available by auxiliary packages such as
+`SchevoGtk`:trac:, please use the information described in `obtaining
+help`_, or refer to the documentation for that package.
+
+
+Common options
+--------------
+
+**-h**, **--help**:
+
+    Display help text for the subcommand.
+
+**-T**, **--trace**:
+
+    Specify this as an option to most subcommands if you want to turn
+    on tracing.  Tracing is a lightweight debugging tool built into
+    Schevo whose footprint can be entirely removed when using
+    optimized Python modules.
+
+
+schevo db compare
+-----------------
+
+Usage: ``schevo db compare DBFILE1 DBFILE2``
+
+Performs a functional comparison between `DBFILE1` and `DBFILE2`.
+
+A functional comparison is where each database has the same schema,
+and the same data exists in each database.
+
+
+schevo db convert
+-----------------
+
+Usage: ``schevo db convert [options] DBFILE``
+
+Converts the database in `DBFILE` to a newer internal format.
+
+Databases using Schevo version 3.0 are, by default, created using
+internal format 1.
+
+In order to implement certain features for Schevo 3.1, the internal
+format was changed, and made available as format 2.
+
+Options:
+
+**-f FORMAT**, **--format=FORMAT**:
+
+    Convert to a specific format.  (Default: latest format.)
+
+
+schevo db create
+----------------
+
+Usage: ``schevo db create [options] DBFILE``
+
+Creates a new database in `DBFILE` using a specific schema.
+
+At a minimum, either the ``--app`` or ``--schema`` option must be
+specified.
+
+Options:
+
+**-a PATH**, **--app=PATH**:
+
+    Use the application in `PATH` to find the schema.  `PATH` may be
+    specified as a filesystem path or a Python package name.
+    Specifying ``--app=myapp`` is the same as specifying
+    ``--schema=myapp.schema --icons=myapp.icons``.
+
+**-c PATH**, **--icons=PATH**:
+
+    Use the icons in `PATH` to insert icon data into the database, if
+    the database schema supports it and icons are available.
+
+**-e VERSION**, **--evolve-from-version=VERSION**:
+
+    When creating the database, begin at `VERSION` and evolve the
+    database one version at a time until the desired version is
+    reached.  (Default: start directly at latest version.)
+
+**-p**, **--sample**:
+
+    Populate database with sample data after creation.
+
+**-s PATH**, **--schema=PATH**:
+
+    Use the schema in `PATH` when creating the database. `PATH` may be
+    specified as a filesystem path or a Python package name.
+
+**-v VERSION**, **--version=VERSION**:
+
+    The desired schema version that the database should end up at.
+    (Default: database ends up at latest version.)
+
+**-x**, **--delete**:
+
+    Delete `DBFILE` if it exists before creating it.  Useful for
+    recreating sample databases during application development.
+
+
+schevo db evolve
+----------------
+
+Usage: ``schevo db evolve [options] DBFILE VERSION``
+
+Evolves the existing database `DBFILE` to the version specified in
+`VERSION`.  The database will be evolved as many times as necessary to reach the version specified.
+
+Specifying ``latest`` for `VERSION` causes the database to be evolved
+to the latest schema version available.
+
+At a minimum, either the ``--app`` or ``--schema`` option must be
+specified.
+
+Options:
+
+**-a PATH**, **--app=PATH**:
+
+    Use the application in `PATH` to find the schema.  `PATH` may be
+    specified as a filesystem path or a Python package name.
+    Specifying ``--app=myapp`` is the same as specifying
+    ``--schema=myapp.schema --icons=myapp.icons``.
+
+**-c PATH**, **--icons=PATH**:
+
+    Use the icons in `PATH` to insert icon data into the database, if
+    the database schema supports it and icons are available.
+
+**-s PATH**, **--schema=PATH**:
+
+    Use the schema in `PATH` when evolving the database. `PATH` may be
+    specified as a filesystem path or a Python package name.
+
+
+schevo db inject
+----------------
+
+Usage: ``schevo db inject [options] DBFILE``
+
+Injects a schema directly into `DBFILE` without altering database
+structures.
+
+**THIS IS A DANGEROUS COMMAND** and should only be used when
+absolutely necessary.  When injecting a new schema into a database, it
+should not have any changes that alter the semantics of the schema.
+
+This command will determine the schema version from `DBFILE`, then
+load that version of the schema from the given schema package.
+
+At a minimum, either the ``--app`` or ``--schema`` option must be
+specified.
+
+Options:
+
+**-a PATH**, **--app=PATH**:
+
+    Use the application in `PATH` to find the schema.  `PATH` may be
+    specified as a filesystem path or a Python package name.
+    Specifying ``--app=myapp`` is the same as specifying
+    ``--schema=myapp.schema --icons=myapp.icons``.
+
+**-s PATH**, **--schema=PATH**:
+
+    Use the schema in `PATH` when injecting a schema into the
+    database. `PATH` may be specified as a filesystem path or a Python
+    package name.
+
+
+schevo db update
+----------------
+
+Usage: ``schevo db update [options] DBFILE``
+
+Updates the existing database in `DBFILE` while keeping the same
+schema version.  Internal structures are modified to conform to the
+new edition of the schema.
+
+This command is intended for **developer use**, and **not for
+production use**.
+
+This command will determine the schema version from `DBFILE`, then
+load that version of the schema from the given schema package.
+
+At a minimum, either the ``--app`` or ``--schema`` option must be
+specified.
+
+Options:
+
+**-a PATH**, **--app=PATH**:
+
+    Use the application in `PATH` to find the schema.  `PATH` may be
+    specified as a filesystem path or a Python package name.
+    Specifying ``--app=myapp`` is the same as specifying
+    ``--schema=myapp.schema --icons=myapp.icons``.
+
+**-c PATH**, **--icons=PATH**:
+
+    Use the icons in `PATH` to insert icon data into the database, if
+    the database schema supports it and icons are available.
+
+**-s PATH**, **--schema=PATH**:
+
+    Use the schema in `PATH` when updating the database. `PATH` may be
+    specified as a filesystem path or a Python package name.
+
+
+schevo shell
+------------
+
+Usage: ``schevo shell [options] DBFILE``
+
+Opens a Python shell with the database in `DBFILE` already open and
+available in the interpreter's namespace as the variable `db`.
+
+If IPython_ is available, it will use that for the shell; otherwise,
+the built-in Python interpreter will be used.
+
+.. _IPython: http://ipython.scipy.org/
+
+
+Extending the 'schevo' tool
+===========================
+
+TODO: Write information about creating ``[schevo.schevo_command]``
+entry points.

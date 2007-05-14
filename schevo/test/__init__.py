@@ -5,6 +5,7 @@ For copyright, license, and warranty, see bottom of file.
 
 __all__ = [
     'BaseTest',
+    'ComparesDatabases',
     'CreatesDatabase',
     'CreatesSchema',
     'DocTest',
@@ -23,6 +24,7 @@ from schevo.trace import log
 
 from schevo.test.base import (
     BaseTest,
+    ComparesDatabases,
     CreatesDatabase,
     CreatesSchema,
     DocTest,

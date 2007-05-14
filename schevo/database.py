@@ -9,6 +9,7 @@ from schevo.lib import optimize
 
 from schevo import database1
 from schevo import database2
+from schevo.field import not_fget
 from schevo import icon
 from schevo.store.connection import Connection
 from schevo.store.file_storage import FileStorage
@@ -69,6 +70,53 @@ def convert_format(filename_or_fp, format):
     finally:
         if close_when_done:
             fs.close()
+
+
+def equivalent(db1, db2, require_identical_schema_source=True):
+    """Return True if `db1` and `db2` are functionally equivalent, or False
+    if they differ.
+
+    - `db1` and `db2`: The open databases to compare.
+    - `require_identical_schema_source`: True if `db1` and `db2` must have
+      identical schema. This is typical, since this function is intended to test
+      equivalence between a database that has been created at version `n` and a
+      database that has been created at version 1 and then evolved to version
+      `n`. Set to False if the schemata are non-identical, as in the unit tests
+      for this function.  **BE CAREFUL** when doing so, and in particular,
+      make sure field names are declared in the same order in each schema.
+
+    "Functionally equivalent" in this scenario means that details meant to
+    be used internally are ignored by this tool.  Rather, it performs a
+    higher-level comparison of the database.  For example, the following
+    details are ignored:
+
+    - Entity OIDs
+    - Entity revision numbers
+    - Order of results when iterating over an extent
+    """
+    if require_identical_schema_source:
+        if db1.schema_source != db2.schema_source:
+            return False
+    # Create value count dictionaries for each extent in each database.
+    extents1, extents2 = {}, {}
+    for extents, db in [(extents1, db1), (extents2, db2)]:
+        for extent in db.extents():
+            counts = {
+                # value-tuple: instance-count,
+                }
+            extents[extent.name] = counts
+            # Get field values for each entity in the extent, and increment
+            # value counts.
+            for entity in extent:
+                field_map = entity.sys.field_map(not_fget)
+                stop_entities = frozenset([entity])
+                values = tuple(
+                    field.db_equivalence_value(stop_entities)
+                    for field in field_map.itervalues()
+                    )
+                counts[values] = counts.get(values, 0) + 1
+    # Now that the structures are filled in, they can be directly compared.
+    return extents1 == extents2
 
 
 def evolve(db, schema_source, version):

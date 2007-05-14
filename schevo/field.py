@@ -301,6 +301,29 @@ class Field(base.Field):
         new_field.__dict__.update(self.__dict__)
         return new_field
 
+    def db_equivalence_value(self, stop_entities):
+        """Return a hashable version of this field's value that can be
+        compared to the equivalent value in another database. Used by
+        `schevo.database.equivalent`.
+
+        - `stop_entities`: A set of entities that should *not* be recursed into.
+
+        Fields that contain entities must not return entities themselves
+        in the data structure returned by this method.  Instead, this method
+        must recurse into those entities (unless they are in `stop_entities`,
+        in which case `None` should be put in their place to prevent'
+        recursion loops) and return a tuple of the result of calling
+        `db_equivalence_value` on each of those entities' fields in the order
+        that they are defined, sans calculated fields.
+
+        The default implementation of this method is to raise a
+        NotImplementedError.  Custom fields based on Field or _EntityBase
+        *must* override this method in order for databases using those
+        custom fields to be usable by `schevo.database.equivalent`.
+        """
+        raise NotImplementedError(
+            'db_equivalence_value not implemented for %r' % self.__class__)
+
     def _dump(self):
         """Return a value suitable for storage in a database."""
         return self._value
@@ -483,6 +506,9 @@ class HashedValue(Field):
         else:
             return self.hashEncode(value)
 
+    def db_equivalence_value(self, stop_entities):
+        return self._value
+
     def hashCompare(self, value, hashedValue):
         """Compare value to one-way hash, returning True if matching.
 
@@ -528,6 +554,9 @@ class String(Field):
             return value
         return str(value)
 
+    def db_equivalence_value(self, stop_entities):
+        return self._value
+
     def validate(self, value):
         Field.validate(self, value)
         if not self.allow_empty and value == '':
@@ -568,6 +597,9 @@ class Unicode(Field):
         if value is UNASSIGNED:
             return value
         return unicode(value)
+
+    def db_equivalence_value(self, stop_entities):
+        return self._value
 
     def validate(self, value):
         Field.validate(self, value)
@@ -621,6 +653,9 @@ class Blob(Field):
             return value
         return str(value)
 
+    def db_equivalence_value(self, stop_entities):
+        return self._value
+
     def __str__(self):
         v = self._value
         if v is UNASSIGNED:
@@ -658,6 +693,9 @@ class Integer(Field):
             return value
         return int(value)
 
+    def db_equivalence_value(self, stop_entities):
+        return self._value
+
     def validate(self, value):
         """Validate the value, raising an error on failure."""
         Field.validate(self, value)
@@ -676,6 +714,9 @@ class Float(Field):
         if value is UNASSIGNED:
             return value
         return float(value)
+
+    def db_equivalence_value(self, stop_entities):
+        return self._value
 
     def validate(self, value):
         """Validate the value, raising an error on failure."""
@@ -714,14 +755,6 @@ class Money(Field):
             format = u'%.' + unicode(self.fract_digits) + u'f'
             return format % float(v)
 
-    def reversible(self, value=None):
-        if value is None:
-            value = self._value
-        if value is UNASSIGNED:
-            return u''
-        else:
-            return unicode(self)
-
     def convert(self, value, db=None):
         """Convert the value to a monetary value."""
         if value == '':
@@ -729,6 +762,17 @@ class Money(Field):
         if value is UNASSIGNED:
             return value
         return round(float(value), self.fract_digits)
+
+    def db_equivalence_value(self, stop_entities):
+        return self._value
+
+    def reversible(self, value=None):
+        if value is None:
+            value = self._value
+        if value is UNASSIGNED:
+            return u''
+        else:
+            return unicode(self)
 
     def validate(self, value):
         """Validate the value, raising an error on failure."""
@@ -793,6 +837,9 @@ class Date(Field):
             # that it has the same attributes as a datetime object
             # itself.
             return (value.year, value.month, value.day)
+
+    def db_equivalence_value(self, stop_entities):
+        return self._value
 
     def get(self):
         v = Field.get(self)
@@ -882,6 +929,9 @@ class Datetime(Field):
                      value.minute, value.second, value.microsecond)
         return value
 
+    def db_equivalence_value(self, stop_entities):
+        return self._value
+
     def get(self):
         v = Field.get(self)
         if isinstance(v, tuple):
@@ -944,6 +994,9 @@ class Boolean(Field):
         elif value == self.true_label:
             return True
         return bool(value)
+
+    def db_equivalence_value(self, stop_entities):
+        return self._value
 
 
 # --------------------------------------------------------------------
@@ -1121,7 +1174,24 @@ class _EntityBase(Field):
 
 class Entity(_EntityBase):
     """Entity instance field class."""
-    pass
+
+    def db_equivalence_value(self, stop_entities):
+        value = self._value
+        if value is UNASSIGNED:
+            return value
+        else:
+            if value in stop_entities:
+                return None
+            else:
+                stop_entities = set(stop_entities)
+                stop_entities.add(value)
+                stop_entities = frozenset(stop_entities)
+                field_map = value.sys.field_map(not_fget)
+                values = tuple(
+                    field.db_equivalence_value(stop_entities)
+                    for field in field_map.itervalues()
+                    )
+                return values
 
 
 class EntityList(_EntityBase):
@@ -1136,6 +1206,27 @@ class EntityList(_EntityBase):
         else:
             value = _EntityBase.convert(self, value, db)
         return value
+
+    def db_equivalence_value(self, stop_entities):
+        value = self._value
+        if value is UNASSIGNED:
+            return value
+        else:
+            value_tuples = []
+            for v in value:
+                if v in stop_entities:
+                    value_tuples.append(None)
+                else:
+                    stop_entities = set(stop_entities)
+                    stop_entities.add(v)
+                    stop_entities = frozenset(stop_entities)
+                    field_map = v.sys.field_map(not_fget)
+                    values = tuple(
+                        field.db_equivalence_value(stop_entities)
+                        for field in field_map.itervalues()
+                        )
+                    value_tuples.append(values)
+            return tuple(value_tuples)
 
     def _dump(self):
         value = self._value

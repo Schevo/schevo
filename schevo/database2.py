@@ -1144,14 +1144,14 @@ class Database(base.Database):
         """
         pass
 
-    def _sync(self, schema_source=None, schema_version=None, 
+    def _sync(self, schema_source=None, schema_version=None,
               initialize=True, commit=True, evolving=False):
         """Synchronize the database with a schema definition.
 
         - `schema_source`: String containing the source code for a
           schema.  If `None`, the schema source contained in the
           database itself will be used.
-          
+
         - `schema_version`: If set, the schema version to use for a
           newly-created database.  If set to something other than None
           for an existing database, raises a ValueError.

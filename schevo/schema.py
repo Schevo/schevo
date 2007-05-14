@@ -288,7 +288,7 @@ def read(location, version):
     return schema_source
 
 def schema_filepath(location, version, prefix=None):
-    """Return the path of a specific schema version contained within 
+    """Return the path of a specific schema version contained within
     the given location."""
     if prefix is None:
         prefix = schema_filename_prefix(location)

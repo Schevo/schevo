@@ -11,6 +11,9 @@ import schevo.schema
 
 from schevo.script.command import Command
 from schevo.script import opt
+from schevo.store.connection import Connection
+from schevo.store.file_storage import FileStorage
+
 
 usage = """\
 schevo db inject [options] DBFILE
@@ -23,8 +26,8 @@ have any changes that alter the semantics of the schema.
 
 Either --app or --schema must be given at a minimum.
 
-Note: Currently, only the schema_001.py file will be loaded from the
-schema package."""
+This command will determine the schema version from DBFILE, then load
+that version of the schema from the given schema package."""
 
 
 def _parser():
@@ -55,6 +58,8 @@ class Inject(Command):
         if len(args) != 1:
             parser.error('Please specify DBFILE.')
         db_filename = args[0]
+        if not os.path.isfile(db_filename):
+            parser.error('Please specify a DBFILE that exists.')
         # Process paths.  Start with app_path option and populate
         # schema_path and icon_path based on it if it is set, then use
         # icon_path and schema_path options to override.
@@ -78,13 +83,15 @@ class Inject(Command):
             schema_path = os.path.join(app_path, 'schema')
         if options.schema_path:
             schema_path = path(options.schema_path)
-        schema_source = schevo.schema.read(schema_path, version=1)
-        schema_version = 1
+        # Inspect the database file to get its schema version.
+        fs = FileStorage(db_filename)
+        schema_version = Connection(fs).get_root()['SCHEVO']['version']
+        fs.close()
+        print 'Database is at version %i.' % schema_version
         # Inject the schema.
-        if not os.path.isfile(db_filename):
-            parser.error('Please specify a DBFILE that exists.')
+        schema_source = schevo.schema.read(schema_path, version=schema_version)
         schevo.database.inject(db_filename, schema_source, schema_version)
-        print 'Schema injected.'
+        print 'Schema injected as version %i.' % schema_version
 
 
 start = Inject

@@ -8,7 +8,6 @@ from textwrap import dedent
 from schevo.constant import UNASSIGNED
 from schevo import error
 from schevo.test import CreatesDatabase, EvolvesSchemata, raises
-from schevo.test import raises
 
 
 # Make sure we can import the testschema_evolve1 package.
@@ -973,19 +972,19 @@ class BaseEvolveInterVersion(CreatesDatabase):
 
 
 class BaseEvolvesSchemataNoSkip(EvolvesSchemata):
-    
+
     schemata = 'testschema_evolve'
-    
+
     schema_version = 2
-    
+
     sample_data = '''
         E.Foo._sample_unittest = [
             (u'fob', ),
             ]
         '''
-        
+
     skip_evolution = False
-    
+
     def test(self):
         assert db.version == 2
         names = set(foo.name for foo in db.Foo)
@@ -996,17 +995,17 @@ class BaseEvolvesSchemataNoSkip(EvolvesSchemata):
 class BaseEvolvesSchemataSkip(EvolvesSchemata):
 
     schemata = 'testschema_evolve'
-    
+
     schema_version = 2
-    
+
     sample_data = '''
         E.Foo._sample_unittest = [
             (u'fob', ),
             ]
         '''
-        
+
     skip_evolution = True
-    
+
     def test(self):
         assert db.version == 2
         names = set(foo.name for foo in db.Foo)
@@ -1035,7 +1034,7 @@ class TestEvolveInterVersion2(BaseEvolveInterVersion):
 
 
 class TestEvolvesSchemataNoSkip1(BaseEvolvesSchemataNoSkip):
-    
+
     format = 1
 
 

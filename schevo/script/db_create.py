@@ -130,7 +130,7 @@ class Create(Command):
         schema_source = schevo.schema.read(
             schema_path, version=evolve_from_version)
         db = schevo.database.open(
-            db_filename, schema_source=schema_source, 
+            db_filename, schema_source=schema_source,
             schema_version=evolve_from_version)
         # Evolve if necessary.
         if final_version > evolve_from_version:

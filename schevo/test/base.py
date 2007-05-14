@@ -49,7 +49,7 @@ def troff():
 
 
 _db_cache = {
-    # (format, version, evolve_skipped, schema_source, suffix): 
+    # (format, version, evolve_skipped, schema_source, suffix):
     #   (db, fp, connection),
     }
 _cached_dbs = set(
@@ -222,10 +222,13 @@ class CreatesSchema(CreatesDatabase):
 
     def _open(self, suffix=''):
         format = self.format
-        if self.body:
-            schema = self.schema = PREAMBLE + dedent(self.body)
-        else:
-            schema = self.schema
+        body_name = 'body' + suffix
+        body = getattr(self, body_name, '')
+        schema_name = 'schema' + suffix
+        schema = getattr(self, schema_name, '')
+        if body:
+            schema = PREAMBLE + dedent(body)
+            setattr(self, schema_name, schema)
         use_db_cache = self._use_db_cache
         db_name = 'db' + suffix
         ex_name = 'ex' + suffix
@@ -245,7 +248,7 @@ class CreatesSchema(CreatesDatabase):
             # Forget existing modules.
             for m in module.MODULES:
                 module.forget(m)
-            db = self._base_open(suffix, self.schema)
+            db = self._base_open(suffix, schema)
             if use_db_cache:
                 fp = getattr(self, 'fp' + suffix)
                 connection = getattr(self, 'connection' + suffix)
@@ -261,8 +264,8 @@ class CreatesSchema(CreatesDatabase):
         self.suffixes.add(suffix)
         return db
 
-    def open(self):
-        db = self._open()
+    def open(self, suffix=''):
+        db = self._open(suffix)
         db.populate('unittest')
         return db
 
@@ -315,26 +318,27 @@ class EvolvesSchemata(CreatesDatabase):
         # Attach the new schemata list to the instance.
         self.schemata = schemata
 
-    def _open(self, suffix=''):
+    def _open(self):
         format = self.format
         use_db_cache = self._use_db_cache
-        db_name = 'db' + suffix
-        ex_name = 'ex' + suffix
-        fpv_name = 'fpv' + suffix
+        db_name = 'db'
+        ex_name = 'ex'
+        fpv_name = 'fpv'
         schema = self.schemata[-1]
         version = self.schema_version
         skip_evolution = self.skip_evolution
+        suffix = ''
         cache_key = (format, version, skip_evolution, schema, suffix)
         if (use_db_cache
             and cache_key in _db_cache
             and not hasattr(self, fpv_name)
             ):
             db, fp, connection = _db_cache[cache_key]
-            setattr(self, 'fp' + suffix, fp)
-            setattr(self, 'connection' + suffix, connection)
-            if not hasattr(self, db_name):
+            self.fp = fp
+            self.connection = connection
+            if not hasattr(self, 'db'):
                 db._reset_all()
-            setattr(self, db_name, db)
+            self.db = db
         else:
             # Forget existing modules.
             for m in module.MODULES:
@@ -350,15 +354,15 @@ class EvolvesSchemata(CreatesDatabase):
                 # Open database with target version.
                 db = self._base_open(suffix, schema, schema_version=version)
             if use_db_cache:
-                fp = getattr(self, 'fp' + suffix)
-                connection = getattr(self, 'connection' + suffix)
+                fp = self.fp
+                connection = self.connection
                 _db_cache[cache_key] = (db, fp, connection)
                 _cached_dbs.add(db)
         # Also set the module-level global.
         modname = self.__class__.__module__
         mod = sys.modules[modname]
-        setattr(mod, db_name, db)
-        setattr(mod, ex_name, db.execute)
+        mod.db = db
+        mod.ex = db.execute
         self.suffixes.add(suffix)
         return db
 
@@ -429,6 +433,87 @@ class DocTest(CreatesSchema):
         self.body = body
         schema_source = PREAMBLE + dedent(self.body)
         self.sync(schema_source)
+
+
+class ComparesDatabases(object):
+    """Database evolution equivalence tester.
+
+    To use, add a test class in your app's unit test suite that
+    inherits from `ComparesDatabases`.  Then set the three class-level
+    attributes `schemata`, `max_version` (optional), and
+    `expected_failure` (optional, rarely used).
+
+    The test makes sure that evolving from version N-1 to N results in
+    a database that is functionally equivalent to a database created
+    directly at version N.
+
+    It does this for all database versions N starting from version 2
+    and ending at the latest version, or `max_version` if specified.
+
+    See Schevo's test_equivalence.py for example usage.
+    """
+
+    # The package name of the database schema to use when comparing.
+    schemata = ''
+
+    # Maximum version that should be tested, or None to use the
+    # maximum version available.
+    max_version = None
+
+    # Whether or not to expect at least one comparison to fail.
+    expected_failure = False
+
+    def test(self):
+        location = self.schemata
+        # Keep track of lack of failures.
+        failed = False
+        # Get the maximum schema version.
+        final_version = max(
+            schevo.schema.latest_version(location), self.max_version)
+        # For schema version N from 2 to maximum,
+        for N in xrange(2, final_version + 1):
+            # Read schema version N.
+            schema_N = schevo.schema.read(location, N)
+            # Create a database directly at version N.
+            fp_direct = StringIO()
+            db_direct = database.open(
+                fp = fp_direct,
+                schema_source = schema_N,
+                schema_version = N,
+                )
+            # Read schema version N - 1.
+            schema_N1 = schevo.schema.read(location, N - 1)
+            # Create a database at version N - 1.
+            fp_evolved = StringIO()
+            db_evolved = database.open(
+                fp = fp_evolved,
+                schema_source = schema_N1,
+                schema_version = N - 1,
+                )
+            # Evolve database to version N.
+            database.evolve(db_evolved, schema_N, N)
+            # Compare the databases.
+            is_equivalent = database.equivalent(db_direct, db_evolved)
+            # If failure,
+            if not is_equivalent:
+                if self.expected_failure:
+                    # If failure expected, keep track of failure.
+                    failed = True
+                else:
+                    # If failure not expected, raise an exception.
+                    raise Exception(
+                        'Database created directly at version %i is not '
+                        'the same as database created at version %i then '
+                        'evolved to version %i.'
+                        % (N, N - 1, N)
+                        )
+        # If failure expected, but no failures,
+        if self.expected_failure and not failed:
+            # Raise an exception.
+            raise Exception(
+                'Expected databases to be unequal at some point, but '
+                'they are all functionally equivalent.'
+                )
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
