@@ -9,7 +9,7 @@ from schevo.lib import optimize
 from schevo import base
 from schevo.change import summarize
 from schevo.constant import CASCADE, DEFAULT, UNASSIGN, UNASSIGNED
-from schevo.error import (DatabaseMismatch, DeleteRestricted,
+from schevo.error import (DatabaseMismatch, DeleteRestricted, SchemaError,
                           TransactionExpired, TransactionFieldsNotChanged,
                           TransactionNotExecuted)
 from schevo import field
@@ -22,11 +22,33 @@ from schevo.namespace import NamespaceExtension
 from schevo.trace import log
 
 
+class TransactionMeta(schema_metaclass('T')):
+
+    def __init__(cls, class_name, bases, class_dict):
+        super(TransactionMeta, cls).__init__(class_name, bases, class_dict)
+        if (cls._restrict_subclasses
+            and '_restrict_subclasses' not in class_dict
+            ):
+            # Base class is restricting its subclasses.
+            if '__init__' in class_dict or '_execute' in class_dict:
+                raise SchemaError(
+                    'Transaction subclass %r, with bases %r, '
+                    'tried to override __init__ or _execute, '
+                    'but that is not allowed with that type '
+                    'of base class.'
+                    % (class_name, bases)
+                    )
+
+
 class Transaction(base.Transaction):
 
-    __metaclass__ = schema_metaclass('T')
+    __metaclass__ = TransactionMeta
 
     _field_spec = FieldSpecMap()
+
+    # If true, do not allow subclasses to change the behavior of
+    # `__init__` or `_execute`.
+    _restrict_subclasses = False
 
     def __init__(self):
         self._changes_requiring_notification = []
@@ -143,6 +165,8 @@ class Combination(Transaction):
 
     _label = u'Combination'
 
+    _restrict_subclasses = True
+
     def __init__(self, transactions):
         Transaction.__init__(self)
         self._transactions = transactions
@@ -163,6 +187,8 @@ class Create(Transaction):
     _label = u'Create'
 
     _style = _Create_Standard
+
+    _restrict_subclasses = True
 
     def __init__(self, *args, **kw):
         Transaction.__init__(self)
@@ -275,6 +301,8 @@ class Delete(Transaction):
     """Delete an existing entity instance."""
 
     _label = u'Delete'
+
+    _restrict_subclasses = True
 
     def __init__(self, entity):
         Transaction.__init__(self)
@@ -401,6 +429,8 @@ class Update(Transaction):
 
     _require_changes = True
 
+    _restrict_subclasses = True
+
     def __init__(self, _entity, **kw):
         Transaction.__init__(self)
         self._entity = _entity
@@ -472,6 +502,8 @@ class Update(Transaction):
 
 class Inverse(Transaction):
     """An inversion of an executed transaction."""
+
+    _restrict_subclasses = True
 
     def __init__(self, original_tx):
         Transaction.__init__(self)
@@ -634,6 +666,8 @@ class Initialize(_Populate):
 
     _data_attr = '_initial'
 
+    _restrict_subclasses = True
+
 
 class Populate(_Populate):
     """A transaction that populates the database with sample data."""
@@ -641,6 +675,8 @@ class Populate(_Populate):
     _label = u'Populate'
 
     _data_attr = '_sample'
+
+    _restrict_subclasses = True
 
     def __init__(self, sample_name=''):
         _Populate.__init__(self)
@@ -654,6 +690,8 @@ class Populate(_Populate):
 class CallableWrapper(Transaction):
     """A transaction that, upon execution, calls a callable object
     with the open database."""
+
+    _restrict_subclasses = True
 
     def __init__(self, fn):
         assert callable(fn)

@@ -2,30 +2,10 @@
  Schema Definition Reference
 =============================
 
-(Note: This document is far from complete and is regularly updated and
-reorganized.  This notice will be removed when the document has
-matured and stabilized.)
-
-Document Status: draft, in development
 
 .. sectnum::
 
 .. contents::
-
-
-.. Doctest setup
-
-   >>> import os
-   >>> from schevo.test import CreatesSchema
-   >>> tester = CreatesSchema()
-   >>> db = None
-   >>> def new_db(schema_source):
-   ...     global db
-   ...     if db is not None:
-   ...         tester.tearDown()
-   ...     tester.schema = schema_source
-   ...     tester.setUp()
-   ...     db = tester.db
 
 
 Overview
@@ -51,6 +31,14 @@ structures defined by the database's schema definition.
 .. _Durus: http://www.mems-exchange.org/software/durus/
 
 .. _internal database structures: reference-database.html
+
+
+Doctest Setup
+=============
+
+This document also functions as a doctest::
+
+    >>> from schevo.test import DocTest
 
 
 Schema definition syntax
@@ -444,19 +432,19 @@ Transaction definitions
 Customizing standard Create transactions
 ........................................
 
-See SchevoTransactionHookMethods.
+See `SchevoTransactionHookMethods`:trac:.
 
 
 Customizing standard Delete transactions
 ........................................
 
-See SchevoTransactionHookMethods.
+See `SchevoTransactionHookMethods`:trac:.
 
 
 Customizing standard Update transactions
 ........................................
 
-See SchevoTransactionHookMethods.
+See `SchevoTransactionHookMethods`:trac:.
 
 
 Creating new transactions

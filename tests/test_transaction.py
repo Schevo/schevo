@@ -421,8 +421,7 @@ class BaseTransaction(CreatesSchema):
         class _Create(T.Create):
             """A cog is usually created with five sprockets."""
 
-            def _execute(self, db):
-                cog = T.Create._execute(self, db)
+            def _after_execute(self, db, cog):
                 sprockets = db.extent('Sprocket')
                 try:
                     for x in xrange(5):
@@ -430,7 +429,6 @@ class BaseTransaction(CreatesSchema):
                 except:
                     # If sprockets couldn't be created, don't worry.
                     pass
-                return cog
 
 
     class Sprocket(E.Entity):
@@ -442,11 +440,9 @@ class BaseTransaction(CreatesSchema):
             """A sprocket is only created if the name of the cog is
             not 'Spacely'."""
 
-            def _execute(self, db):
-                sprocket = T.Create._execute(self, db)
+            def _after_execute(self, db, sprocket):
                 if sprocket.cog.name == 'Spacely':
                     raise Exception('Antitrust error.')
-                return sprocket
 
 
     class ProblemGender(E.Entity):

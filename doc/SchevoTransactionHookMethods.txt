@@ -1,6 +1,28 @@
+==========================
+ Transaction Hook Methods
+==========================
+
+
+.. sectnum::
+
+.. contents::
+
+
+Overview
+========
+
 When overriding the default implementations of Create, Delete, and Update
 transactions for entity classes in a schema, there are hooks that make it
 easy to change specific behavior.
+
+
+Doctest Setup
+=============
+
+This document also functions as a doctest::
+
+    >>> from schevo.test import DocTest
+
 
 Subclassing in general
 ======================
@@ -23,6 +45,40 @@ in the ``T`` namespace.  For example::
 		    
         class _Update(T.Update):
             ...
+
+
+Overriding __init__ and _execute not allowed
+--------------------------------------------
+
+Overriding `__init__` or `_execute` in most `Transaction` subclasses
+is not allowed.  If you attempt to do so, Schevo will raise a
+`schevo.error.SchemaError` exception::
+
+    >>> t = DocTest("""
+    ...     class Foo(E.Entity):
+    ...
+    ...         bar = f.unicode()
+    ...
+    ...         class _Create(T.Create):
+    ...
+    ...             def _execute(self, db):
+    ...                 pass
+    ... """) #doctest: +ELLIPSIS
+    Traceback (most recent call last):
+        ...
+    SchemaError: ...
+
+Classes that have a `_restrict_subclasses` attribute set to `True`
+enforce the above restriction.  They include the following:
+
+* Combination
+* Create
+* Delete
+* Update
+* Inverse
+* Initialize
+* Populate
+* CallableWrapper
 
 
 Overriding hook methods
