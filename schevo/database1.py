@@ -230,10 +230,7 @@ class Database(database2.Database):
         field_id = field_name_id[name]
         value = entity_map['fields'][field_id]
         if field_id in entity_field_ids and isinstance(value, tuple):
-            extent_id, oid = value
-            value = object.__new__(Placeholder)
-            value.extent_id = extent_id
-            value.oid = oid
+            value = Placeholder.new(*value)
         return value
 
     def _entity_fields(self, extent_name, oid):
@@ -246,10 +243,7 @@ class Database(database2.Database):
         fields = {}
         for field_id, value in entity_map['fields'].iteritems():
             if field_id in entity_field_ids and isinstance(value, tuple):
-                extent_id, oid = value
-                value = object.__new__(Placeholder)
-                value.extent_id = extent_id
-                value.oid = oid
+                value = Placeholder.new(*value)
             # During database evolution, it may turn out that fields
             # get removed.  For time efficiency reasons, Schevo does
             # not iterate through all entities to remove existing
@@ -281,10 +275,7 @@ class Database(database2.Database):
             if field_name:
                 value = fields.get(field_id, None)
                 if isinstance(value, tuple):
-                    extent_id, oid = value
-                    value = object.__new__(Placeholder)
-                    value.extent_id = extent_id
-                    value.oid = oid
+                    value = Placeholder.new(*value)
                     related_entities[field_name] = frozenset([value])
                 else:
                     related_entities[field_name] = frozenset()

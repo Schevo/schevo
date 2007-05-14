@@ -109,6 +109,20 @@ is the calling entity::
   # Doctest to go here.
 
 
+Entity placeholders
+===================
+
+`schevo.placeholder.Placeholder` instances store information about an
+entity in a database.  Schevo databases keep `Placeholder` instances
+internally, and work with them instead of actual `Entity` instances
+since the latter cannot be directly persisted.
+
+Do not worry about using `Placeholder` instances directly, but be
+aware of their existence.  At times, you may run across an Exception
+whose message includes the `repr` of a `Placeholder` instance, such as
+a `schevo.error.KeyCollision` error.
+
+
 Field classes
 =============
 

@@ -1791,8 +1791,7 @@ def convert_from_format1(conn):
                 # set of related entities.
                 value = fields.get(field_id, UNASSIGNED)
                 if isinstance(value, tuple):
-                    p = object.__new__(Placeholder)
-                    p.extent_id, p.oid = value
+                    p = Placeholder.new(*value)
                     fields[field_id] = p
                     related_entity_set.add(p)
                 related_entities[field_id] = frozenset(related_entity_set)
@@ -1814,8 +1813,7 @@ def _convert_index_from_format1(entity_field_ids, index_spec, index_tree):
         child_tree = index_tree[key]
         if is_entity_field and isinstance(key, tuple):
             # Convert entity tuple to Placeholder.
-            p = object.__new__(Placeholder)
-            p.extent_id, p.oid = key
+            p = Placeholder.new(*key)
             # Replace old key with new key.
             del index_tree[key]
             index_tree[p] = child_tree
