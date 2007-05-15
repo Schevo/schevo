@@ -182,8 +182,8 @@ definition as a module.
 - ``f``: `FieldDefinition
   <class-schevo.fieldspec.FieldDefinition.html>`__ constructors.
   These correspond to the classes defined in the ``F`` namespace and
-  are used to create field specifications of entities, queries,
-  transactions, and views. See `field specifications`_.
+  are used to create lists of field definitions for entities, queries,
+  transactions, and views. See `field definitions`_.
 
 - ``Q``: `Query <class-schevo.query.Query.html>`__ classes.  The Query
   class, and all its subclasses defined in `schevo.query
@@ -223,7 +223,7 @@ entities that each have zero fields, as none were defined.
 The entity/extent definition may further contain the following types
 of declarations:
 
-- `Field specifications`_.  Here is a ``Foo`` extent where each entity
+- `Field definitions`_.  Here is a ``Foo`` extent where each entity
   has a ``name`` field of ``unicode`` type, and a ``FooChild`` extent
   where each entity has a reference to a ``Foo`` entity and also has a
   ``bar`` field of ``integer`` type::
@@ -364,12 +364,109 @@ Field definitions
 -----------------
 
 
-Field specifications
-....................
-
-
 Calculated field methods
 ........................
+
+
+Field types
+-----------
+
+Schevo contains many built-in field types typically used when building
+a database schema.  You can also create `custom field types`_ when
+your schema has unique requirements for data types.
+
+
+HashedValue field type
+......................
+
+A **HashedValue** field, upon having its value set, will store a
+one-way hash of that value.
+
+You can use the `compare(value)` method of a `HashedValue` field to
+see if the hash matches a value, but it is not possible to retrieve
+the original value from the one-way hash.
+
+This is useful for storing information about a user's password in a
+reasonably secure manner, preventing immediate discovery of passwords
+if a proprietary Schevo database were stolen or otherwise accessed by
+unauthorized users.
+
+
+String field types
+..................
+
+**String** fields are used to store 8-bit Python strings. An
+application may assume that a `String` field's value can be displayed
+to a user as text.
+
+**Path** fields are `String` fields used to store filesystem paths.
+
+
+Unicode fields
+..............
+
+**Unicode** fields are used to store Unicode strings. An application
+may assume that a `Unicode` field is a single-line field.
+
+**Memo** fields are used to store Unicode strings. An application may
+assume that a `Memo` field is identical in operation to a `Unicode`
+field, but that it is a multiple-line field.
+
+**Password** fields are used to store plaintext Unicode strings.  An
+application may assume that the contents of a `Password` field should
+not be displayed as plaintext.  **NOTE:** `Password` fields are not
+necessarily secure.  You may wish to use the `HashedValue field type`_
+instead.
+
+
+Blob fields
+...........
+
+**Blob** fields are used to store binary large objects as Python
+strings. An application should not assume that a `Blog` field can be
+displayed to a user as text.
+
+**Image** fields are `Blob` fields that store binary data for an
+image.
+
+
+Numeric fields
+..............
+
+**Integer** fields store integer values.
+
+**Float** fields store floating point values.
+
+**Money** fields store fixed-point fractional values, and are commonly
+used to store values representing monetary amounts.
+
+
+Date and time fields
+....................
+
+**Date** fields store `datetime.date` objects.
+
+**Datetime** fields store `datetime.datetime` objects.
+
+
+Boolean field
+.............
+
+A **Boolean** field stores a boolean value.
+
+
+Entity fields
+.............
+
+An **Entity** field stores a reference to another entity.
+
+An **EntityList** field stores a list of references to other entities.
+
+An **EntitySet** field stores a set of references to other entities.
+
+
+Custom field types
+..................
 
 
 Key and index specifications

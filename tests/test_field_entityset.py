@@ -1,4 +1,4 @@
-"""EntityList field unit tests.
+"""EntitySet field unit tests.
 
 For copyright, license, and warranty, see bottom of file.
 """
@@ -9,7 +9,7 @@ from schevo.constant import UNASSIGNED
 from schevo.error import KeyCollision
 
 
-class BaseFieldEntityList(CreatesSchema):
+class BaseFieldEntitySet(CreatesSchema):
 
     body = '''
         class Foo(E.Entity):
@@ -21,9 +21,9 @@ class BaseFieldEntityList(CreatesSchema):
 
         class Bar(E.Entity):
 
-            foo_list = f.entity_list('Foo', required=False)
+            foo_set = f.entity_set('Foo', required=False)
 
-            _key(foo_list)
+            _key(foo_set)
 
 
         class Bof(E.Entity):
@@ -34,63 +34,56 @@ class BaseFieldEntityList(CreatesSchema):
         '''
 
     def test_store_and_retrieve_UNASSIGNED(self):
-        bar = ex(db.Bar.t.create(foo_list=UNASSIGNED))
-        assert bar.foo_list is UNASSIGNED
+        bar = ex(db.Bar.t.create(foo_set=UNASSIGNED))
+        assert bar.foo_set is UNASSIGNED
         self.reopen()
-        assert bar.foo_list is UNASSIGNED
+        assert bar.foo_set is UNASSIGNED
 
     def test_store_and_retrieve_empty_list(self):
-        bar = ex(db.Bar.t.create(foo_list=[]))
-        assert bar.foo_list == []
+        bar = ex(db.Bar.t.create(foo_set=set()))
+        assert bar.foo_set == set()
         self.reopen()
-        assert bar.foo_list == []
+        assert bar.foo_set == set()
 
     def test_store_and_retrieve_one_entity(self):
         foo = ex(db.Foo.t.create(name='foo'))
-        bar = ex(db.Bar.t.create(foo_list=[foo]))
-        assert bar.foo_list == [foo]
+        bar = ex(db.Bar.t.create(foo_set=set([foo])))
+        assert bar.foo_set == set([foo])
         self.reopen()
-        assert bar.foo_list == [foo]
+        assert bar.foo_set == set([foo])
 
     def test_store_and_retrieve_multiple_entities(self):
         foo1 = ex(db.Foo.t.create(name='foo1'))
         foo2 = ex(db.Foo.t.create(name='foo2'))
-        bar = ex(db.Bar.t.create(foo_list=[foo1, foo2]))
-        assert bar.foo_list == [foo1, foo2]
+        bar = ex(db.Bar.t.create(foo_set=set([foo1, foo2, foo1])))
+        assert bar.foo_set == set([foo1, foo2])
         self.reopen()
-        assert bar.foo_list == [foo1, foo2]
+        assert bar.foo_set == set([foo1, foo2])
 
     def test_storing_wrong_type_fails(self):
         foo = ex(db.Foo.t.create(name='foo'))
         bof = ex(db.Bof.t.create(name='bof'))
-        tx = db.Bar.t.create(foo_list=[foo, bof])
+        tx = db.Bar.t.create(foo_set=set([foo, bof]))
         assert raises(TypeError, db.execute, tx)
 
     def test_links_are_maintained(self):
         foo = ex(db.Foo.t.create(name='foo'))
-        bar1 = ex(db.Bar.t.create(foo_list=[foo]))
+        bar1 = ex(db.Bar.t.create(foo_set=set([foo])))
         assert foo.m.bars() == [bar1]
-        call = ex, db.Bar.t.create(foo_list=[foo])
+        call = ex, db.Bar.t.create(foo_set=set([foo]))
         assert raises(KeyCollision, *call)
 
-    def test_only_one_link_is_maintained_when_duplicates_are_in_list(self):
-        foo = ex(db.Foo.t.create(name='foo'))
-        bar1 = ex(db.Bar.t.create(foo_list=[foo, foo]))
-        assert foo.m.bars() == [bar1]
-        bar2 = ex(db.Bar.t.create(foo_list=[foo, foo, foo]))
-        assert set(foo.m.bars()) == set([bar1, bar2])
 
-
-class TestFieldEntityList2(BaseFieldEntityList):
+class TestFieldEntitySet2(BaseFieldEntitySet):
 
     format = 2
 
 
-class TestFieldEntityList1(BaseTest):
-    """This tests for failure, since EntityList is not allowed in format 1
-    databases.
+class TestFieldEntitySet1(BaseTest):
+    """This tests for failure, since EntitySet is not allowed in
+    format 1 databases.
 
-    Create a schema that contains an EntityList field::
+    Create a schema that contains an EntitySet field::
 
         >>> body = '''
         ...     class Foo(E.Entity):
@@ -101,7 +94,7 @@ class TestFieldEntityList1(BaseTest):
         ...
         ...     class Bar(E.Entity):
         ...
-        ...         foo_list = f.entity_list('Foo')
+        ...         foo_set = f.entity_set('Foo')
         ...
         ...     class Bof(E.Entity):
         ...

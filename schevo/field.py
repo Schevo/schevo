@@ -1201,10 +1201,10 @@ class EntityList(_EntityBase):
         if isinstance(value, list):
             new_values = []
             for item in value:
-                new_values.append(_EntityBase.convert(self, item, db))
+                new_values.append(super(EntityList, self).convert(item, db))
             value = new_values
         else:
-            value = _EntityBase.convert(self, value, db)
+            value = super(EntityList, self).convert(value, db)
         return value
 
     def db_equivalence_value(self, stop_entities):
@@ -1253,17 +1253,68 @@ class EntityList(_EntityBase):
         """Validate the value, raising an error on failure."""
         if isinstance(value, list):
             for item in value:
-                _EntityBase.validate(self, item)
+                super(EntityList, self).validate(item)
         else:
-            _EntityBase.validate(self, value)
+            super(EntityList, self).validate(value)
 
     def verify(self, value):
         """Verify the value, raising an error on failure."""
         if isinstance(value, list):
             for item in value:
-                _EntityBase.verify(self, item)
+                super(EntityList, self).validate(item)
         else:
-            _EntityBase.verify(self, value)
+            super(EntityList, self).validate(value)
+
+
+class EntitySet(_EntityBase):
+    """Set of Entity instances field class."""
+
+    def convert(self, value, db=None):
+        if isinstance(value, (set, frozenset)):
+            new_values = set()
+            for item in value:
+                new_values.add(super(EntitySet, self).convert(item, db))
+            value = new_values
+        else:
+            value = super(EntitySet, self).convert(value, db)
+        return value
+
+    def _dump(self):
+        value = self._value
+        if isinstance(value, (set, frozenset)):
+            value = frozenset(Placeholder(entity) for entity in value)
+        return value
+
+    def _entities_in_value(self):
+        value = self._value
+        if isinstance(value, (set, frozenset)):
+            return frozenset(Placeholder(entity) for entity in value)
+        return frozenset()
+
+    def _restore(self, db):
+        value = self._value
+        if isinstance(value, frozenset):
+            value = set(placeholder.restore(db) for placeholder in value)
+        self._value = value
+
+    def reversible(self, value=None):
+        return None
+
+    def validate(self, value):
+        """Validate the value, raising an error on failure."""
+        if isinstance(value, (set, frozenset)):
+            for item in value:
+                super(EntitySet, self).validate(item)
+        else:
+            super(EntitySet, self).validate(value)
+
+    def verify(self, value):
+        """Verify the value, raising an error on failure."""
+        if isinstance(value, (set, frozenset)):
+            for item in value:
+                super(EntitySet, self).validate(item)
+        else:
+            super(EntitySet, self).validate(value)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
