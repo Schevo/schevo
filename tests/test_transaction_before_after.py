@@ -18,28 +18,28 @@ class BaseTransaction(CreatesSchema):
 
         class _Create(T.Create):
 
-            def _before(self, db):
+            def _before_execute(self, db):
                 self.x.bar = 5
 
-            def _after(self, db, foo):
+            def _after_execute(self, db, foo):
                 assert foo.name == self.name
                 assert self.x.bar == 5
 
         class _Update(T.Update):
 
-            def _before(self, db, foo):
+            def _before_execute(self, db, foo):
                 self.x.bar = 42
 
-            def _after(self, db, foo):
+            def _after_execute(self, db, foo):
                 assert foo.name == self.name
                 assert self.x.bar == 42
 
         class _Delete(T.Delete):
 
-            def _before(self, db, foo):
+            def _before_execute(self, db, foo):
                 self.x.bar = 12
 
-            def _after(self, db):
+            def _after_execute(self, db):
                 assert self.x.bar == 12
     
     '''
