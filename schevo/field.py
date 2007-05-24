@@ -494,8 +494,8 @@ class HashedValue(Field):
     """
 
     data_type = str
-    hashHeader = '\xb9\xc8\xfd\xb8\xca\xb7\xc9\xea' \
-                 '\xde\xf5\xc7\xac\x9b\xfa\xfc\xa6'
+    hash_header = '\xb9\xc8\xfd\xb8\xca\xb7\xc9\xea' \
+                  '\xde\xf5\xc7\xac\x9b\xfa\xfc\xa6'
 
     def __str__(self):
         v = self._value
@@ -514,7 +514,7 @@ class HashedValue(Field):
     def compare(self, value):
         """Return True if value matches this field's one way hash."""
         try:
-            return self.hashCompare(value, self._value)
+            return self.hash_compare(value, self._value)
         except:
             # If an exception is raised, the value obviously isn't the
             # same.
@@ -524,27 +524,27 @@ class HashedValue(Field):
         """Return the one-way hash of value."""
         if value is UNASSIGNED:
             return value
-        if value.startswith(self.hashHeader):
+        if value.startswith(self.hash_header):
             # Short-circuit if the value is already hashed.
             return value
         else:
-            return self.hashEncode(value)
+            return self.hash_encode(value)
 
     def db_equivalence_value(self, stop_entities):
         return self._value
 
-    def hashCompare(self, value, hashedValue):
+    def hash_compare(self, value, hashedValue):
         """Compare value to one-way hash, returning True if matching.
 
         Override this method if you want to use a different hashing
         algorithm.
         """
-        headerLen = len(self.hashHeader)
+        headerLen = len(self.hash_header)
         salt = hashedValue[headerLen:headerLen+12]
-        encodedValue = self.hashEncode(value, salt)
+        encodedValue = self.hash_encode(value, salt)
         return (encodedValue == hashedValue)
 
-    def hashEncode(self, value, salt=None):
+    def hash_encode(self, value, salt=None):
         """Encode a value as a one-way hash and return the hash.
 
         Override this method if you want to use a different hashing
@@ -559,7 +559,7 @@ class HashedValue(Field):
         md.update(value)
         digest = md.digest()
         hashedValue = salt + digest
-        return self.hashHeader + hashedValue
+        return self.hash_header + hashedValue
 
 
 class String(Field):
