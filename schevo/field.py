@@ -487,10 +487,10 @@ class HashedValue(Field):
     value itself.  To see if another plaintext value 'matches' the
     stored hash, use the compare() method.
 
-    hashHeader: The value that is prepended to all hashed values, to
+    hash_header: The value that is prepended to all hashed values, to
     allow for passing hashed values from field to field unchanged.
     Override this in your subclass if you by chance plan to hash the
-    16 random bytes that the default hashHeader consists of.
+    16 random bytes that the default hash_header consists of.
     """
 
     data_type = str
@@ -533,16 +533,16 @@ class HashedValue(Field):
     def db_equivalence_value(self, stop_entities):
         return self._value
 
-    def hash_compare(self, value, hashedValue):
+    def hash_compare(self, value, hashed_value):
         """Compare value to one-way hash, returning True if matching.
 
         Override this method if you want to use a different hashing
         algorithm.
         """
-        headerLen = len(self.hash_header)
-        salt = hashedValue[headerLen:headerLen+12]
-        encodedValue = self.hash_encode(value, salt)
-        return (encodedValue == hashedValue)
+        header_len = len(self.hash_header)
+        salt = hashed_value[header_len:header_len+12]
+        encoded_value = self.hash_encode(value, salt)
+        return (encoded_value == hashed_value)
 
     def hash_encode(self, value, salt=None):
         """Encode a value as a one-way hash and return the hash.
@@ -558,8 +558,8 @@ class HashedValue(Field):
         md.update(salt)
         md.update(value)
         digest = md.digest()
-        hashedValue = salt + digest
-        return self.hash_header + hashedValue
+        hashed_value = salt + digest
+        return self.hash_header + hashed_value
 
 
 class String(Field):
