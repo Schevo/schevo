@@ -45,11 +45,15 @@ class BaseTransaction(CreatesSchema):
     '''
 
     def test(self):
-        # All of the asserts are in the schema.  Just create a Foo,
-        # update it, then delete it to cover all of the code.
-        foo = ex(db.Foo.t.create(name='foo1'))
-        ex(foo.t.update(name='foo2'))
-        ex(foo.t.delete())
+        tx = db.Foo.t.create(name='foo1')
+        foo = ex(tx)
+        assert tx.x.bar == 5
+        tx = foo.t.update(name='foo2')
+        ex(tx)
+        assert tx.x.bar == 42
+        tx = foo.t.delete()
+        ex(tx)
+        assert tx.x.bar == 12
 
 
 class TestTransaction1(BaseTransaction):
