@@ -407,6 +407,8 @@ class Delete(Transaction):
             raise TransactionExpired(
                 'Original entity revision was %i, is now %i'
                 % (self._rev, entity._rev))
+        # Before execute callback.
+        self._before_execute(db, entity)
         # Build list of direct and indirect references.
         traversed = set()
         restricters = dict()
