@@ -61,7 +61,7 @@ class View(base.View):
         elif name == 'x':
             self.x = attr = ViewExtenders(self)
         elif name in self._field_map:
-            attr = self._field_map[name].get()
+            attr = self._field_map[name].get_immutable()
         else:
             msg = 'Field %r does not exist on %r.' % (name, self)
             raise AttributeError(msg)

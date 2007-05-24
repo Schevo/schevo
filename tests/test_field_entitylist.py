@@ -26,6 +26,27 @@ class BaseFieldEntityList(CreatesSchema):
             _key(foo_list)
 
 
+        class Baz(E.Entity):
+
+            foo_list = f.entity_list('Foo', min_size=1)
+
+            _key(foo_list)
+
+
+        class Bee(E.Entity):
+
+            foo_list = f.entity_list('Foo', allow_duplicates=False)
+
+            _key(foo_list)
+            
+
+        class Boo(E.Entity):
+
+            foo_list = f.entity_list('Foo', allow_unassigned=True)
+
+            _key(foo_list)
+
+
         class Bof(E.Entity):
 
             name = f.unicode()
@@ -39,26 +60,38 @@ class BaseFieldEntityList(CreatesSchema):
         self.reopen()
         assert bar.foo_list is UNASSIGNED
 
-    def test_store_and_retrieve_empty_list(self):
-        bar = ex(db.Bar.t.create(foo_list=[]))
-        assert bar.foo_list == []
-        self.reopen()
-        assert bar.foo_list == []
-
     def test_store_and_retrieve_one_entity(self):
         foo = ex(db.Foo.t.create(name='foo'))
         bar = ex(db.Bar.t.create(foo_list=[foo]))
-        assert bar.foo_list == [foo]
+        assert list(bar.foo_list) == [foo]
         self.reopen()
-        assert bar.foo_list == [foo]
+        assert list(bar.foo_list) == [foo]
 
     def test_store_and_retrieve_multiple_entities(self):
         foo1 = ex(db.Foo.t.create(name='foo1'))
         foo2 = ex(db.Foo.t.create(name='foo2'))
         bar = ex(db.Bar.t.create(foo_list=[foo1, foo2]))
-        assert bar.foo_list == [foo1, foo2]
+        assert list(bar.foo_list) == [foo1, foo2]
         self.reopen()
-        assert bar.foo_list == [foo1, foo2]
+        assert list(bar.foo_list) == [foo1, foo2]
+
+    def test_mutate_transaction_field_value(self):
+        foo1 = ex(db.Foo.t.create(name='foo1'))
+        foo2 = ex(db.Foo.t.create(name='foo2'))
+        bar = ex(db.Bar.t.create(foo_list=[foo1]))
+        assert list(bar.foo_list) == [foo1]
+        tx = bar.t.update()
+        tx.foo_list.append(foo2)
+        db.execute(tx)
+        assert list(bar.foo_list) == [foo1, foo2]
+
+    def test_immutable_entity_view_field_value(self):
+        foo1 = ex(db.Foo.t.create(name='foo1'))
+        foo2 = ex(db.Foo.t.create(name='foo2'))
+        bar = ex(db.Bar.t.create(foo_list=[foo1]))
+        assert raises(AttributeError, getattr, bar.foo_list, 'append')
+        v = bar.v.default()
+        assert raises(AttributeError, getattr, v.foo_list, 'append')
 
     def test_storing_wrong_type_fails(self):
         foo = ex(db.Foo.t.create(name='foo'))
@@ -79,6 +112,38 @@ class BaseFieldEntityList(CreatesSchema):
         assert foo.m.bars() == [bar1]
         bar2 = ex(db.Bar.t.create(foo_list=[foo, foo, foo]))
         assert set(foo.m.bars()) == set([bar1, bar2])
+
+    def test_min_size_max_size(self):
+        # Make sure that empty lists are allowed by default.
+        foo = ex(db.Foo.t.create(name='foo'))
+        tx = db.Bar.t.create(foo_list=[])
+        bar = db.execute(tx)
+        assert list(bar.foo_list) == []
+        # Make sure they are not allowed when min_size > 0.
+        tx = db.Baz.t.create(foo_list=[])
+        call = ex, tx
+        assert raises(ValueError, *call)
+
+    def test_disallow_duplicates(self):
+        # Make sure that duplicates are allowed by default.
+        foo = ex(db.Foo.t.create(name='foo'))
+        bar = ex(db.Bar.t.create(foo_list=[foo, foo]))
+        assert list(bar.foo_list) == [foo, foo]
+        # Make sure they are disallowed when allow_duplicates is False.
+        tx = db.Bee.t.create(foo_list=[foo, foo])
+        call = ex, tx
+        assert raises(ValueError, *call)
+
+    def test_allow_unassigned(self):
+        # Make sure that UNASSIGNED members are disallowed by default.
+        foo = ex(db.Foo.t.create(name='foo'))
+        tx = db.Bar.t.create(foo_list=[foo, UNASSIGNED])
+        call = ex, tx
+        assert raises(ValueError, *call)
+        # Make sure they are allowed when allow_unassigned is True.
+        tx = db.Boo.t.create(foo_list=[foo, UNASSIGNED])
+        boo = db.execute(tx)
+        assert list(boo.foo_list) == [foo, UNASSIGNED]
 
 
 class TestFieldEntityList2(BaseFieldEntityList):

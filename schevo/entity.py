@@ -166,7 +166,7 @@ class EntityMeta(type):
                         value = UNASSIGNED
                     field._value = value
                     field._restore(db)
-                    return field.get()
+                    return field.get_immutable()
             setattr(cls, field_name, property(fget=get_field_value))
         cls._fget_fields = tuple(fget_fields)
 

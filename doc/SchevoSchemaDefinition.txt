@@ -363,9 +363,118 @@ tuple.
 Field definitions
 -----------------
 
+Define a field for an Entity, Parameterized Query, Transaction, or
+View by using a `field factory`.  Field factories are accessed using
+the global `f` namespace.
+
+The members of the `f` namespace are all of the available field types,
+converted from their "CamelCase" names to "lowercase_with_underscores"
+names, e.g. the `Boolean` field class becomes `f.boolean`, and the
+`EntityList` field class becomes `f.entity_list`.
+
+For example, this Entity subclass defines three fields::
+
+    class Dog(E.Entity):
+    
+        name = f.unicode()                        # [1]
+        birthdate = f.date(required=False)        # [2]
+        disposition = f.entity('Disposition', on_delete=UNASSIGN,
+                               required=False)    # [3]
+
+1. The `name` field is a required `Unicode` field.  By default, all
+   fields are required.
+
+2. The `birthdate` field is an optional `Date` field.
+
+3. The `disposition` field is an optional `Entity` field that can
+   store a reference to a `Disposition` entity.  When the referenced
+   `Disposition` entity is deleted, this field's value is set to
+   `UNASSIGNED`. See also `cascading delete rules for Entity fields`_.
+
 
 Calculated field methods
 ........................
+
+
+Cascading delete rules for Entity fields
+........................................
+
+When defining an `Entity`, `EntityList`, `EntitySet`, or a custom
+entity-storing field, you may specify cascade delete rules for that
+field.
+
+Upon receiving a request to delete an entity whose reference is stored
+in one of these fields, Schevo will first check the rules of those
+fields to see if the deletion is allowed and, if so, what should
+happen to the field or entity that refers to the deleted entity.
+
+The default rule of the `available rules`_ is `RESTRICT`, which is the
+safest operation, since it prevents accidental deletion of an entity
+if it is being referred to by another entity.
+
+
+Specifying type-specific rules
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Specify a rule for only a certain type of entity by giving the type
+name and rule as a tuple to the field factory.
+
+For example, to specify an `Entity` field that can refer to a `Cog` or
+a `Sprocket` that allows cascade deletion when a `Cog` is deleted but
+disallows deletion of a referred-to `Sprocket`, use this::
+
+    part = f.entity(('Cog', CASCADE), ('Sprocket', RESTRICT))
+
+
+Specifying default rules
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Specify a rule for all types of entities by giving a value to the
+`on_delete` keyword argument to the field factory.
+
+For example, to specify an `Entity` field that can refer to a `Cog`, a
+`Sprocket`, or a `Widget`, but that requests field unassignment on
+deletion of the referred entity, use this::
+
+    part = f.entity('Cog', 'Sprocket', 'Widget', on_delete=UNASSIGN)
+
+
+Available rules
+~~~~~~~~~~~~~~~
+
+* `CASCADE`: If entity `B` has a field that refers to entity `A`, and
+  entity `A` is deleted, entity `B` will be deleted as well, provided
+  that no other rules are restricting the deletion of entity `B`.
+
+* `REMOVE`: If entity `B` has an `EntityList` or `EntitySet` field
+  that contains a reference to entity `A`, and entity `A` is deleted,
+  the reference to `A` will be removed from that field in `B`.
+
+* `RESTRICT`: If entity `B` has a field that refers to entity `A`,
+  Schevo will not allow deletion of entity `A`.
+
+* `UNASSIGN`: If entity `B` has a field that refers to entity `A`, and
+  entity `A` is deleted, the field containing the reference to `A`
+  will be set to `UNASSIGNED`, if allowed.
+
+  If the field definition in `B` is an `Entity` field, it must include
+  ``required=False``.  If the field in `B` is a required field, then
+  the unassignment will not work and the deletion will be restricted.
+
+  If the field definition in `B` is an `EntityList` field, it must
+  include ``allow_unassigned=True``. If the field in `B` does not
+  allow `UNASSIGNED` to be a member of its collection, then the
+  unassignment will not work and the deletion will be restricted.
+
+
+Rule interaction
+~~~~~~~~~~~~~~~~
+
+There may be complex interactions between cascade deletion rules if
+you have complex logic in your application.  Schevo is designed to
+handle these in a consistent manner.  As of this writing, please see
+the source for `schevo.transaction`, and the source for the
+`test_on_delete` unit test, for further information.
 
 
 Field types
@@ -395,7 +504,7 @@ unauthorized users.
 String field types
 ..................
 
-**String** fields are used to store 8-bit Python strings. An
+**String** fields are used to store Python ASCII strings. An
 application may assume that a `String` field's value can be displayed
 to a user as text.
 

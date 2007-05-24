@@ -8,7 +8,8 @@ from schevo.lib import optimize
 
 from schevo import base
 from schevo.change import summarize
-from schevo.constant import CASCADE, DEFAULT, UNASSIGN, UNASSIGNED
+from schevo.constant import (CASCADE, DEFAULT, REMOVE, RESTRICT,
+                             UNASSIGN, UNASSIGNED)
 from schevo.error import (DatabaseMismatch, DeleteRestricted, SchemaError,
                           TransactionExpired, TransactionFieldsNotChanged,
                           TransactionNotExecuted)
@@ -297,6 +298,77 @@ class Create(Transaction):
         return entity
 
 
+def find_references(db, entity, traversed,
+                    restricters, cascaders, unassigners, removers):
+    """Support function for Delete transactions.  Acts recursively to
+    get a list of all entities directly or indirectly related to
+    `entity`.
+
+    NOTE: This function returns nothing.  Instead, the `references`
+    and `traversed` arguments are mutated.
+
+    - `db`: The database the Delete is occuring in.
+
+    - `entity`: The entity to inspect when adding to the references
+      list.
+
+    The following arguments are directly mutated during execution:
+
+    - `traversed`: The set of already-traversed entities.
+
+    - `restricters`: Dictionary of ``referrer: set([(f_name,
+      referred), ...])`` pairs storing information about references
+      that RESTRICT deletion.
+
+    - `cascaders`: Dictionary of ``referrer: set([f_name, ...])``
+      pairs storing information about references that allow CASCADE
+      deletion.
+
+    - `unassigners`: Dictionary of ``referrer: set([(f_name,
+      referred), ...])`` pairs storing information about references
+      that desire to UNASSIGN values on deletion.
+
+    - `removers`: Dictionary of ``referrer: set([(f_name, referred),
+      ...])`` pairs storing information about references that desire
+      to REMOVE values on deletion.
+    """
+    if entity in traversed:
+        return
+    traversed.add(entity)
+    entity_extent_name = entity._extent.name
+    for (e_name, f_name), others in entity.sys.links().iteritems():
+        extent = db.extent(e_name)
+        field_class = extent.field_spec[f_name]
+        on_delete_get = field_class.on_delete.get
+        on_delete_default = field_class.on_delete_default
+        for referrer in others:
+            on_delete = on_delete_get(entity_extent_name, on_delete_default)
+            if on_delete is RESTRICT:
+                if referrer == entity:
+                    # Don't restrict when an entity refers to
+                    # itself. Instead, treat it as a CASCADE delete.
+                    field_names = cascaders.setdefault(referrer, set())
+                    field_names.add(f_name)
+                else:
+                    field_referred_set = restricters.setdefault(
+                        referrer, set())
+                    field_referred_set.add((f_name, entity))
+            elif on_delete is CASCADE:
+                field_names = cascaders.setdefault(referrer, set())
+                field_names.add(f_name)
+            elif on_delete is UNASSIGN:
+                field_referred_set = unassigners.setdefault(referrer, set())
+                field_referred_set.add((f_name, entity))
+            elif on_delete is REMOVE:
+                field_referred_set = removers.setdefault(referrer, set())
+                field_referred_set.add((f_name, entity))
+            else:
+                raise ValueError(
+                    'Unrecognized on_delete value %r' % on_delete)
+            find_references(db, referrer, traversed,
+                            restricters, cascaders, unassigners, removers)
+
+
 class Delete(Transaction):
     """Delete an existing entity instance."""
 
@@ -335,65 +407,54 @@ class Delete(Transaction):
             raise TransactionExpired(
                 'Original entity revision was %i, is now %i'
                 % (self._rev, entity._rev))
-        deletes = self._deletes
-        known_deletes = self._known_deletes
-        self._before_execute(db, entity)
-        # Traverse through entities that link to this one, and delete
-        # or update them accordingly.
-        #
-        # Set of (EntityClass, oid) for entities that have already
-        # been traversed.
+        # Build list of direct and indirect references.
         traversed = set()
-        # Assume we've already traversed this entity.
-        traversed.add((entity.__class__, entity.sys.oid))
-        deletes.add((entity.__class__, entity.sys.oid))
-        # Dict of {(EntityClass, oid): [field_name, ...]} for fields
-        # to delete.
-        to_delete = {}
-        # Dict of {(EntityClass, oid): [field_name, ...]} for fields
-        # to unassign.
-        to_unassign = {}
-        # Iterate through links and carry out appropriate actions.
-        for (e_name, f_name), others in entity.sys.links().iteritems():
-            EntityClass = db.extent(e_name)._EntityClass
-            for other in others:
-                e_o = (EntityClass, other.sys.oid)
-                if e_o in traversed or e_o in deletes:
-                    continue
-                traversed.add(e_o)
-                field = getattr(other.f, f_name)
-                on_delete = field.on_delete.get(
-                    entity.__class__.__name__, field.on_delete_default)
-                if on_delete is CASCADE:
-                    L = to_delete.setdefault(e_o, [])
-                    L.append(f_name)
-                    known_deletes.append(e_o)
-                elif on_delete is UNASSIGN:
-                    L = to_unassign.setdefault(e_o, [])
-                    L.append(f_name)
-                else:
-                    if e_o in self._known_deletes:
-                        # An outer txn plans to delete this entity so
-                        # we can safely ignore the restriction.
-                        continue
-                    raise DeleteRestricted(
-                        '%r cannot be deleted; it is referred to by '
-                        '%r.%s' % (entity, other, f_name))
-        # Unassign fields.
-        for (EntityClass, oid), field_names in to_unassign.iteritems():
-            other = EntityClass(oid)
-            tx = other.t.update()
-            for field_name in field_names:
-                tx.f[field_name].readonly = False
-                setattr(tx, field_name, UNASSIGNED)
+        restricters = dict()
+        cascaders = dict()
+        unassigners = dict()
+        removers = dict()
+        find_references(db, entity, traversed,
+                        restricters, cascaders, unassigners, removers)
+        # Referrers should be removed from restricters if they are
+        # also requesting cascade deletion.
+        restricter_keys = set(restricters) - set(cascaders)
+        if len(restricter_keys) != 0:
+            # Raise DeleteRestricted if there are any restricters left
+            # over.
+            messages = []
+            for referrer in restricter_keys:
+                restricter_set = restricters[referrer]
+                for f_name, referred in restricter_set:
+                    messages.append(
+                        '%r cannot be deleted; it is referred to by %r.%s.'
+                        % (referred, referrer, f_name)
+                        )
+            message = ' '.join(messages)
+            raise DeleteRestricted(message)
+        else:
+            # Convert all restricters to cascaders so that fields are
+            # unassigned properly before deletion.
+            for referrer, field_referred_set in restricters.iteritems():
+                field_names = cascaders.setdefault(referrer, set())
+                for field_name, referred in field_referred_set:
+                    field_names.add(field_name)
+        # Unassign fields requested by unassigners.
+        for referrer, field_referred_set in unassigners.iteritems():
+            tx = referrer.t.update()
+            for f_name, referred in field_referred_set:
+                tx.f[f_name]._unassign(referred)
+            db.execute(tx)
+        # Remove values from fields marked as removers.
+        for referrer, field_referred_set in removers.iteritems():
+            tx = referrer.t.update()
+            for f_name, referred in field_referred_set:
+                tx.f[f_name]._remove(referred)
             db.execute(tx)
         # Forceably update fields to UNASSIGNED first to prevent
         # DeleteRestrict from being raised by the database itself.
-        others = []
-        for (EntityClass, oid), field_names in to_delete.iteritems():
-            other = EntityClass(oid)
-            others.append((EntityClass.__name__, oid, other))
-            field_map = other.sys.field_map(not_fget)
+        referrers = set()
+        for referrer, field_names in cascaders.iteritems():
+            field_map = referrer.sys.field_map(not_fget)
             field_dump_map = dict(field_map.dump_map())
             field_related_entity_map = dict(field_map.related_entity_map())
             new_dump_map = dict((name, UNASSIGNED) for name in field_names)
@@ -401,18 +462,23 @@ class Delete(Transaction):
                 (name, frozenset()) for name in field_names)
             field_dump_map.update(new_dump_map)
             field_related_entity_map.update(new_related_entity_map)
+            extent_name = referrer._extent.name
+            oid = referrer._oid
             db._update_entity(
-                other._extent.name, oid, field_dump_map,
-                field_related_entity_map)
+                extent_name, oid, field_dump_map, field_related_entity_map)
+            referrers.add((extent_name, oid, referrer))
         # Delete entities in a deterministic (sorted) fashion.
-        for extent_name, oid, other in sorted(others):
+        for extent_name, oid, referrer in sorted(referrers):
+            if referrer == entity:
+                # Skip the original entity whose deletion was
+                # requested, since we must delete it using a call to
+                # the database's `_delete_entity` method.
+                continue
             if not db._extent_contains_oid(extent_name, oid):
                 # A nested transaction or cascade deleted this entity
                 # before we could.
                 continue
-            tx = other.t.delete()
-            tx._deletes.update(deletes)
-            tx._known_deletes.extend(self._known_deletes)
+            tx = referrer.t.delete()
             db.execute(tx, strict=False)
         # Attempt to delete the entity itself.
         extent_name = self._extent_name

@@ -58,6 +58,12 @@ class DEFAULT(object):
     __metaclass__ = _GLOBAL
 
 
+class REMOVE(object):
+    """Remove referred-to value from entity field on delete."""
+
+    __metaclass__ = _GLOBAL
+
+
 class RESTRICT(object):
     """Restrict delete on entity field."""
 

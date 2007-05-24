@@ -22,6 +22,11 @@ import schevo.namespace
 from schevo.placeholder import Placeholder
 
 
+# Common module-level constants.
+EMPTY_LIST = list()
+EMPTY_SET = frozenset()
+
+
 # Filters for calls to field_map methods.
 
 def not_expensive(field):
@@ -335,10 +340,20 @@ class Field(base.Field):
         else:
             return self._value
 
+    get_immutable = get
+
     def _restore(self, db):
         """Restore field's true value by converting it from the value stored
         in the database."""
         pass
+
+    def _remove(self, member):
+        """Remove `member` from the field's value.
+
+        Used for fields that store collections such as lists or sets.
+        """
+        raise NotImplementedError(
+            '_remove not implemented for %r' % self.__class__)
 
     def reversible(self, value=None):
         """Return a reversible string representation of the field value, or
@@ -379,6 +394,15 @@ class Field(base.Field):
         self._value = value
         # Mark this field as having been assigned.
         self.assigned = True
+
+    def _unassign(self, member):
+        """Replace `member` in the field's value with UNASSIGNED.
+
+        Used for Entity fields and fields that store collections such
+        as lists or sets.
+        """
+        raise NotImplementedError(
+            '_unassign not implemented for %r' % self.__class__)
 
     def validate(self, value):
         """Validate the value, raising an error on failure.
@@ -848,6 +872,8 @@ class Date(Field):
             v = datetime.date(year, month, day)
         return v
 
+    get_immutable = get
+
     def validate(self, value):
         """Validate the value, raising an error on failure."""
         Field.validate(self, value)
@@ -939,6 +965,8 @@ class Datetime(Field):
             v = datetime.datetime(year, month, day, hour, minute,
                                   second, microsecond)
         return v
+
+    get_immutable = get
 
     def validate(self, value):
         """Validate the value, raising an error on failure."""
@@ -1193,9 +1221,18 @@ class Entity(_EntityBase):
                     )
                 return values
 
+    def _unassign(self, member):
+        self._value = UNASSIGNED
+
 
 class EntityList(_EntityBase):
     """List of Entity instances field class."""
+
+    # True if duplicate values are allowed in the list.
+    allow_duplicates = True
+
+    # True if UNASSIGNED values are allowed in the list.
+    allow_unassigned = False
 
     def convert(self, value, db=None):
         if isinstance(value, list):
@@ -1231,29 +1268,99 @@ class EntityList(_EntityBase):
     def _dump(self):
         value = self._value
         if isinstance(value, list):
-            value = [Placeholder(entity) for entity in value]
+            new_value = []
+            for entity in value:
+                if entity is UNASSIGNED:
+                    new_value.append(UNASSIGNED)
+                else:
+                    new_value.append(Placeholder(entity))
+            value = new_value
         return value
 
     def _entities_in_value(self):
         value = self._value
         if isinstance(value, list):
-            return frozenset(Placeholder(entity) for entity in value)
+            new_value = set()
+            for entity in value:
+                if entity is not UNASSIGNED:
+                    new_value.add(Placeholder(entity))
+            return frozenset(new_value)
         return frozenset()
+
+    def get_immutable(self):
+        """Return an immutable version of the field value."""
+        if self.fget is not None:
+            value = self.fget[0](self._instance)
+        else:
+            value = self._value
+        if value is not UNASSIGNED:
+            return tuple(value)
+        else:
+            return value
+
+    def _initialize(self, value):
+        """Initialize the field with a value."""
+        if value is not UNASSIGNED:
+            # Make a copy of the list.
+            self._initial = list(value)
+        else:
+            self._initial = value
+        self._value = value
+
+    def _remove(self, member):
+        value = self._value
+        while member in value:
+            value.remove(member)
 
     def _restore(self, db):
         value = self._value
         if isinstance(value, list):
-            value = [placeholder.restore(db) for placeholder in value]
+            new_value = []
+            for placeholder in value:
+                if placeholder is UNASSIGNED:
+                    new_value.append(UNASSIGNED)
+                else:
+                    new_value.append(placeholder.restore(db))
+            value = new_value
         self._value = value
 
     def reversible(self, value=None):
         return None
 
+    def _unassign(self, member):
+        value = self._value
+        while member in value:
+            position = value.index(member)
+            value[position] = UNASSIGNED
+
     def validate(self, value):
         """Validate the value, raising an error on failure."""
         if isinstance(value, list):
-            for item in value:
-                super(EntityList, self).validate(item)
+            if self.min_size is not None and len(value) < self.min_size:
+                msg = 'EntityList %s is smaller than %r as allowed by %s %r' % (
+                    self._name, self.min_size, self._instance, self._instance)
+                self._raise(ValueError, msg)
+            if self.max_size is not None and len(value) > self.max_size:
+                msg = 'EntityList %s is larger than %r as allowed by %s %r' % (
+                    self._name, self.min_size, self._instance, self._instance)
+                self._raise(ValueError, msg)
+            if not self.allow_duplicates and len(set(value)) != len(value):
+                msg = ('Duplicate members are not allowed in EntityList %s by '
+                       '%s %r' % (self._name, self._instance, self._instance))
+                self._raise(ValueError, msg)
+            if self.allow_unassigned:
+                for item in value:
+                    if item is not UNASSIGNED:
+                        super(EntityList, self).validate(item)
+            else:
+                for item in value:
+                    if item is not UNASSIGNED:
+                        super(EntityList, self).validate(item)
+                    else:
+                        msg = ('EntityList %s on %s %r does not '
+                               'allow UNASSIGNED members' %
+                               (self._name, self._instance, self._instance))
+                        self._raise(ValueError, msg)
         else:
             super(EntityList, self).validate(value)
 
@@ -1261,9 +1368,9 @@ class EntityList(_EntityBase):
         """Verify the value, raising an error on failure."""
         if isinstance(value, list):
             for item in value:
-                super(EntityList, self).validate(item)
+                super(EntityList, self).verify(item)
         else:
-            super(EntityList, self).validate(value)
+            super(EntityList, self).verify(value)
 
 
 class EntitySet(_EntityBase):
@@ -1291,6 +1398,31 @@ class EntitySet(_EntityBase):
             return frozenset(Placeholder(entity) for entity in value)
         return frozenset()
 
+    def get_immutable(self):
+        """Return an immutable version of the field value."""
+        if self.fget is not None:
+            value = self.fget[0](self._instance)
+        else:
+            value = self._value
+        if value is not UNASSIGNED:
+            return frozenset(value)
+        else:
+            return value
+
+    def _initialize(self, value):
+        """Initialize the field with a value."""
+        if value is not UNASSIGNED:
+            # Make a copy of the set.
+            self._initial = set(value)
+        else:
+            self._initial = value
+        self._value = value
+
+    def _remove(self, member):
+        value = self._value
+        if member in value:
+            value.remove(member)
+
     def _restore(self, db):
         value = self._value
         if isinstance(value, frozenset):
@@ -1303,6 +1435,14 @@ class EntitySet(_EntityBase):
     def validate(self, value):
         """Validate the value, raising an error on failure."""
         if isinstance(value, (set, frozenset)):
+            if self.min_size is not None and len(value) < self.min_size:
+                msg = 'EntitySet %s is smaller than %r as allowed by %s %r' % (
+                    self._name, self.min_size, self._instance, self._instance)
+                self._raise(ValueError, msg)
+            if self.max_size is not None and len(value) > self.max_size:
+                msg = 'EntitySet %s is larger than %r as allowed by %s %r' % (
+                    self._name, self.min_size, self._instance, self._instance)
+                self._raise(ValueError, msg)
             for item in value:
                 super(EntitySet, self).validate(item)
         else:
@@ -1312,9 +1452,112 @@ class EntitySet(_EntityBase):
         """Verify the value, raising an error on failure."""
         if isinstance(value, (set, frozenset)):
             for item in value:
-                super(EntitySet, self).validate(item)
+                super(EntitySet, self).verify(item)
         else:
-            super(EntitySet, self).validate(value)
+            super(EntitySet, self).verify(value)
+
+
+class EntitySetSet(_EntityBase):
+    """Set of EntitySet instances field class."""
+
+    def convert(self, value, db=None):
+        if isinstance(value, (set, frozenset)):
+            new_values = set()
+            for item in value:
+                new_values.add(super(EntitySetSet, self).convert(item, db))
+            value = frozenset(new_values)
+        else:
+            value = super(EntitySetSet, self).convert(value, db)
+        return value
+
+    def _dump(self):
+        value = self._value
+        if isinstance(value, (set, frozenset)):
+            new_set = set()
+            for item_set in value:
+                new_set.add(frozenset(Placeholder(entity)
+                                      for entity in item_set))
+            value = frozenset(new_set)
+        return value
+
+    def _entities_in_value(self):
+        value = self._value
+        if isinstance(value, (set, frozenset)):
+            new_set = set()
+            for item_set in value:
+                new_set.update(set(Placeholder(entity) for entity in item_set))
+            return frozenset(new_set)
+        return frozenset()
+
+    def get_immutable(self):
+        """Return an immutable version of the field value."""
+        if self.fget is not None:
+            value = self.fget[0](self._instance)
+        else:
+            value = self._value
+        if value is not UNASSIGNED:
+            return frozenset(value)
+        else:
+            return value
+
+    def _initialize(self, value):
+        """Initialize the field with a value."""
+        if value is not UNASSIGNED:
+            # Make a copy of the set.
+            self._initial = set(value)
+        else:
+            self._initial = value
+        self._value = value
+
+    def _remove(self, member):
+        value = self._value
+        for item_set in value:
+            if member in item_set:
+                item_set.remove(member)
+
+    def _restore(self, db):
+        value = self._value
+        if isinstance(value, frozenset):
+            new_set = set()
+            for item_set in value:
+                new_set.add(frozenset(placeholder.restore(db)
+                                      for placeholder in item_set))
+            value = new_set
+        self._value = value
+
+    def reversible(self, value=None):
+        return None
+
+    def validate(self, value):
+        """Validate the value, raising an error on failure."""
+        if isinstance(value, (set, frozenset)):
+            if self.min_size is not None and len(value) < self.min_size:
+                msg = ('EntitySetSet %s is smaller than %r as allowed by '
+                       '%s %r' % (self._name, self.min_size,
+                                  self._instance, self._instance))
+                self._raise(ValueError, msg)
+            if self.max_size is not None and len(value) > self.max_size:
+                msg = ('EntitySetSet %s is larger than %r as allowed by '
+                       '%s %r' % (self._name, self.min_size,
+                                  self._instance, self._instance))
+                self._raise(ValueError, msg)
+            for item_set in value:
+                if not isinstance(item_set, (set, frozenset)):
+                    msg = ('EntitySetSet value must contain a set of sets, '
+                           'not a set with item %s %r' % (item_set, item_set,))
+                    self._raise(ValueError, msg)
+                for item in item_set:
+                    super(EntitySetSet, self).validate(item)
+        else:
+            super(EntitySetSet, self).validate(value)
+
+    def verify(self, value):
+        """Verify the value, raising an error on failure."""
+        if isinstance(value, (set, frozenset)):
+            for item in value:
+                super(EntitySetSet, self).verify(item)
+        else:
+            super(EntitySetSet, self).verify(value)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

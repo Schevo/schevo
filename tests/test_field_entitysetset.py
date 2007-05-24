@@ -1,4 +1,4 @@
-"""EntitySet field unit tests.
+"""EntitySetSet field unit tests.
 
 For copyright, license, and warranty, see bottom of file.
 """
@@ -9,7 +9,7 @@ from schevo.constant import UNASSIGNED
 from schevo.error import KeyCollision
 
 
-class BaseFieldEntitySet(CreatesSchema):
+class BaseFieldEntitySetSet(CreatesSchema):
 
     body = '''
         class Foo(E.Entity):
@@ -21,14 +21,14 @@ class BaseFieldEntitySet(CreatesSchema):
 
         class Bar(E.Entity):
 
-            foo_set = f.entity_set('Foo', required=False)
+            foo_set = f.entity_set_set('Foo', required=False)
 
             _key(foo_set)
 
 
         class Baz(E.Entity):
 
-            foo_set = f.entity_set('Foo', min_size=1)
+            foo_set = f.entity_set_set('Foo', min_size=1)
 
 
         class Bof(E.Entity):
@@ -46,33 +46,35 @@ class BaseFieldEntitySet(CreatesSchema):
 
     def test_store_and_retrieve_one_entity(self):
         foo = ex(db.Foo.t.create(name='foo'))
-        bar = ex(db.Bar.t.create(foo_set=set([foo])))
-        assert bar.foo_set == set([foo])
+        bar = ex(db.Bar.t.create(foo_set=set([frozenset([foo])])))
+        assert bar.foo_set == set([frozenset([foo])])
         self.reopen()
-        assert bar.foo_set == set([foo])
+        assert bar.foo_set == set([frozenset([foo])])
 
     def test_store_and_retrieve_multiple_entities(self):
         foo1 = ex(db.Foo.t.create(name='foo1'))
         foo2 = ex(db.Foo.t.create(name='foo2'))
-        bar = ex(db.Bar.t.create(foo_set=set([foo1, foo2, foo1])))
-        assert bar.foo_set == set([foo1, foo2])
+        foo3 = ex(db.Foo.t.create(name='foo3'))
+        bar = ex(db.Bar.t.create(foo_set=set([frozenset([foo1, foo2, foo1]),
+                                              frozenset([foo3])])))
+        assert bar.foo_set == set([frozenset([foo1, foo2]), frozenset([foo3])])
         self.reopen()
-        assert bar.foo_set == set([foo1, foo2])
+        assert bar.foo_set == set([frozenset([foo1, foo2]), frozenset([foo3])])
 
     def test_mutate_transaction_field_value(self):
         foo1 = ex(db.Foo.t.create(name='foo1'))
         foo2 = ex(db.Foo.t.create(name='foo2'))
-        bar = ex(db.Bar.t.create(foo_set=set([foo1])))
-        assert bar.foo_set == set([foo1])
+        bar = ex(db.Bar.t.create(foo_set=set([frozenset([foo1])])))
+        assert bar.foo_set == set([frozenset([foo1])])
         tx = bar.t.update()
-        tx.foo_set.add(foo2)
+        tx.foo_set.add(frozenset([foo2]))
         db.execute(tx)
-        assert bar.foo_set == set([foo1, foo2])
+        assert bar.foo_set == set([frozenset([foo1]), frozenset([foo2])])
 
     def test_immutable_entity_view_field_value(self):
         foo1 = ex(db.Foo.t.create(name='foo1'))
         foo2 = ex(db.Foo.t.create(name='foo2'))
-        bar = ex(db.Bar.t.create(foo_set=set([foo1])))
+        bar = ex(db.Bar.t.create(foo_set=set([frozenset([foo1])])))
         assert raises(AttributeError, getattr, bar.foo_set, 'add')
         v = bar.v.default()
         assert raises(AttributeError, getattr, v.foo_set, 'add')
@@ -80,18 +82,18 @@ class BaseFieldEntitySet(CreatesSchema):
     def test_storing_wrong_type_fails(self):
         foo = ex(db.Foo.t.create(name='foo'))
         bof = ex(db.Bof.t.create(name='bof'))
-        tx = db.Bar.t.create(foo_set=set([foo, bof]))
+        tx = db.Bar.t.create(foo_set=set([frozenset([foo, bof])]))
         assert raises(TypeError, db.execute, tx)
 
     def test_links_are_maintained(self):
         foo = ex(db.Foo.t.create(name='foo'))
-        bar1 = ex(db.Bar.t.create(foo_set=set([foo])))
+        bar1 = ex(db.Bar.t.create(foo_set=set([frozenset([foo])])))
         assert foo.m.bars() == [bar1]
-        call = ex, db.Bar.t.create(foo_set=set([foo]))
+        call = ex, db.Bar.t.create(foo_set=set([frozenset([foo])]))
         assert raises(KeyCollision, *call)
 
     def test_min_size_max_size(self):
-        # Make sure that empty lists are allowed by default.
+        # Make sure that empty sets are allowed by default.
         foo = ex(db.Foo.t.create(name='foo'))
         tx = db.Bar.t.create(foo_set=set([]))
         bar = db.execute(tx)
@@ -102,16 +104,16 @@ class BaseFieldEntitySet(CreatesSchema):
         assert raises(ValueError, *call)
 
 
-class TestFieldEntitySet2(BaseFieldEntitySet):
+class TestFieldEntitySetSet2(BaseFieldEntitySetSet):
 
     format = 2
 
 
-class TestFieldEntitySet1(BaseTest):
-    """This tests for failure, since EntitySet is not allowed in
+class TestFieldEntitySetSet1(BaseTest):
+    """This tests for failure, since EntitySetSet is not allowed in
     format 1 databases.
 
-    Create a schema that contains an EntitySet field::
+    Create a schema that contains an EntitySetSet field::
 
         >>> body = '''
         ...     class Foo(E.Entity):
@@ -122,7 +124,7 @@ class TestFieldEntitySet1(BaseTest):
         ...
         ...     class Bar(E.Entity):
         ...
-        ...         foo_set = f.entity_set('Foo')
+        ...         foo_set = f.entity_set_set('Foo')
         ...
         ...     class Bof(E.Entity):
         ...

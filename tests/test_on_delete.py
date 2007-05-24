@@ -102,21 +102,21 @@ class BaseOnDelete(CreatesSchema):
                         | Boo[1]        | <-----------------.
                         |               | <-----.           |
                         | .name = 'BOO' |       |           |
-                        |---------------|       |           |
+                        `---------------`       |           |
                                                 |CASCADE    |
                         .---------------.       |           |
                         | Bar[1]        |       |           |
                     .-> |               |       |           |CASCADE
-                    |   | .boo = Boo[1]---------|           |
+                    |   | .boo = Boo[1]---------`           |
                     |   | .baz = Baz[1]---------.           |
-                    |   |---------------|       |           |
+                    |   `---------------`       |           |
                     |                           |           |
             RESTRICT|   .---------------.       |RESTRICT   |
                     |   | Baz[1]        |       |           |
-                    |   |               | <-----|           |
-                    |   | .boo = Boo[1]---------------------|
-                    |-----.bar = Bar[1] |
-                        |---------------|
+                    |   |               | <-----`           |
+                    |   | .boo = Boo[1]---------------------`
+                    `-----.bar = Bar[1] |
+                        `---------------`
         """
 
         name = f.unicode()
@@ -157,26 +157,26 @@ class BaseOnDelete(CreatesSchema):
                                    | Foo[1]        | <----------------.
                                    |               | <-----.          |
                                    | .name = 'FOO' |       |          |
-                                   |---------------|       |          |
+                                   `---------------`       |          |
                                                            |CASCADE   |
                                    .---------------.       |          |
                                    | Far[1]        |       |          |
                     .------------> |               |       |          |CASCADE
-                    |              | .foo = Foo[1]---------|          |
-                    |              |---------------|                  |
+                    |              | .foo = Foo[1]---------`          |
+                    |              `---------------`                  |
                     |                                                 |
                     |              .---------------.                  |
             RESTRICT|              | Faz[1]        |                  |
                     |          .-> |               |                  |
-                    |          |   | .foo = Foo[1]--------------------|
-                    |          |   |---------------|
+                    |          |   | .foo = Foo[1]--------------------`
+                    |          |   `---------------`
                     |   CASCADE|
                     |          |   .---------------.
                     |          |   | Fee[1]        |
                     |          |   |               |
-                    |          |-----.faz = Faz[1] |
-                    |----------------.far = Far[1] |
-                                   |---------------|
+                    |          `-----.faz = Faz[1] |
+                    `----------------.far = Far[1] |
+                                   `---------------`
         """
 
         name = f.unicode()
@@ -221,20 +221,20 @@ class BaseOnDelete(CreatesSchema):
                        | Moo[1]        | <-----------------.
                        |               | <-----.           |
                        | .name = 'MOO' |       |           |
-                       |---------------|       |           |
+                       `---------------`       |           |
                                                |CASCADE    |
                        .---------------.       |           |
                        | Mar[1]        |       |           |
                    .-> |               |       |           |CASCADE
                    |   | .moo = Moo[1]---------|           |
-                   |   |---------------|                   |
+                   |   `---------------`                   |
                    |                                       |
             CASCADE|   .---------------.                   |
                    |   | Maz[1]        |                   |
                    |   |               |                   |
                    |-----.mar = Mar[1] |                   |
                        | .moo = Moo[1]---------------------|
-                       |---------------|
+                       `---------------`
         """
 
         name = f.unicode()
@@ -318,17 +318,17 @@ class BaseOnDelete(CreatesSchema):
     def internal_cascade_complex_2(self):
         raise NotImplementedError()
 
-##     def test_cascade_complex_hierarchy_foo(self):
-##         foo = db.execute(db.Foo.t.create(name='FOO'))
-##         assert len(db.Foo) == 1
-##         assert len(db.Far) == 1
-##         assert len(db.Faz) == 1
-##         assert len(db.Fee) == 1
-##         db.execute(foo.t.delete())
-##         assert len(db.Foo) == 0
-##         assert len(db.Far) == 0
-##         assert len(db.Faz) == 0
-##         assert len(db.Fee) == 0
+    def test_cascade_complex_hierarchy_foo(self):
+        foo = db.execute(db.Foo.t.create(name='FOO'))
+        assert len(db.Foo) == 1
+        assert len(db.Far) == 1
+        assert len(db.Faz) == 1
+        assert len(db.Fee) == 1
+        db.execute(foo.t.delete())
+        assert len(db.Foo) == 0
+        assert len(db.Far) == 0
+        assert len(db.Faz) == 0
+        assert len(db.Fee) == 0
 
     def test_cascade_complex_hierarchy_moo(self):
         moo = db.execute(db.Moo.t.create(name='MOO'))
@@ -538,6 +538,205 @@ class TestOnDelete2(BaseOnDelete):
         assert len(Boo_extent['entities']) == 0
         assert len(Bar_extent['entities']) == 0
         assert len(Baz_extent['entities']) == 0
+
+
+class TestOnDeleteEntityListRemove(CreatesSchema):
+
+    body = """
+
+    class Foo(E.Entity):
+
+        name = f.unicode()
+        bars = f.entity_list(('Bar', REMOVE), min_size=1)
+
+        _key(name)
+
+        _sample_unittest_priority = 1
+
+        @staticmethod
+        def _sample_unittest(db):
+            bar1 = db.Bar.findone(name=u'bar 1')
+            bar2 = db.Bar.findone(name=u'bar 2')
+            foo = db.execute(db.Foo.t.create(name=u'foo 1', bars=[bar1, bar2]))
+
+
+    class Fob(E.Entity):
+
+        name = f.unicode()
+        bars = f.entity_list(('Bar', REMOVE), min_size=0)
+
+        _key(name)
+
+        _sample_unittest_priority = 1
+
+        @staticmethod
+        def _sample_unittest(db):
+            bar3 = db.Bar.findone(name=u'bar 3')
+            fob = db.execute(db.Fob.t.create(name=u'fob 1', bars=[bar3]))
+
+
+    class Bar(E.Entity):
+
+        name = f.unicode()
+
+        _key(name)
+
+        _sample_unittest_priority = 2
+
+        _sample_unittest = [
+            (u'bar 1', ),
+            (u'bar 2', ),
+            (u'bar 3', ),
+            ]
+    """
+
+    def test_sample_data(self):
+        bar1 = db.Bar.findone(name=u'bar 1')
+        bar2 = db.Bar.findone(name=u'bar 2')
+        foo1 = db.Foo.findone(name=u'foo 1')
+        assert list(foo1.bars) == [bar1, bar2]
+
+    def test_remove_min_one(self):
+        bar1 = db.Bar.findone(name=u'bar 1')
+        bar2 = db.Bar.findone(name=u'bar 2')
+        foo1 = db.Foo.findone(name=u'foo 1')
+        db.execute(bar1.t.delete())
+        assert list(foo1.bars) == [bar2]
+        # Deleting bar2 should fail due to foo1.bars becoming an empty
+        # list, which is not allowed.
+        call = db.execute, bar2.t.delete()
+        assert raises(ValueError, *call)
+
+    def test_remove_min_zero(self):
+        bar3 = db.Bar.findone(name=u'bar 3')
+        fob1 = db.Fob.findone(name=u'fob 1')
+        db.execute(bar3.t.delete())
+        assert list(fob1.bars) == []
+        
+
+class TestOnDeleteUnassignReadonlyField(CreatesSchema):
+
+    body = """
+
+    class Foo(E.Entity):
+
+        name = f.unicode()
+        bar = f.entity('Bar', required=False, on_delete=UNASSIGN)
+
+        _key(name)
+
+        _sample_unittest = [
+            (u'foo 1', (u'bar 1', )),
+            ]
+
+        class _Update(T.Update):
+
+            bar = f.entity('Bar', required=False, readonly=True)
+
+    class Bar(E.Entity):
+
+        name = f.unicode()
+
+        _key(name)
+
+        _sample_unittest = [
+            (u'bar 1', ),
+            ]
+    """
+
+    def test_readonly_on_update(self):
+        foo = db.Foo.findone(name=u'foo 1')
+        tx = foo.t.update()
+        call = setattr, tx, 'bar', UNASSIGNED
+        assert raises(AttributeError, *call)
+
+    def test_unassigns_on_delete(self):
+        foo = db.Foo.findone(name=u'foo 1')
+        bar = foo.bar
+        db.execute(bar.t.delete())
+        assert foo.bar is UNASSIGNED
+
+
+class TestOnDeleteUnassignEntityList(CreatesSchema):
+
+    body = """
+
+    class Foo(E.Entity):
+
+        name = f.unicode()
+        bar_list = f.entity_list('Bar', on_delete=UNASSIGN,
+                                 allow_unassigned=True)
+
+        _key(name)
+
+
+    class Fee(E.Entity):
+
+        name = f.unicode()
+        bar_list = f.entity_list('Bar', on_delete=UNASSIGN)
+
+        _key(name)
+
+
+    class Fum(E.Entity):
+
+        name = f.unicode()
+        bar_list = f.entity_list('Bar', on_delete=UNASSIGN,
+                                 allow_unassigned=True,
+                                 allow_duplicates=False)
+
+        _key(name)
+
+
+    class Bar(E.Entity):
+
+        name = f.unicode()
+
+        _key(name)
+
+        _sample_unittest = [
+            (u'bar 1', ),
+            (u'bar 2', ),
+            (u'bar 3', ),
+            (u'bar 4', ),
+            (u'bar 5', ),
+            ]
+    """
+
+    def test_unassign_when_unassigned_allowed(self):
+        bar1, bar2, bar3, bar4, bar5 = db.Bar.by('name')
+        foo = ex(db.Foo.t.create(
+            name = 'foo',
+            bar_list = [bar1, bar2, bar3, bar4, bar5, bar4, bar3],
+            ))
+        assert list(foo.bar_list) == [bar1, bar2, bar3, bar4, bar5, bar4, bar3]
+        ex(bar4.t.delete())
+        UA = UNASSIGNED
+        assert list(foo.bar_list) == [bar1, bar2, bar3, UA, bar5, UA, bar3]
+
+    def test_unassign_when_unassigned_allowed_no_duplicates(self):
+        bar1, bar2, bar3, bar4, bar5 = db.Bar.by('name')
+        fum = ex(db.Fum.t.create(
+            name = 'fum',
+            bar_list = [bar1, bar2, bar3, bar4, bar5],
+            ))
+        assert list(fum.bar_list) == [bar1, bar2, bar3, bar4, bar5]
+        ex(bar4.t.delete())
+        assert list(fum.bar_list) == [bar1, bar2, bar3, UNASSIGNED, bar5]
+        # Deleting one more will not be allowed since it would cause
+        # duplication.
+        call = ex, bar3.t.delete()
+        assert raises(ValueError, *call)
+
+    def test_unassign_when_unassigned_disallowed(self):
+        bar1, bar2, bar3, bar4, bar5 = db.Bar.by('name')
+        fee = ex(db.Fee.t.create(
+            name = 'fee',
+            bar_list = [bar1, bar2, bar3, bar4, bar5, bar4, bar3],
+            ))
+        assert list(fee.bar_list) == [bar1, bar2, bar3, bar4, bar5, bar4, bar3]
+        call = ex, bar4.t.delete()
+        assert raises(ValueError, *call)
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.
