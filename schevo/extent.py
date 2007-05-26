@@ -167,6 +167,11 @@ class Extent(base.Extent):
         transaction finishes, whichever occurs first."""
         self._relax(self.name, *index_spec)
 
+    def relax_all_indices(self):
+        """Relax all indices using `relax_index`."""
+        for index_spec in self.key_spec:
+            self.relax_index(*index_spec)
+
 
 class ExtentExtenders(NamespaceExtension):
     """Methods that extend the functionality of an extent."""

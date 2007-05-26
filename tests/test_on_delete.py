@@ -540,6 +540,74 @@ class TestOnDelete2(BaseOnDelete):
         assert len(Baz_extent['entities']) == 0
 
 
+class BaseOnDeleteKeyRelax(CreatesSchema):
+
+    body = """
+
+    class Foo(E.Entity):
+
+        bar = f.entity('Bar', on_delete=CASCADE)
+        baz = f.entity('Baz', on_delete=CASCADE)
+
+        _key(baz)
+
+        _sample_unittest = [
+            ((1,), ((1,), 1)),
+            ((1,), ((1,), 2)),
+            ((2,), ((2,), 1)),
+            ((2,), ((2,), 2)),
+            ]
+        
+
+    class Bar(E.Entity):
+
+        number = f.integer()
+
+        _key(number)
+
+        _sample_unittest = [
+            (1,),
+            (2,),
+            ]
+
+
+    class Baz(E.Entity):
+
+        bar = f.entity('Bar', on_delete=CASCADE)
+        number = f.integer()
+
+        _key(bar, number)
+
+        _sample_unittest = [
+            ((1,), 1),
+            ((1,), 2),
+            ((2,), 1),
+            ((2,), 2),
+            ]
+
+    """
+
+    def test_delete_bar(self):
+        assert len(db.Foo) == 4
+        assert len(db.Bar) == 2
+        assert len(db.Baz) == 4
+        bar1 = db.Bar.findone(number=1)
+        ex(bar1.t.delete())
+        assert len(db.Foo) == 2
+        assert len(db.Bar) == 1
+        assert len(db.Baz) == 2
+
+
+class TestOnDeleteKeyRelax1(BaseOnDeleteKeyRelax):
+
+    format = 1
+
+
+class TestOnDeleteKeyRelax2(BaseOnDeleteKeyRelax):
+
+    format = 2
+
+
 class TestOnDeleteEntityListRemove(CreatesSchema):
 
     body = """

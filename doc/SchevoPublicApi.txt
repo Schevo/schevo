@@ -73,6 +73,37 @@ Extent instances
 ================
 
 
+Relaxing and enforcing key restrictions
+---------------------------------------
+
+Schevo has the unique ability to temporarily relax key restrictions
+while still ensuring that the database remains in a consistent state.
+
+Key restrictions may only be relaxed within the execution of a
+transaction.
+
+Given an extent `db.Foo` that has a key specification of `_key(field1,
+field2)`, relax that key restriction by calling `relax_index`::
+
+    db.Foo.relax_index('field1', 'field2')
+
+Key restrictions that are relaxed within a transaction are relaxed for
+the entire execution of the transaction, or until the key is enforced
+within that transaction, or until that transaction ends, whichever
+comes first.
+
+When a key restriction is relaxed by a transaction, it remains relaxed
+for all sub-transactions, regardless of any request by those
+sub-transactions to enforce the key restriction.
+
+To re-enforce the key restriction before the end of a transaction's
+execution, call `enforce_index`::
+
+    db.Foo.enforce_index('field1', 'field2')
+
+See the ``tests/test_relax_index.py`` test case for code examples.
+
+
 Entity instances
 ================
 

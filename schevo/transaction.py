@@ -10,9 +10,15 @@ from schevo import base
 from schevo.change import summarize
 from schevo.constant import (CASCADE, DEFAULT, REMOVE, RESTRICT,
                              UNASSIGN, UNASSIGNED)
-from schevo.error import (DatabaseMismatch, DeleteRestricted, SchemaError,
-                          TransactionExpired, TransactionFieldsNotChanged,
-                          TransactionNotExecuted)
+from schevo.error import (
+    DatabaseMismatch,
+    DeleteRestricted,
+    KeyCollision,
+    SchemaError,
+    TransactionExpired,
+    TransactionFieldsNotChanged,
+    TransactionNotExecuted,
+    )
 from schevo import field
 from schevo.field import not_fget
 from schevo.fieldspec import FieldMap, FieldSpecMap
@@ -464,10 +470,19 @@ class Delete(Transaction):
                 (name, frozenset()) for name in field_names)
             field_dump_map.update(new_dump_map)
             field_related_entity_map.update(new_related_entity_map)
-            extent_name = referrer._extent.name
+            extent = referrer._extent
+            extent_name = extent.name
             oid = referrer._oid
-            db._update_entity(
-                extent_name, oid, field_dump_map, field_related_entity_map)
+            try:
+                db._update_entity(
+                    extent_name, oid, field_dump_map, field_related_entity_map)
+            except KeyCollision:
+                # Since it takes more time to relax an index, only do
+                # it when we find a key collision.
+                extent.relax_all_indices()
+                # Try the update again.
+                db._update_entity(
+                    extent_name, oid, field_dump_map, field_related_entity_map)
             referrers.add((extent_name, oid, referrer))
         # Delete entities in a deterministic (sorted) fashion.
         for extent_name, oid, referrer in sorted(referrers):

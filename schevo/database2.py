@@ -135,9 +135,9 @@ class Database(base.Database):
             retval = tx._execute(self)
             assert log(2, 'Result was', repr(retval))
             # Enforce any indices relaxed by the transaction.
-            for extent_name, index_spec in tx._relaxed:
+            for extent_name, index_spec in frozenset(tx._relaxed):
                 assert log(2, 'Enforcing index', extent_name, index_spec)
-                self._enforce_index(extent_name, index_spec)
+                self._enforce_index_field_ids(extent_name, *index_spec)
             # If the transaction must be executed with strict
             # validation, perform that validation now.
             if strict:
@@ -494,6 +494,13 @@ class Database(base.Database):
         append_change(DELETE, extent_name, oid)
 
     def _enforce_index(self, extent_name, *index_spec):
+        """Call _enforce_index after converting index_spec from field
+        names to field IDs."""
+        extent_map = self._extent_map(extent_name)
+        index_spec = _field_ids(extent_map, index_spec)
+        return self._enforce_index_field_ids(extent_name, *index_spec)
+  
+    def _enforce_index_field_ids(self, extent_name, *index_spec):
         """Validate and begin enforcing constraints on the specified
         index if it was relaxed within the currently-executing
         transaction."""
@@ -501,10 +508,8 @@ class Database(base.Database):
         if not executing:
             # No-op if called outside a transaction.
             return
-        # ID-ify the index_spec.
-        extent_map = self._extent_map(extent_name)
-        index_spec = _field_ids(extent_map, index_spec)
         # Find the index to re-enforce.
+        extent_map = self._extent_map(extent_name)
         indices = extent_map['indices']
         if index_spec not in indices:
             raise error.IndexDoesNotExist(
