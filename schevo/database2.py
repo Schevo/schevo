@@ -6,6 +6,7 @@ For copyright, license, and warranty, see bottom of file.
 import sys
 from schevo.lib import optimize
 
+import os
 import random
 
 import louie
@@ -224,7 +225,8 @@ class Database(base.Database):
 
     def pack(self):
         """Pack the database."""
-        self.connection.pack()
+        if os.environ.get('SCHEVO_NOPACK', '').strip() != '1':
+            self.connection.pack()
 
     def populate(self, sample_name=''):
         """Populate the database with sample data."""
