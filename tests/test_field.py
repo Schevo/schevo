@@ -530,12 +530,67 @@ class TestImage(object):
         assert unicode(f) == u'(Binary data)'
 
 
-class TestPassword(object):
+class TestHashedPassword(object):
 
     def test_unicode_representation(self):
-        f = field.Password(None, None)
+        f = field.HashedPassword(None, None)
         f.set('some-password')
-        assert unicode(f) == u'(Hidden)'
+        assert unicode(f) == u'(Encrypted)'
+
+    def test_unicode_values(self):
+        f = field.HashedPassword(None, None)
+        value = u'some-unicode-password-\ucafe'
+        f.set(value)
+        assert f.compare(value)
+
+
+class TestPasswordIsDeprecated(object):
+
+    """
+    Change `showwarning` to log to a list instead of to stderr, so we
+    can test the deprecation warning below::
+
+        >>> import warnings
+        >>> old_showwarning = warnings.showwarning
+        >>> captured_warnings = []
+        >>> def showwarning(message, category, filename, lineno, file=None):
+        ...     captured_warnings.append((message, category, filename, lineno))
+        >>> warnings.showwarning = showwarning
+
+    Create a schema that has a `password` field class::
+
+        >>> body = '''
+        ...     class Foo(E.Entity):
+        ...
+        ...         p = f.password()
+        ...     '''
+
+    When using the schema, a deprecation warning is given for the `p`
+    field definition::
+
+        >>> from schevo.test import DocTest
+        >>> len_before = len(captured_warnings)
+        >>> t = DocTest(body)
+        >>> len_after = len(captured_warnings)
+        >>> len_after - len_before
+        1
+        >>> message, category, filename, lineno = captured_warnings[-1]
+        >>> print str(message)  #doctest: +ELLIPSIS
+        'password' is a deprecated field type. ...
+
+    The line number that the warning is on appears to be line four
+    above, but since a two-line header is prepended to the body during
+    unit testing, it's actually line six that the warning occurs at::
+
+        >>> lineno
+        6
+
+    Place the old `showwarning` function back into the `warnings`
+    module::
+
+        >>> warnings.showwarning = old_showwarning
+
+    """
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

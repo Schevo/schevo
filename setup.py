@@ -113,9 +113,5 @@ setup(
     [schevo.schevo_command]
     db = schevo.script.db:start
     shell = schevo.script.shell:start
-
-    [schevo.schema_export]
-    icon=schevo.icon.schema
-    identity=schevo.identity.schema
     """,
     )

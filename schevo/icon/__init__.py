@@ -13,7 +13,6 @@ __all__ = [
 
 # Needs to be imported right away.
 import schevo.entity
-import schevo.icon.schema
 
 
 # Copyright (C) 2001-2006 Orbtech, L.L.C.

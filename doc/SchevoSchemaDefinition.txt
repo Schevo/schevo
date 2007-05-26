@@ -485,15 +485,20 @@ a database schema.  You can also create `custom field types`_ when
 your schema has unique requirements for data types.
 
 
-HashedValue field type
-......................
+HashedValue field types
+.......................
 
 A **HashedValue** field, upon having its value set, will store a
 one-way hash of that value.
 
-You can use the `compare(value)` method of a `HashedValue` field to
-see if the hash matches a value, but it is not possible to retrieve
-the original value from the one-way hash.
+Use the `compare(value)` method of a `HashedValue` field instance to
+see if the hash matches a value.
+
+It is not possible to retrieve the original value from the one-way
+hash.
+
+**HashedPassword** fields are a convenience class to show that a field
+specifically stores hashed values of passwords.  
 
 This is useful for storing information about a user's password in a
 reasonably secure manner, preventing immediate discovery of passwords
@@ -520,12 +525,6 @@ may assume that a `Unicode` field is a single-line field.
 **Memo** fields are used to store Unicode strings. An application may
 assume that a `Memo` field is identical in operation to a `Unicode`
 field, but that it is a multiple-line field.
-
-**Password** fields are used to store plaintext Unicode strings.  An
-application may assume that the contents of a `Password` field should
-not be displayed as plaintext.  **NOTE:** `Password` fields are not
-necessarily secure.  You may wish to use the `HashedValue field type`_
-instead.
 
 
 Blob fields
@@ -576,6 +575,41 @@ An **EntitySet** field stores a set of references to other entities.
 
 Custom field types
 ..................
+
+
+Deprecated field types
+......................
+
+Deprecated field types are those field types that are available in
+Schevo in order to support legacy schemata, but are no longer
+recommended for use.
+
+If you have a database schema that uses any of these field types, you
+should use a different field type instead.
+
+When you use a deprecated field type, Schevo will give a Python
+`DeprecationWarning` about such use to encourage you to use a
+different field type.
+
+The following types of fields are deprecated:
+
+- **Password**: Use one of the `HashedValue field types`_ instead.
+
+  If you wish to store a plain-text password in your schema, you can
+  do one of the following:
+
+  * Use the `Unicode` field type::
+
+        class Foo(E.Entity):
+            password = f.unicode()
+
+  * Create a custom `PlaintextPassword` field type::
+
+        class PlaintextPassword(F.Unicode):
+            pass
+
+        class Foo(E.Entity):
+            password = f.plaintext_password()
 
 
 Key and index specifications

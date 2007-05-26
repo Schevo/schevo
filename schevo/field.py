@@ -189,6 +189,8 @@ class Field(base.Field):
     valid_values = None
     was = None
 
+    _deprecated_class = False
+    _deprecated_class_see_also = None
     _name = None
 
     @property
@@ -478,14 +480,17 @@ class Field(base.Field):
 
 
 class HashedValue(Field):
-    """Field which stores a value as a one-way hash.
-
-    Useful for storing passwords.
+    """Field that stores a value as a one-way hash.
 
     When you assign or set the value of this field, it stores a
     one-way hash of that value in the field rather than the plaintext
     value itself.  To see if another plaintext value 'matches' the
     stored hash, use the compare() method.
+
+    When a unicode value, as opposed to a string value, is given to
+    hash or to compare to an existing hash, it will be encoded to a
+    UTF-8 encoded string before the hash or comparison operation
+    occurs.
 
     hash_header: The value that is prepended to all hashed values, to
     allow for passing hashed values from field to field unchanged.
@@ -524,10 +529,12 @@ class HashedValue(Field):
         """Return the one-way hash of value."""
         if value is UNASSIGNED:
             return value
-        if value.startswith(self.hash_header):
+        if isinstance(value, str) and value.startswith(self.hash_header):
             # Short-circuit if the value is already hashed.
             return value
         else:
+            if isinstance(value, unicode):
+                value = value.encode('utf8')
             return self.hash_encode(value)
 
     def db_equivalence_value(self, stop_entities):
@@ -539,6 +546,8 @@ class HashedValue(Field):
         Override this method if you want to use a different hashing
         algorithm.
         """
+        if isinstance(value, unicode):
+            value = value.encode('utf8')
         header_len = len(self.hash_header)
         salt = hashed_value[header_len:header_len+12]
         encoded_value = self.hash_encode(value, salt)
@@ -560,6 +569,13 @@ class HashedValue(Field):
         digest = md.digest()
         hashed_value = salt + digest
         return self.hash_header + hashed_value
+
+
+class HashedPassword(HashedValue):
+    """Field that stores a password as a one-way hash."""
+
+
+# --------------------------------------------------------------------
 
 
 class String(Field):
@@ -641,26 +657,6 @@ class Memo(Unicode):
     """
 
     data_type = unicode
-
-
-class Password(Unicode):
-    """Password field class.
-
-    Intended to designate a unicode field as something that stores a
-    plaintext string, but whose value shouldn't be exposed in a UI.
-    """
-
-    data_type = unicode
-
-    def __unicode__(self):
-        v = self.get()
-        if v is UNASSIGNED:
-            return Field.__unicode__(self)
-        else:
-            return u'(Hidden)'
-
-    def reversible(self, value=None):
-        return u''
 
 
 # --------------------------------------------------------------------
@@ -1558,6 +1554,32 @@ class EntitySetSet(_EntityBase):
                 super(EntitySetSet, self).verify(item)
         else:
             super(EntitySetSet, self).verify(value)
+
+
+# --------------------------------------------------------------------
+
+
+class Password(Unicode):
+    """Password field class.
+
+    Intended to designate a unicode field as something that stores a
+    plaintext string, but whose value shouldn't be exposed in a UI.
+    """
+
+    data_type = unicode
+
+    _deprecated_class = True
+    _deprecated_class_see_also = 'http://schevo.org/wiki/SchevoSchemaDefinition'
+
+    def __unicode__(self):
+        v = self.get()
+        if v is UNASSIGNED:
+            return Field.__unicode__(self)
+        else:
+            return u'(Hidden)'
+
+    def reversible(self, value=None):
+        return u''
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
