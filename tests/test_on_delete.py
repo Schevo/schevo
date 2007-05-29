@@ -90,6 +90,28 @@ class BaseOnDelete(CreatesSchema):
                 raise RuntimeError("We expect this to get called and fail.")
 
 
+    class Bam(E.Entity):
+
+        bat = f.entity('Bat')
+
+        class _Create(T.Create):
+
+            def _setup(self):
+                # We assign this internally.
+                del self.f.bat
+
+            def _after_execute(self, db, bam):
+                create = db.Bat.t.create
+                # Every bam has one bat.
+                bat = db.execute(create(bam=bam))
+                db.execute(bam.t.update(bat=bat))
+
+
+    class Bat(E.Entity):
+
+        bam = f.entity('Bam')
+
+
     class Boo(E.Entity):
         """The parent of two children, one of which references the
         other.  We want the cascade to succeed on both children in
@@ -284,6 +306,12 @@ class BaseOnDelete(CreatesSchema):
         tx = alpha_alpha.t.delete()
         db.execute(tx)
         assert alpha_bravo not in db.AlphaBravo
+
+    def test_cascade_bam(self):
+        bam = db.execute(db.Bam.t.create())
+        tx = bam.t.delete()
+        db.execute(tx)
+        assert bam not in db.Bam
 
     def test_cascade_complex(self):
         # Create the complex structure.
