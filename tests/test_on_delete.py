@@ -132,6 +132,29 @@ class BaseOnDelete(CreatesSchema):
         bam = f.entity('Bam')
 
 
+    class Bamm(E.Entity):
+
+        batt = f.entity('Batt', required=False)
+
+        class _Create(T.Create):
+
+            def _after_execute(self, db, bamm):
+                batt = db.execute(db.Batt.t.create())
+                bobb = db.execute(db.Bobb.t.create(bamm=bamm))
+                db.execute(batt.t.update(bobb=bobb))
+                db.execute(bamm.t.update(batt=batt))
+
+
+    class Batt(E.Entity):
+
+        bobb = f.entity('Bobb', required=False)
+
+
+    class Bobb(E.Entity):
+
+        bamm = f.entity('Bamm', required=False)
+
+
     # ----------------------------------------------------------------
 
 
@@ -341,6 +364,12 @@ class BaseOnDelete(CreatesSchema):
         tx = bam.t.delete()
         db.execute(tx)
         assert bam not in db.Bam
+
+    def test_cascade_bamm(self):
+        bamm = db.execute(db.Bamm.t.create())
+        tx = bamm.t.delete()
+        db.execute(tx)
+        assert bamm not in db.Bamm
 
     def test_cascade_complex(self):
         # Create the complex structure.
