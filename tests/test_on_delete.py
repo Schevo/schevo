@@ -90,7 +90,27 @@ class BaseOnDelete(CreatesSchema):
                 raise RuntimeError("We expect this to get called and fail.")
 
 
+    # ----------------------------------------------------------------
+
+
     class Bam(E.Entity):
+        """Bam and Bat circularly reference eachother.
+
+        The relationships created upon a creation of a Bam entity
+        can be visualized as follows::
+
+                        .---------------.
+                        | Bam[1]        |<----.
+                        |               |     |
+                  .-------.bat = Bat[1] |     | RESTRICT
+                  |     `---------------`     |
+                  |                           |
+                  |     .---------------.     |
+                  `---->| Bat[1]        |     |
+                        |               |     |
+                        | .bam = Bam[1]-------`
+                        `---------------`
+        """
 
         bat = f.entity('Bat')
 
@@ -110,6 +130,9 @@ class BaseOnDelete(CreatesSchema):
     class Bat(E.Entity):
 
         bam = f.entity('Bam')
+
+
+    # ----------------------------------------------------------------
 
 
     class Boo(E.Entity):
@@ -167,6 +190,9 @@ class BaseOnDelete(CreatesSchema):
 
         boo = f.entity(('Boo', CASCADE))
         bar = f.entity('Bar')
+
+
+    # ----------------------------------------------------------------
 
 
     class Foo(E.Entity):
@@ -231,6 +257,9 @@ class BaseOnDelete(CreatesSchema):
 
         faz = f.entity(('Faz', CASCADE))
         far = f.entity('Far')
+
+
+    # ----------------------------------------------------------------
 
 
     class Moo(E.Entity):
