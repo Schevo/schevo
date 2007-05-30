@@ -104,7 +104,7 @@ class BaseOnDelete(CreatesSchema):
                         |               |     |
                   .-------.bat = Bat[1] |     | RESTRICT
                   |     `---------------`     |
-                  |                           |
+         RESTRICT |                           |
                   |     .---------------.     |
                   `---->| Bat[1]        |     |
                         |               |     |
@@ -130,6 +130,48 @@ class BaseOnDelete(CreatesSchema):
     class Bat(E.Entity):
 
         bam = f.entity('Bam')
+
+
+    # ----------------------------------------------------------------
+
+
+    class Bamc(E.Entity):
+        """Bamc and Batc circularly reference eachother.
+
+        The relationships created upon a creation of a Bamc entity
+        can be visualized as follows::
+
+                        .-----------------.
+                        | Bamc[1]         |<----.
+                        |                 |     |
+                  .-------.batc = Batc[1] |     | CASCADE
+                  |     `-----------------`     |
+         RESTRICT |                             |
+                  |     .-----------------.     |
+                  `---->| Batc[1]         |     |
+                        |                 |     |
+                        | .bamc = Bamc[1]-------`
+                        `-----------------`
+        """
+
+        batc = f.entity('Batc')
+
+        class _Create(T.Create):
+
+            def _setup(self):
+                # We assign this internally.
+                del self.f.batc
+
+            def _after_execute(self, db, bamc):
+                create = db.Batc.t.create
+                # Every bamc has one batc.
+                batc = db.execute(create(bamc=bamc))
+                db.execute(bamc.t.update(batc=batc))
+
+
+    class Batc(E.Entity):
+
+        bamc = f.entity('Bamc', on_delete=CASCADE)
 
 
     # ----------------------------------------------------------------
@@ -362,11 +404,16 @@ class BaseOnDelete(CreatesSchema):
         db.execute(tx)
         assert alpha_bravo not in db.AlphaBravo
 
-    def test_cascade_bam(self):
+    def test_cascade_bamc(self):
+        bamc = db.execute(db.Bamc.t.create())
+        tx = bamc.t.delete()
+        db.execute(tx)
+        assert bamc not in db.Bamc
+
+    def test_restrict_bam(self):
         bam = db.execute(db.Bam.t.create())
         tx = bam.t.delete()
-        db.execute(tx)
-        assert bam not in db.Bam
+        assert raises(error.DeleteRestricted, db.execute, tx)
 
     def test_cascade_bamm(self):
         bamm = db.execute(db.Bamm.t.create())
