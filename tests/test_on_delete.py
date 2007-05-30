@@ -132,6 +132,9 @@ class BaseOnDelete(CreatesSchema):
         bam = f.entity('Bam')
 
 
+    # ----------------------------------------------------------------
+
+
     class Bamm(E.Entity):
 
         batt = f.entity('Batt', required=False)
