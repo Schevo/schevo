@@ -415,11 +415,10 @@ class BaseOnDelete(CreatesSchema):
         tx = bam.t.delete()
         assert raises(error.DeleteRestricted, db.execute, tx)
 
-    def test_cascade_bamm(self):
+    def test_restrict_bamm(self):
         bamm = db.execute(db.Bamm.t.create())
         tx = bamm.t.delete()
-        db.execute(tx)
-        assert bamm not in db.Bamm
+        assert raises(error.DeleteRestricted, db.execute, tx)
 
     def test_cascade_complex(self):
         # Create the complex structure.

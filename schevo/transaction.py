@@ -375,29 +375,6 @@ def find_references(db, entity, traversed,
                             restricters, cascaders, unassigners, removers)
 
 
-def find_chains(entity):
-    db = entity.sys.db
-    traversed = set()
-    chains = []
-    _find_chains(db, entity, traversed, chains)
-    return chains
-
-
-def _find_chains(db, entity, traversed, chains, chain=None):
-    if chain is None:
-        chain = []
-    chain.append(entity)
-    if entity in traversed:
-        chains.append(chain)
-        return
-    traversed.add(entity)
-    entity_extent_name = entity._extent.name
-    for (e_name, f_name), others in entity.sys.links().iteritems():
-        extent = db.extent(e_name)
-        for referrer in others:
-            _find_chains(db, referrer, traversed, chains, chain)
-
-
 class Delete(Transaction):
     """Delete an existing entity instance."""
 
@@ -450,19 +427,9 @@ class Delete(Transaction):
         # Referrers should be removed from restricters if they are
         # also requesting cascade deletion.
         restricter_keys = set(restricters) - set(cascaders)
-        # Starting at the entity whose deletion is requested, find
-        # chains of circular references that contain that entity, and
-        # make sure they are not in the restricters.
-        chains = find_chains(entity)
-        for chain in chains:
-            if chain[0] == entity and chain[0] == chain[-1]:
-                chain = frozenset(chain)
-                for referrer, restricter_set in restricters.iteritems():
-                    for f_name, referred in frozenset(restricter_set):
-                        if referred in chain:
-                            restricter_set.remove((f_name, referred))
-                    if len(restricter_set) == 0:
-                        restricter_keys.discard(referrer)
+        # The entity whose deletion was requested should never be
+        # considered a restricter.
+        restricter_keys.discard(entity)
         if len(restricter_keys) != 0:
             # Raise DeleteRestricted if there are any restricters left
             # over.
@@ -521,8 +488,10 @@ class Delete(Transaction):
                 db._update_entity(
                     extent_name, oid, field_dump_map, field_related_entity_map)
             referrers.add((extent_name, oid, referrer))
-        # Delete entities in a deterministic (sorted) fashion.
+        # Everything checks out okay for this entity, so add it to the
+        # set of deleted entities.
         deletes.add((entity.__class__, entity._oid))
+        # Delete entities in a deterministic (sorted) fashion.
         for extent_name, oid, referrer in sorted(referrers):
             referrer_e_o = referrer.__class__, referrer._oid
             if referrer_e_o in deletes:
