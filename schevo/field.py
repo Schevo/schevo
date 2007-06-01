@@ -1471,9 +1471,8 @@ class EntitySetSet(_EntityBase):
         if isinstance(value, (set, frozenset)):
             new_set = set()
             for item_set in value:
-                new_set.add(frozenset(Placeholder(entity)
-                                      for entity in item_set))
-            value = frozenset(new_set)
+                new_set.add(tuple(Placeholder(entity) for entity in item_set))
+            value = tuple(new_set)
         return value
 
     def _entities_in_value(self):
@@ -1513,11 +1512,11 @@ class EntitySetSet(_EntityBase):
 
     def _restore(self, db):
         value = self._value
-        if isinstance(value, frozenset):
+        if isinstance(value, tuple):
             new_set = set()
-            for item_set in value:
+            for items in value:
                 new_set.add(frozenset(placeholder.restore(db)
-                                      for placeholder in item_set))
+                                      for placeholder in items))
             value = new_set
         self._value = value
 
