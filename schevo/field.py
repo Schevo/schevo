@@ -1385,7 +1385,7 @@ class EntitySet(_EntityBase):
     def _dump(self):
         value = self._value
         if isinstance(value, (set, frozenset)):
-            value = frozenset(Placeholder(entity) for entity in value)
+            value = tuple(Placeholder(entity) for entity in value)
         return value
 
     def _entities_in_value(self):
@@ -1421,7 +1421,7 @@ class EntitySet(_EntityBase):
 
     def _restore(self, db):
         value = self._value
-        if isinstance(value, frozenset):
+        if isinstance(value, tuple):
             value = set(placeholder.restore(db) for placeholder in value)
         self._value = value
 

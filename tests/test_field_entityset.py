@@ -51,6 +51,16 @@ class BaseFieldEntitySet(CreatesSchema):
         self.reopen()
         assert bar.foo_set == set([foo])
 
+    def test_store_and_retrieve_one_entity_plus_UNASSIGNED(self):
+        foo = ex(db.Foo.t.create(name='foo'))
+        bar = ex(db.Bar.t.create(foo_set=set([foo])))
+        assert bar.foo_set == set([foo])
+        bar2 = ex(db.Bar.t.create(foo_set=UNASSIGNED))
+        assert bar2.foo_set is UNASSIGNED
+        self.reopen()
+        assert bar.foo_set == set([foo])
+        assert bar2.foo_set is UNASSIGNED
+
     def test_store_and_retrieve_multiple_entities(self):
         foo1 = ex(db.Foo.t.create(name='foo1'))
         foo2 = ex(db.Foo.t.create(name='foo2'))
