@@ -142,8 +142,7 @@ class TestDatabase2(BaseDatabase):
 # http://schevo.org/
 #
 # Orbtech
-# 709 East Jackson Road
-# Saint Louis, MO  63119-4241
+# Saint Louis, MO
 # http://orbtech.com/
 #
 # This toolkit is free software; you can redistribute it and/or
