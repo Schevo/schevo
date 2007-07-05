@@ -1156,7 +1156,7 @@ class TestTransaction2(BaseTransaction):
         assert p_related_genders == expected_p_related_genders
 
 
-# Copyright (C) 2001-2006 Orbtech, L.L.C.
+# Copyright (C) 2001-2007 Orbtech, L.L.C.
 #
 # Schevo
 # http://schevo.org/

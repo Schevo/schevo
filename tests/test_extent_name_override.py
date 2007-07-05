@@ -37,7 +37,7 @@ class TestOverride2(BaseOverride):
     format = 2
 
 
-# Copyright (C) 2001-2006 Orbtech, L.L.C. and contributors.
+# Copyright (C) 2001-2007 Orbtech, L.L.C. and contributors.
 #
 # Schevo
 # http://schevo.org/

@@ -140,7 +140,7 @@ def evolve_db(parser, schema_path, db, final_version):
     print 'Database evolution to version %i complete.' % db.version
 
 
-# Copyright (C) 2001-2006 Orbtech, L.L.C.
+# Copyright (C) 2001-2007 Orbtech, L.L.C.
 #
 # Schevo
 # http://schevo.org/

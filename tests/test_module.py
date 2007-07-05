@@ -43,7 +43,7 @@ def test_remember_forget():
     assert m.__name__ not in sys.modules
 
 
-# Copyright (C) 2001-2006 Orbtech, L.L.C.
+# Copyright (C) 2001-2007 Orbtech, L.L.C.
 #
 # Schevo
 # http://schevo.org/

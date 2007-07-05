@@ -180,7 +180,7 @@ class WLock(SubLock):
         self.rwlock._release_w(self)
 
 
-# Copyright (C) 2001-2006 Orbtech, L.L.C.
+# Copyright (C) 2001-2007 Orbtech, L.L.C.
 #
 # Schevo
 # http://schevo.org/

@@ -98,7 +98,7 @@ class UnsupportedFieldType(SchemaError):
     """The field type is not supported by the database engine in use."""
 
 
-# Copyright (C) 2001-2006 Orbtech, L.L.C.
+# Copyright (C) 2001-2007 Orbtech, L.L.C.
 #
 # Schevo
 # http://schevo.org/

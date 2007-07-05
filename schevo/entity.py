@@ -751,7 +751,7 @@ class EntityViews(NamespaceExtension):
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
 
 
-# Copyright (C) 2001-2006 Orbtech, L.L.C. and contributors
+# Copyright (C) 2001-2007 Orbtech, L.L.C. and contributors
 #
 # Schevo
 # http://schevo.org/

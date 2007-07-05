@@ -56,7 +56,7 @@ def start_hotshot():
     stats.print_stats(schevo_package_path, 50)
 
 
-# Copyright (C) 2001-2006 Orbtech, L.L.C.
+# Copyright (C) 2001-2007 Orbtech, L.L.C.
 #
 # Schevo
 # http://schevo.org/

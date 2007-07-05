@@ -214,7 +214,7 @@ def open(filename=None, schema_source=None, schema_version=None,
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
 
 
-# Copyright (C) 2001-2006 Orbtech, L.L.C.
+# Copyright (C) 2001-2007 Orbtech, L.L.C.
 #
 # Schevo
 # http://schevo.org/
