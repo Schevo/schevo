@@ -17,7 +17,7 @@ from schevo.query import ResultsIterator, ResultsList
 class Extent(base.Extent):
     """An extent of entity instances."""
 
-    def __init__(self, db, name, EntityClass):
+    def __init__(self, db, name, id, EntityClass):
         # Decorate the EntityClass.
         EntityClass._db = db
         EntityClass._extent = self
@@ -28,6 +28,7 @@ class Extent(base.Extent):
         self.db = db
         self.default_key = EntityClass._default_key
         self.field_spec = EntityClass._field_spec
+        self.id = id
         self.index_spec = EntityClass._index_spec
         self.initial = EntityClass._initial
         self.key_spec = EntityClass._key_spec

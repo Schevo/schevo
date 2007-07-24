@@ -35,6 +35,10 @@ class Query(base.Query):
     __metaclass__ = QueryMeta
 
     def __call__(self):
+        """Shortcut to get to `_query_results` method."""
+        return self._results()
+
+    def _results(self):
         """Return a `Results` instance based on the current state of
         this query."""
         return results(())
@@ -55,7 +59,7 @@ class Simple(Query):
         self._fn = fn
         self._label = label
 
-    def __call__(self):
+    def _results(self):
         return results(self._fn())
 
     def __unicode__(self):
@@ -155,7 +159,7 @@ class Exact(Param):
             field = field_map[name]
             field.assigned = True
 
-    def __call__(self):
+    def _results(self):
         return results(self._on.find(**self._criteria))
 
     @property
@@ -194,7 +198,7 @@ class Links(Query):
         self._other_extent = other_extent
         self._other_field_name = other_field_name
 
-    def __call__(self):
+    def _results(self):
         return results(self._entity.sys.links(
             self._other_extent, self._other_field_name))
 
@@ -292,7 +296,7 @@ class Match(Query):
         self.operator = operator
         self.value = value
 
-    def __call__(self):
+    def _results(self):
         on = self.on
         if isinstance(on, base.Query):
             on = on()
@@ -409,7 +413,7 @@ class Intersection(Query):
     def __init__(self, *queries):
         self.queries = list(queries)
 
-    def __call__(self):
+    def _results(self):
         assert log(1, 'called Intersection')
         resultset = None
         for query in self.queries:
@@ -497,7 +501,7 @@ class Union(Query):
     def __init__(self, *queries):
         self.queries = list(queries)
 
-    def __call__(self):
+    def _results(self):
         resultset = set()
         for query in self.queries:
             resultset.update(query())
@@ -518,7 +522,7 @@ class Group(Query):
         self.field_name = field_name
         self.FieldClass = FieldClass
 
-    def __call__(self):
+    def _results(self):
         field_name = self.field_name
         groups = {}
         for result in self.query():
@@ -541,7 +545,7 @@ class Min(Query):
         self.field_name = field_name
         self.FieldClass = FieldClass
 
-    def __call__(self):
+    def _results(self):
         def generator():
             field_name = self.field_name
             groups = self.query()
@@ -573,7 +577,7 @@ class Max(Query):
         self.field_name = field_name
         self.FieldClass = FieldClass
 
-    def __call__(self):
+    def _results(self):
         def generator():
             field_name = self.field_name
             groups = self.query()

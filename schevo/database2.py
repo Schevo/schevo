@@ -1255,7 +1255,7 @@ schevo.schema.prep(locals())
             for e_name in self.extent_names():
                 e_id = extent_name_id[e_name]
                 EntityClass = E[e_name]
-                extent = Extent(self, e_name, EntityClass)
+                extent = Extent(self, e_name, e_id, EntityClass)
                 extents[e_id] = extents[e_name] = extent
                 relaxed[e_name] = {}
                 entity_classes[e_id] = entity_classes[e_name] = EntityClass

@@ -305,7 +305,11 @@ class Field(base.Field):
         """Return a copy of this field that can be modified."""
         FieldClass = self.__class__
         new_field = FieldClass(None, None)
-        new_field.__dict__.update(self.__dict__)
+        try:
+            new_field.__dict__.update(self.__dict__)
+        except AttributeError:
+            for name in self.__slots__:
+                setattr(new_field, name, getattr(self, name))
         return new_field
 
     def db_equivalence_value(self, stop_entities):
@@ -1160,6 +1164,17 @@ class _EntityBase(Field):
         r = self.reversible
         return [(r(value), value) for value in values]
 
+    def _transform(self, transform_entity):
+        """Transforms, in place, the value of the field, using the
+        return value of `transform_entity(entity)` for each entity
+        that is in the field's value.
+
+        This is used by extension libraries such as SchevoPolicy.
+        """
+        value = self._value
+        if isinstance(value, EntityActual):
+            self._value = transform_entity(value)
+
     def validate(self, value):
         """Validate the value, raising an error on failure."""
         Field.validate(self, value)
@@ -1323,6 +1338,11 @@ class EntityList(_EntityBase):
     def reversible(self, value=None):
         return None
 
+    def _transform(self, transform_entity):
+        value = self._value
+        if isinstance(value, list):
+            self._value = [transform_entity(entity) for entity in value]
+
     def _unassign(self, member):
         value = self._value
         while member in value:
@@ -1428,6 +1448,11 @@ class EntitySet(_EntityBase):
     def reversible(self, value=None):
         return None
 
+    def _transform(self, transform_entity):
+        value = self._value
+        if isinstance(value, (set, frozenset)):
+            self._value = set(transform_entity(entity) for entity in value)
+
     def validate(self, value):
         """Validate the value, raising an error on failure."""
         if isinstance(value, (set, frozenset)):
@@ -1522,6 +1547,14 @@ class EntitySetSet(_EntityBase):
 
     def reversible(self, value=None):
         return None
+
+    def _transform(self, transform_entity):
+        value = self._value
+        if isinstance(value, (set, frozenset)):
+            self._value = set(
+                set(transform_entity(entity) for entity in inner_set)
+                for inner_set in value
+                )
 
     def validate(self, value):
         """Validate the value, raising an error on failure."""

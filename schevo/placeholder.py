@@ -16,7 +16,7 @@ class Placeholder(object):
 
     def __init__(self, entity):
         """Create a Placeholder instance based on `entity`."""
-        self.extent_id = entity._db._extent_name_id[entity._extent.name]
+        self.extent_id = entity._extent.id
         self.oid = entity._oid
         self.entity = entity
 
@@ -86,7 +86,7 @@ class Placeholder(object):
             # Use the attached entity if it's there; only foolishness
             # would result in it being the wrong one.
             return self.entity
-        extent = db.extent(db._extent_id_name[self.extent_id])
+        extent = db.extent(self.extent_id)
         oid = self.oid
         if oid in extent:
             entity = self.entity = extent[oid]
