@@ -201,9 +201,14 @@ class EntityMeta(type):
         """Create standard transaction classes."""
         # Fields in a transaction class defined in the schema appear
         # below the fields that come from the entity field spec.
-        for name in ('_Create', '_Delete', '_Update'):
-            # Create a subclass.
+        for name in dir(cls):
             OldClass = getattr(cls, name)
+            if not isinstance(OldClass, type):
+                continue
+            if not issubclass(OldClass, (transaction.Create,
+                                         transaction.Delete,
+                                         transaction.Update)):
+                continue
             NewClass = type(name, (OldClass,), {})
             NewClass._EntityClass = cls
             NewClass._extent_name = class_name

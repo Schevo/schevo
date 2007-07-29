@@ -11,9 +11,14 @@
 Overview
 ========
 
-When overriding the default implementations of Create, Delete, and Update
-transactions for entity classes in a schema, there are hooks that make it
-easy to change specific behavior.
+Transaction hooks make it easy to change specific behavior of default
+transaction classes.  You can customize the following behaviors:
+
+* Setup of a transaction instance.
+
+* What happens just before standard transaction execution.
+
+* What happens just after standard transaction execution.
 
 
 Doctest Setup
@@ -44,6 +49,21 @@ in the ``T`` namespace.  For example::
             ...
 		    
         class _Update(T.Update):
+            ...
+
+You can also create custom transactions that have names that differ
+from the standard ones shown above.  Remember to set up a `t` method
+so you can create instances of your new transaction::
+
+    class Foo(E.Entity):
+
+        bar = f.unicode()
+        count = f.integer()
+
+        def t_custom_update(self, **kw):
+            return E.Foo._CustomUpdate(self, **kw)
+
+        class _CustomUpdate(T.Update):
             ...
 
 
