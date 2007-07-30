@@ -129,7 +129,7 @@ class BaseDecoration(CreatesSchema):
             tx = T.Transfer()
             tx.from_account = self
             tx.f.from_account.readonly = True
-            tx._label = 'Transfer Funds From %s' % self
+            relabel(tx, 'Transfer Funds From %s' % self)
             return tx
 
         _sample_unittest = [
@@ -340,7 +340,7 @@ class BaseDecoration(CreatesSchema):
         # This label is assigned automatically.
         assert label.label(db) == 'Schevo Database'
         # It can be easily overridden.
-        db.label = 'Custom Label'
+        label.relabel(db, 'Custom Label')
         assert label.label(db) == 'Custom Label'
 
     def test_extent_decoration(self):

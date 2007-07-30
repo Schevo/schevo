@@ -23,6 +23,7 @@ __all__ = [
     'UNASSIGN',
     'UNASSIGNED',
     'extentmethod',
+    'relabel',
     'schevo',  # And, indirectly, 'schevo.error'.
     'with_label',
     ]
@@ -41,7 +42,7 @@ from schevo.constant import (
     UNASSIGN,
     UNASSIGNED,
     )
-from schevo.label import with_label
+from schevo.label import relabel, with_label
 
 import schevo.base
 import schevo.entity

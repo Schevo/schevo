@@ -81,6 +81,11 @@ def with_label(label, plural=None):
     return label_decorator
 
 
+def relabel(obj, new_label):
+    """Relabel an object with a new label."""
+    obj._label = new_label
+
+
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
 
 

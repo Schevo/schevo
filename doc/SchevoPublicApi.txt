@@ -69,6 +69,26 @@ Database instances
 ==================
 
 
+Database labels
+---------------
+
+By default, a database instance is labeled "Schevo Database"::
+
+    >>> from schevo.label import label, relabel
+    >>> t = DocTest("""
+    ...     class Foo(E.Entity):
+    ...         pass
+    ...     """)
+    >>> print label(t.db)
+    Schevo Database
+
+Override the label by using `relabel`::
+
+    >>> relabel(t.db, 'My Database')
+    >>> print label(t.db)
+    My Database
+
+
 Extent instances
 ================
 
@@ -102,6 +122,42 @@ execution, call `enforce_index`::
     db.Foo.enforce_index('field1', 'field2')
 
 See the ``tests/test_relax_index.py`` test case for code examples.
+
+
+Extent labels
+-------------
+
+By default, an extent has a singular and plural label based on the
+entity class name associated with the extent::
+
+    >>> from schevo.label import label, plural
+    >>> t = DocTest("""
+    ...     class GreatPerson(E.Entity):
+    ...
+    ...         name = f.unicode()
+    ...     """)
+    >>> print label(t.db.GreatPerson)
+    Great Person
+    >>> print plural(t.db.GreatPerson)
+    Great Persons
+
+To override the singular and/or plural labels of an extent, assign
+values to the `_label` and/or `_plural` attributes of the associated
+entity class::
+
+    >>> from schevo.label import label, plural
+    >>> t = DocTest("""
+    ...     class GreatPerson(E.Entity):
+    ...      
+    ...         name = f.unicode()
+    ...
+    ...         _label = 'Great PERSON'
+    ...         _plural = 'Great PEOPLE'
+    ...     """)
+    >>> print label(t.db.GreatPerson)
+    Great PERSON
+    >>> print plural(t.db.GreatPerson)
+    Great PEOPLE
 
 
 Entity instances
@@ -138,6 +194,101 @@ be a list of Entity instances in that extent where that field's value
 is the calling entity::
 
   # Doctest to go here.
+
+
+Entity labels
+-------------
+
+The `label` of an entity instance is the same as the `unicode`
+representation of the entity instance.
+
+By default, the label is determined by the default key defined in the
+entity class::
+
+    >>> from schevo.label import label
+    >>> t = DocTest("""
+    ...     class State(E.Entity):
+    ...     
+    ...         name = f.unicode()
+    ...         abbreviation = f.unicode()
+    ...         
+    ...         _key(name)
+    ...         _key(abbreviation)
+    ...         
+    ...         _initial = [
+    ...             ('Missouri', 'MO'),
+    ...             ]
+    ...     """)
+    >>> missouri = t.db.State.findone(name='Missouri')
+    >>> print label(missouri)
+    Missouri
+
+If the key has more than one field, the values are separated by two
+colons::
+
+    >>> t = DocTest("""
+    ...     class City(E.Entity):
+    ...
+    ...         name = f.unicode()
+    ...         state = f.entity('State')
+    ...         
+    ...         _key(name, state)
+    ...
+    ...         _initial = [
+    ...             ('Monett', ('Missouri',)),
+    ...             ]
+    ...
+    ...     class State(E.Entity):
+    ...     
+    ...         name = f.unicode()
+    ...         abbreviation = f.unicode()
+    ...         
+    ...         _key(name)
+    ...         _key(abbreviation)
+    ...         
+    ...         _initial = [
+    ...             ('Missouri', 'MO'),
+    ...             ]
+    ...     """)
+    >>> missouri = t.db.State.findone(name='Missouri')
+    >>> monett = t.db.City.findone(name='Monett', state=missouri)
+    >>> print label(monett)
+    Monett :: Missouri
+
+Override the `__unicode__` method of an entity class to customize the
+label::
+
+    >>> t = DocTest("""
+    ...     class City(E.Entity):
+    ...
+    ...         name = f.unicode()
+    ...         state = f.entity('State')
+    ...         
+    ...         _key(name, state)
+    ...
+    ...         def __unicode__(self):
+    ...             return u'%s, %s' % (self.name, self.state.abbreviation)
+    ...
+    ...         _initial = [
+    ...             ('Monett', ('Missouri',)),
+    ...             ]
+    ...
+    ...     class State(E.Entity):
+    ...     
+    ...         name = f.unicode()
+    ...         abbreviation = f.unicode()
+    ...         
+    ...         _key(name)
+    ...         _key(abbreviation)
+    ...
+    ...         _initial = [
+    ...             ('Missouri', 'MO'),
+    ...             ]
+    ...     """)
+    >>> missouri = t.db.State.findone(name='Missouri')
+    >>> monett = t.db.City.findone(name='Monett', state=missouri)
+    >>> print label(monett)
+    Monett, MO
 
 
 Entity placeholders
