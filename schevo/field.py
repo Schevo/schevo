@@ -1484,8 +1484,11 @@ class EntitySetSet(_EntityBase):
     def convert(self, value, db=None):
         if isinstance(value, (set, frozenset)):
             new_values = set()
-            for item in value:
-                new_values.add(super(EntitySetSet, self).convert(item, db))
+            for items in value:
+                new_items = set()
+                for item in items:
+                    new_items.add(super(EntitySetSet, self).convert(item, db))
+                new_values.add(frozenset(new_items))
             value = frozenset(new_values)
         else:
             value = super(EntitySetSet, self).convert(value, db)
@@ -1552,8 +1555,8 @@ class EntitySetSet(_EntityBase):
         value = self._value
         if isinstance(value, (set, frozenset)):
             self._value = set(
-                set(transform_entity(entity) for entity in inner_set)
-                for inner_set in value
+                frozenset(transform_entity(entity) for entity in item_set)
+                for item_set in value
                 )
 
     def validate(self, value):
