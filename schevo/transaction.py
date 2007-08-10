@@ -185,6 +185,26 @@ class Combination(Transaction):
         return results
 
 
+def _resolve(db, value, error_msg):
+    """Support function for Create transactions to resolve entity
+    references originating in a different database."""
+    if isinstance(value, base.Entity) and value._db is not db:
+        entity = value
+        if entity._default_key is not None:
+            extent_name = entity.sys.extent.name
+            if hasattr(db, extent_name):
+                extent = getattr(db, extent_name)
+                criteria = dict(
+                    [(name, _resolve(db, getattr(entity, name), error_msg))
+                     for name in entity._default_key])
+                value = extent.findone(**criteria)
+                if value is not None:
+                    return value
+        raise DatabaseMismatch(error_msg)
+    else:
+        return value
+
+
 _Create_Standard = 0
 _Create_If_Necessary = 1
 
@@ -238,21 +258,9 @@ class Create(Transaction):
         # information contained in the foreign entity.
         msg = '"%s" field of "%s" cannot be resolved to the current database'
         for field_name, field in field_map.iteritems():
-            entity = field._value
-            if isinstance(entity, base.Entity) and entity._db is not db:
-                resolved = False
-                if entity._default_key is not None:
-                    extent_name = entity.sys.extent.name
-                    if hasattr(db, extent_name):
-                        extent = getattr(db, extent_name)
-                        criteria = dict([(name, getattr(entity, name))
-                                         for name in entity._default_key])
-                        value = extent.findone(**criteria)
-                        if value is not None:
-                            field._value = value
-                            resolved = True
-                if not resolved:
-                    raise DatabaseMismatch(msg % (field_name, entity))
+            field_value = field._value
+            error_msg = msg % (field_name, field_value)
+            field._value = _resolve(db, field_value, error_msg)
         # Before execute callback.
         self._before_execute(db)
         # Validate individual fields.
