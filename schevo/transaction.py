@@ -201,16 +201,18 @@ class Create(Transaction):
     def __init__(self, *args, **kw):
         Transaction.__init__(self)
         field_map = self._field_map
-        # Look for matching values in args.
-        for field_name, field in field_map.iteritems():
-            for arg in args:
-                if hasattr(arg, field_name):
-                    value = getattr(arg, field_name)
-                    setattr(self, field_name, value)
+        # Call setup, which may remove fields from this transaction.
+        self._setup()
         # Assign values supplied by kw.
         for name, value in kw.iteritems():
             setattr(self, name, value)
-        self._setup()
+        # Look for matching field values in objects passed as args.
+        for field_name, field in field_map.iteritems():
+            if not field.assigned and not field.readonly:
+                for arg in args:
+                    if hasattr(arg, field_name):
+                        value = getattr(arg, field_name)
+                        setattr(self, field_name, value)
         # Assign default values for fields that haven't yet been
         # assigned a value.
         for field in field_map.itervalues():
