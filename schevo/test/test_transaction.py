@@ -584,8 +584,8 @@ class BaseTransaction(CreatesSchema):
                 db.execute(person.t.delete())
         gender = db.Gender.findone(code='M')
         db.execute(gender.t.delete())
-        tx = db.Person.t.create(john, name='Other Guy')
-        assert raises(error.DatabaseMismatch, db.execute, tx)
+        assert raises(error.DatabaseMismatch,
+                      db.Person.t.create, john, name='Other Guy')
 
     def test_create_with_fget(self):
         tx = db.Gender.t.create()

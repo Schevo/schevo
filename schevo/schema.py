@@ -168,6 +168,24 @@ def finish(db, schema_module=None):
         EntityClass = schema_def.E[entity_name]
         for FieldClass in EntityClass._field_spec.itervalues():
             FieldClass.readonly = True
+    # Decorate all Transaction classes with the current database.
+    for transaction_name in schema_def.T:
+        TransactionClass = schema_def.T[transaction_name]
+        TransactionClass._db = db
+    # Decorate all Entity transaction classes with the current database.
+    for entity_name in schema_def.E:
+        EntityClass = schema_def.E[entity_name]
+        for v in EntityClass.__dict__.itervalues():
+            if (inspect.isclass(v)
+                and issubclass(v, schevo.transaction.Transaction)):
+                v._db = db
+    # Decorate all View transaction classes with the current database.
+    for view_name in schema_def.V:
+        ViewClass = schema_def.V[view_name]
+        for v in ViewClass.__dict__.itervalues():
+            if (inspect.isclass(v)
+                and issubclass(v, schevo.transaction.Transaction)):
+                v._db = db
     # Add relationship metadata to each Entity class.
     for parent, spec in schema_def.relationships.iteritems():
         E = schema_def.E

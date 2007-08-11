@@ -1102,21 +1102,44 @@ class _EntityBase(Field):
         instance = self._instance
         if instance is None:
             return Field.convert(self, value, db)
-        else:
-            if value is UNASSIGNED:
-                return value
-            if isinstance(value, basestring):
-                if value == '':
-                    return UNASSIGNED
-                else:
-                    try:
-                        name, oid = value.split('-')
-                        oid = int(oid)
-                        return db.extent(name)[oid]
-                    except (AttributeError, KeyError, IndexError, ValueError):
-                        return UNASSIGNED
+        if value is UNASSIGNED:
+            return value
+        if isinstance(value, basestring):
+            if value == '':
+                return UNASSIGNED
             else:
-                return value
+                try:
+                    name, oid = value.split('-')
+                    oid = int(oid)
+                    return db.extent(name)[oid]
+                except (AttributeError, KeyError, IndexError, ValueError):
+                    return UNASSIGNED
+        if isinstance(self._instance, base.Transaction):
+            msg = ('"%s" field of "%s" cannot be resolved to '
+                   'the current database')
+            error_msg = msg % (self._name, value)
+            return self._db_resolve(self._instance._db, value, error_msg)
+        return value
+
+    def _db_resolve(self, db, value, error_msg):
+        """Resolve entity references originating in a different
+        database."""
+        if isinstance(value, base.Entity) and value._db is not db:
+            entity = value
+            if entity._default_key is not None:
+                extent_name = entity.sys.extent.name
+                if hasattr(db, extent_name):
+                    extent = getattr(db, extent_name)
+                    criteria = dict(
+                        [(name, self._db_resolve(db, getattr(entity, name),
+                                                 error_msg))
+                         for name in entity._default_key])
+                    value = extent.findone(**criteria)
+                    if value is not None:
+                        return value
+            raise schevo.error.DatabaseMismatch(error_msg)
+        else:
+            return value
 
     def _dump(self):
         """Return a value suitable for storage in a database."""
@@ -1246,7 +1269,7 @@ class EntityList(_EntityBase):
     allow_unassigned = False
 
     def convert(self, value, db=None):
-        if isinstance(value, list):
+        if isinstance(value, (list, tuple)):
             new_values = []
             for item in value:
                 new_values.append(super(EntityList, self).convert(item, db))
