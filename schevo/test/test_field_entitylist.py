@@ -13,11 +13,21 @@ from schevo.error import KeyCollision
 class BaseFieldEntityList(CreatesSchema):
 
     body = '''
+
+        def default_foo_list():
+            foo = db.Foo.findone(name='default foo')
+            return [foo]
+
+
         class Foo(E.Entity):
 
             name = f.unicode()
 
             _key(name)
+
+            _initial = [
+                ('default foo', ),
+                ]
 
 
         class Bar(E.Entity):
@@ -36,7 +46,8 @@ class BaseFieldEntityList(CreatesSchema):
 
         class Bee(E.Entity):
 
-            foo_list = f.entity_list('Foo', allow_duplicates=False)
+            foo_list = f.entity_list('Foo', allow_duplicates=False,
+                                     default=default_foo_list)
 
             _key(foo_list)
             

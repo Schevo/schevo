@@ -1072,8 +1072,7 @@ class _EntityBase(Field):
         elif kw_allow is ANY:
             kw_allow = [ANY]
         cls._init_args(kw_allow)
-        for name, value in kw.iteritems():
-            setattr(cls, name, value)
+        super(_EntityBase, cls)._init_kw(kw)
 
     @classmethod
     def _init_args(cls, args):

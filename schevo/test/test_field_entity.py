@@ -11,6 +11,9 @@ class BaseEntity(CreatesSchema):
 
     body = '''
 
+    def default_bar():
+        return db.Bar.findone(stuff=1) or UNASSIGNED
+
     class Foo(E.Entity):
 
         thing = f.string()
@@ -25,6 +28,8 @@ class BaseEntity(CreatesSchema):
 
         stuff = f.integer()
 
+        _key(stuff)
+
         _sample_unittest = [
             (1, ),
             (2, ),
@@ -34,7 +39,7 @@ class BaseEntity(CreatesSchema):
     class Baz(E.Entity):
 
         foo = f.entity('Foo')
-        bar = f.entity('Bar')
+        bar = f.entity('Bar', default=default_bar)
         foobar = f.entity('Foo', 'Bar', required=False)
     '''
 
