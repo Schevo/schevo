@@ -97,6 +97,7 @@ setup(
 
     dependency_links = [
     'http://schevo.org/files/thirdparty/',
+    'http://schevo.org/wiki/SchevoDurus',
     ],
 
     ext_modules = [
