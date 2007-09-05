@@ -63,10 +63,14 @@ class BaseRelaxIndex(CreatesSchema):
 
 class TestRelaxIndex1(BaseRelaxIndex):
 
+    include = True
+
     format = 1
 
 
 class TestRelaxIndex2(BaseRelaxIndex):
+
+    include = True
 
     format = 2
 

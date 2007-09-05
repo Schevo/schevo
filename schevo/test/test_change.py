@@ -464,30 +464,42 @@ class BaseDistributor(CreatesSchema):
 
 class TestChangeset1(BaseChangeset):
 
+    include = True
+
     format = 1
 
 
 class TestChangeset2(BaseChangeset):
+
+    include = True
 
     format = 2
 
 
 class TestExecuteNotification1(BaseExecuteNotification):
 
+    include = True
+
     format = 1
 
 
 class TestExecuteNotification2(BaseExecuteNotification):
+
+    include = True
 
     format = 2
 
 
 class TestDistributor1(BaseDistributor):
 
+    include = True
+
     format = 1
 
 
 class TestDistributor2(BaseDistributor):
+
+    include = True
 
     format = 2
 

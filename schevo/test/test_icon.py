@@ -49,10 +49,14 @@ class BaseFsIconMap(CreatesSchema):
 
 class TestFsIconMap1(BaseFsIconMap):
 
+    include = True
+
     format = 1
 
 
 class TestFsIconMap2(BaseFsIconMap):
+
+    include = True
 
     format = 2
 

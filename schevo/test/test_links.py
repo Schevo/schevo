@@ -196,10 +196,14 @@ class BaseLinks(CreatesSchema):
 
 class TestLinks1(BaseLinks):
 
+    include = True
+
     format = 1
 
 
 class TestLinks2(BaseLinks):
+
+    include = True
 
     format = 2
 

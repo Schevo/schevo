@@ -25,10 +25,14 @@ class BaseExtentMethod(CreatesSchema):
 
 class TestExtentMethod1(BaseExtentMethod):
 
+    include = True
+
     format = 1
 
 
 class TestExtentMethod2(BaseExtentMethod):
+
+    include = True
 
     format = 2
 

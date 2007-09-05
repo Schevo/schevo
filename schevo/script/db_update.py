@@ -76,7 +76,11 @@ class Update(Command):
         if not os.path.isfile(db_filename):
             parser.error('DBFILE must be an existing database.')
         print 'Opening database...'
-        db = schevo.database.open(db_filename)
+        db = schevo.database.open(
+            filename = db_filename,
+            backend_name = options.backend_name,
+            backend_args = options.backend_args,
+            )
         print 'Current database version is %i.' % db.version
         try:
             schema_source = schevo.schema.read(schema_path, version=db.version)

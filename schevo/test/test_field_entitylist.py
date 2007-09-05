@@ -1,3 +1,4 @@
+
 """EntityList field unit tests.
 
 For copyright, license, and warranty, see bottom of file.
@@ -147,6 +148,8 @@ class BaseFieldEntityList(CreatesSchema):
 
 
 class TestFieldEntityList2(BaseFieldEntityList):
+
+    include = True
 
     format = 2
 

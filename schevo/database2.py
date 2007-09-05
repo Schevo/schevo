@@ -27,22 +27,17 @@ from schevo.namespace import NamespaceExtension
 from schevo.placeholder import Placeholder
 import schevo.schema
 from schevo.signal import TransactionExecuted
-from schevo.store.btree import BTree
-from schevo.store.persistent_dict import PersistentDict as PDict
-from schevo.store.persistent_list import PersistentList as PList
 from schevo.trace import log
 from schevo.transaction import (
     CallableWrapper, Combination, Initialize, Populate, Transaction)
 
 
 class Database(base.Database):
-    """Schevo database, format 2, using schevo.store as an object store.
+    """Schevo database, format 2.
 
     See doc/SchevoInternalDatabaseStructures.txt for detailed information on
     data structures.
     """
-
-    label = 'Schevo Database'
 
     # By default, don't dispatch signals.  Set to True to dispatch
     # TransactionExecuted signals.
@@ -52,16 +47,19 @@ class Database(base.Database):
     read_lock = dummy_lock
     write_lock = dummy_lock
 
-    def __init__(self, connection):
+    def __init__(self, backend):
         """Create a database.
 
-        - `connection`: The Durus connection to use.
+        - `backend`: The storage backend instance to use.
         """
-        self.connection = connection
-        self._root = connection.get_root()
+        self.backend = backend
+        self._BTree = backend.BTree
+        self._PDict = backend.PDict
+        self._PList = backend.PList
+        self._root = backend.get_root()
         # Shortcuts to coarse-grained commit and rollback.
-        self._commit = connection.commit
-        self._rollback = connection.abort
+        self._commit = backend.commit
+        self._rollback = backend.rollback
         # Keep track of schema modules remembered.
         self._remembered = []
         # Initialization.
@@ -97,8 +95,7 @@ class Database(base.Database):
             assert log(2, 'Stopping', p)
             p.pop().close()
         assert log(1, 'Closing storage.')
-        self.connection.storage.close()
-        del self.connection
+        self.backend.close()
         remembered = self._remembered
         while remembered:
             module.forget(remembered.pop())
@@ -226,7 +223,7 @@ class Database(base.Database):
     def pack(self):
         """Pack the database."""
         if os.environ.get('SCHEVO_NOPACK', '').strip() != '1':
-            self.connection.pack()
+            self.backend.pack()
 
     def populate(self, sample_name=''):
         """Populate the database with sample data."""
@@ -244,6 +241,24 @@ class Database(base.Database):
     @property
     def version(self):
         return self._root['SCHEVO']['version']
+
+    def _get_label(self):
+        SCHEVO = self._root['SCHEVO']
+        if 'label' not in SCHEVO:
+            # Older database, no label stored in it.
+            return u'Schevo Database'
+        else:
+            return SCHEVO['label']
+
+    def _set_label(self, new_label):
+        if self._executing:
+            raise error.DatabaseExecutingTransaction(
+                'Cannot change database label while executing a transaction.')
+        self._root['SCHEVO']['label'] = unicode(new_label)
+        self._commit()
+
+    label = property(_get_label, _set_label)
+    _label = property(_get_label, _set_label)
 
     def _append_change(self, typ, extent_name, oid):
         executing = self._executing
@@ -326,6 +341,8 @@ class Database(base.Database):
         ia_append = indices_added.append
         links_created = []
         lc_append = links_created.append
+        BTree = self._BTree
+        PDict = self._PDict
         try:
             if oid is None:
                 oid = extent_map['next_oid']
@@ -368,7 +385,8 @@ class Database(base.Database):
                     txns, relaxed = relaxed_specs[index_spec]
                 else:
                     relaxed = None
-                _index_add(extent_map, index_spec, relaxed, oid, field_values)
+                _index_add(extent_map, index_spec, relaxed, oid, field_values,
+                           BTree)
                 ia_append((extent_map, index_spec, oid, field_values))
             # Update links from this entity to another entity.
             referrer_extent_id = extent_name_id[extent_name]
@@ -437,7 +455,7 @@ class Database(base.Database):
                             for del_entity_cls, del_oid in tx._deletes])
             deletes.update([(extent_name_id[del_entity_cls.__name__], del_oid)
                             for del_entity_cls, del_oid in tx._known_deletes])
-        for (other_extent_id, other_field_id), others in links.items():
+        for (other_extent_id, other_field_id), others in links.iteritems():
             for other_oid in others:
                 if (other_extent_id, other_oid) in deletes:
                     continue
@@ -471,7 +489,8 @@ class Database(base.Database):
                     link_key = (referrer_extent_id, referrer_field_id)
                     other_extent_map = extent_maps_by_id[other_extent_id]
                     if other_oid in other_extent_map['entities']:
-                        other_entity_map = other_extent_map['entities'][other_oid]
+                        other_entity_map = other_extent_map[
+                            'entities'][other_oid]
                         links = other_entity_map['links']
                         other_links = links[link_key]
                         # The following check is due to scenarios like this:
@@ -527,8 +546,10 @@ class Database(base.Database):
             txns.remove(current_txn)
         # If no more transactions have relaxed this index, enforce it.
         if not txns:
+            BTree = self._BTree
             for _extent_map, _index_spec, _oid, _field_values in added:
-                _index_validate(_extent_map, _index_spec, _oid, _field_values)
+                _index_validate(_extent_map, _index_spec, _oid, _field_values,
+                                BTree)
 
     def _entity(self, extent_name, oid):
         """Return the entity instance."""
@@ -598,8 +619,8 @@ class Database(base.Database):
             # for our use but is faster and will stay empty anyway.
             btree = entity_links.get(key, {})
             if return_count:
-                count = len(btree.keys()) # XXX Optimization opportunity.
-                assert log(2, 'returning len(btree.keys())', count)
+                count = len(btree)
+                assert log(2, 'returning len(btree)', count)
                 return count
             else:
                 EntityClass = entity_classes[other_extent_name]
@@ -630,7 +651,7 @@ class Database(base.Database):
                 assert log(2, 'Skipping', other_extent_name)
                 continue
             if return_count:
-                links += len(btree.keys()) # XXX: Optimization opportunity.
+                links += len(btree)
             else:
                 other_field_name = other_extent_map['field_id_name'][
                     other_field_id]
@@ -694,13 +715,10 @@ class Database(base.Database):
         if not criteria:
             # Return all of them.
             assert log(2, 'Return all oids.')
-            return entity_maps.keys()
+            return list(entity_maps.keys())
         extent_name_id = self._extent_name_id
         indices = extent_map['indices']
-        assert log(3, 'indices.keys()', indices.keys())
         normalized_index_map = extent_map['normalized_index_map']
-        assert log(3, 'normalized_index_map.keys()',
-                   normalized_index_map.keys())
         field_name_id = extent_map['field_name_id']
         # Convert from field_name:value to field_id:value.
         field_id_value = {}
@@ -745,14 +763,13 @@ class Database(base.Database):
                 field_value = field_id_value[field_id]
                 if field_value not in branch:
                     # No matches found.
-                    assert log(3, field_value, 'not found in', branch.keys())
                     match = False
                     break
                 branch = branch[field_value]
             if match:
                 # Now we're at a leaf that matches all of the
                 # criteria, so return the OIDs in that leaf.
-                results = branch.keys()
+                results = list(branch.keys())
         else:
             # Fields aren't indexed, so use brute force.
             assert log(2, 'Use brute force.')
@@ -833,6 +850,7 @@ class Database(base.Database):
         nl_append = new_links.append
         lc_append = links_created.append
         ld_append = links_deleted.append
+        BTree = self._BTree
         try:
             # Get old values for use in a potential inversion.
             old_fields = self._entity_fields(extent_name, oid)
@@ -840,7 +858,7 @@ class Database(base.Database):
                 extent_name, oid)
             old_rev = entity_map['rev']
             # Manage entity references.
-            for name, related_entity_set in related_entities.items():
+            for name, related_entity_set in related_entities.iteritems():
                 field_id = field_name_id[name]
                 for placeholder in related_entity_set:
                     other_extent_id = placeholder.extent_id
@@ -902,7 +920,8 @@ class Database(base.Database):
                     txns, relaxed = relaxed_specs[index_spec]
                 else:
                     relaxed = None
-                _index_add(extent_map, index_spec, relaxed, oid, field_values)
+                _index_add(extent_map, index_spec, relaxed, oid, field_values,
+                           BTree)
                 ia_append((extent_map, index_spec, oid, field_values))
             # Update links from this entity to another entity.
             referrer_extent_id = extent_name_id[extent_name]
@@ -946,7 +965,7 @@ class Database(base.Database):
             for _e, _i, _o, _f in indices_added:
                 _index_remove(_e, _i, _o, _f)
             for _e, _i, _r, _o, _f in indices_removed:
-                _index_add(_e, _i, _r, _o, _f)
+                _index_add(_e, _i, _r, _o, _f, BTree)
             for other_entity_map, links, link_key, oid in links_created:
                 del links[link_key][oid]
                 other_entity_map['link_count'] -= 1
@@ -958,6 +977,9 @@ class Database(base.Database):
     def _create_extent(self, extent_name, field_names, entity_field_names,
                       key_spec=None, index_spec=None):
         """Create a new extent with a given name."""
+        BTree = self._BTree
+        PList = self._PList
+        PDict = self._PDict
         if extent_name in self._extent_maps_by_name:
             raise error.ExtentExists('%r already exists.' % extent_name)
         if key_spec is None:
@@ -968,7 +990,8 @@ class Database(base.Database):
         extent_id = self._unique_extent_id()
         indices = extent_map['indices'] = PDict()
         extent_map['index_map'] = PDict()
-        normalized_index_map = extent_map['normalized_index_map'] = PDict()
+        normalized_index_map = extent_map[
+            'normalized_index_map'] = PDict()
         extent_map['entities'] = BTree()
         field_id_name = extent_map['field_id_name'] = PDict()
         field_name_id = extent_map['field_name_id'] = PDict()
@@ -988,14 +1011,14 @@ class Database(base.Database):
         # index structures.
         for field_names in key_spec:
             i_spec = _field_ids(extent_map, field_names)
-            _create_index(extent_map, i_spec, True)
+            _create_index(extent_map, i_spec, True, BTree, PList)
         # Convert field names to field IDs in index spec and create
         # index structures.
         for field_names in index_spec:
             i_spec = _field_ids(extent_map, field_names)
             # Although we tell it unique=False, it may find a subset
             # key, which will cause this superset to be unique=True.
-            _create_index(extent_map, i_spec, False)
+            _create_index(extent_map, i_spec, False, BTree, PList)
         # Convert field names to field IDs for entity field names.
         extent_map['entity_field_ids'] = _field_ids(
             extent_map, entity_field_names)
@@ -1013,7 +1036,8 @@ class Database(base.Database):
     def _create_schevo_structures(self):
         """Create or update Schevo structures in the database."""
         root = self._root
-        if 'SCHEVO' not in root.keys():
+        PDict = self._PDict
+        if 'SCHEVO' not in root:
             schevo = root['SCHEVO'] = PDict()
             schevo['format'] = 2
             schevo['version'] = 0
@@ -1138,7 +1162,7 @@ class Database(base.Database):
                 referrer_key = (extent_id, field_id)
                 if referrer_key in other_links:
                     referrers = other_links[referrer_key]
-                    other_link_count -= len(referrers.keys())
+                    other_link_count -= len(referrers)
                     del other_links[referrer_key]
                 other_entity['link_count'] = other_link_count
 
@@ -1211,17 +1235,6 @@ class Database(base.Database):
                 schema = old_schema
                 schema_module = old_schema_module
             else:
-                # XXX
-                # Temporary code to deal with older schemata.
-                schema_source = schema_source.replace("""\
-from schevo import *
-from schevo.namespace import schema_prep
-schema_prep(locals())
-""", """\
-from schevo.schema import *
-schevo.schema.prep(locals())
-""")
-                # /XXX
                 schema_module = None
                 schevo.schema.start(self, evolving)
                 locked = True
@@ -1275,7 +1288,6 @@ schevo.schema.prep(locals())
             elif schema_version is not None:
                 # Do not allow schema_version to differ from existing version if
                 # opening an existing database.
-                print SCHEVO['version'], schema_version
                 if SCHEVO['version'] != schema_version:
                     raise ValueError(
                         'Existing database; schema_version must be set to None '
@@ -1442,24 +1454,6 @@ schevo.schema.prep(locals())
             if field_id not in field_id_name:
                 return field_id
 
-## This is how Zope does it:
-
-##     def _generateId(self):
-##         """Generate an id which is not yet taken.
-
-##         This tries to allocate sequential ids so they fall into the
-##         same BTree bucket, and randomizes if it stumbles upon a
-##         used one.
-##         """
-##         while True:
-##             if self._v_nextid is None:
-##                 self._v_nextid = random.randint(0, 2**31)
-##             uid = self._v_nextid
-##             self._v_nextid += 1
-##             if uid not in self.refs:
-##                 return uid
-##             self._v_nextid = None
-
     def _update_extent_maps_by_name(self):
         extent_maps_by_name = self._extent_maps_by_name = {}
         for extent in self._extent_maps_by_id.itervalues():
@@ -1474,6 +1468,8 @@ schevo.schema.prep(locals())
                         for field_names in key_spec]
         index_spec_ids = [_field_ids(extent_map, field_names)
                           for field_names in index_spec]
+        BTree = self._BTree
+        PList = self._PList
         # Convert key indices that have been changed to non-unique
         # incides.
         for i_spec in index_spec_ids:
@@ -1484,24 +1480,27 @@ schevo.schema.prep(locals())
         for i_spec in key_spec_ids:
             if i_spec not in indices:
                 # Create a new unique index and populate it.
-                _create_index(extent_map, i_spec, True)
+                _create_index(
+                    extent_map, i_spec, True, BTree, PList)
                 for oid in entities:
                     fields_by_id = entities[oid]['fields']
                     field_values = tuple(fields_by_id.get(field_id, UNASSIGNED)
                                          for field_id in i_spec)
-                    _index_add(extent_map, i_spec, None, oid, field_values)
+                    _index_add(extent_map, i_spec, None, oid, field_values,
+                               BTree)
         # Create new non-unique indices for those that don't exist.
         for i_spec in index_spec_ids:
             if i_spec not in indices:
                 # Create a new non-unique index and populate it.
-                _create_index(extent_map, i_spec, False)
+                _create_index(extent_map, i_spec, False, BTree, PList)
                 for oid in entities:
                     fields_by_id = entities[oid]['fields']
                     field_values = tuple(fields_by_id.get(field_id, UNASSIGNED)
                                          for field_id in i_spec)
-                    _index_add(extent_map, i_spec, None, oid, field_values)
+                    _index_add(extent_map, i_spec, None, oid, field_values,
+                               BTree)
         # Remove key indices that no longer exist.
-        to_remove = set(indices.keys()) - set(key_spec_ids + index_spec_ids)
+        to_remove = set(indices) - set(key_spec_ids + index_spec_ids)
         for i_spec in to_remove:
             _delete_index(extent_map, i_spec)
         # Check non-unique indices to see if any are supersets of
@@ -1509,7 +1508,7 @@ schevo.schema.prep(locals())
         # validate them.
         #
         # XXX: Needs testing.
-        for i_spec, (unique, branch) in indices.items():
+        for i_spec, (unique, branch) in list(indices.items()):
             # Look for unique index supersets of this index, and make
             # it unique if any exist.
             if not unique:
@@ -1526,7 +1525,8 @@ schevo.schema.prep(locals())
                         fields_by_id = entities[oid]['fields']
                         field_values = tuple(fields_by_id[field_id]
                                              for field_id in i_spec)
-                        _index_validate(extent_map, i_spec, oid, field_values)
+                        _index_validate(extent_map, i_spec, oid, field_values,
+                                        BTree)
 
     def _validate_changes(self, changes):
         # Here we are applying rules defined by the entity itself, not
@@ -1548,13 +1548,14 @@ schevo.schema.prep(locals())
 
         NOT INDENDED FOR GENERAL USE.
         """
+        BTree = self._BTree
         for extent_name in self.extent_names():
             extent_map = self._extent_map(extent_name)
             extent_map['entities'] = BTree()
             extent_map['len'] = 0
             extent_map['next_oid'] = 1
             indices = extent_map['indices']
-            for index_spec, (unique, index_tree) in indices.items():
+            for index_spec, (unique, index_tree) in list(indices.items()):
                 indices[index_spec] = (unique, BTree())
         self._commit()
         self.dispatch = Database.dispatch
@@ -1563,7 +1564,7 @@ schevo.schema.prep(locals())
         self._on_open()
 
 
-def _create_index(extent_map, index_spec, unique):
+def _create_index(extent_map, index_spec, unique, BTree, PList):
     """Create a new index in the extent with the given spec and
     uniqueness flag."""
     assert log(1, extent_map['name'])
@@ -1582,7 +1583,8 @@ def _create_index(extent_map, index_spec, unique):
                 break
     # Continue with index creation.
     assert log(2, 'unique', unique)
-    assert log(2, 'normalized_index_map.keys()', normalized_index_map.keys())
+    assert log(
+        2, 'normalized_index_map.keys()', list(normalized_index_map.keys()))
     partial_specs = _partial_index_specs(index_spec)
     assert log(3, 'partial_specs', partial_specs)
     normalized_specs = _normalized_index_specs(partial_specs)
@@ -1595,7 +1597,8 @@ def _create_index(extent_map, index_spec, unique):
     for normalized_spec in normalized_specs:
         L = normalized_index_map.setdefault(normalized_spec, PList())
         L.append(index_spec)
-    assert log(2, 'normalized_index_map.keys()', normalized_index_map.keys())
+    assert log(
+        2, 'normalized_index_map.keys()', list(normalized_index_map.keys()))
 
 
 def _delete_index(extent_map, index_spec):
@@ -1632,7 +1635,7 @@ def _field_names(extent_map, field_ids):
     return tuple(field_id_name[id] for id in field_ids)
 
 
-def _index_add(extent_map, index_spec, relaxed, oid, field_values):
+def _index_add(extent_map, index_spec, relaxed, oid, field_values, BTree):
     """Add an entry to the specified index, of entity oid having the
     given values in order of the index spec."""
     indices = extent_map['indices']
@@ -1646,7 +1649,7 @@ def _index_add(extent_map, index_spec, relaxed, oid, field_values):
             branch[field_value] = new_branch
             branch = new_branch
     # Raise error if unique index and not an empty leaf.
-    if unique and branch.keys() and relaxed is None:
+    if unique and len(branch) and relaxed is None:
         _index_clean(extent_map, index_spec, field_values)
         raise error.KeyCollision(
             'Duplicate value %r for key %r on %r'
@@ -1676,7 +1679,7 @@ def _index_clean_branch(branch, field_values):
             # Clean children first.
             _index_clean_branch(branch[branch_value], child_values)
         # Clean ourself if empty.
-        if not branch[branch_value].keys():
+        if not len(branch[branch_value]):
             del branch[branch_value]
 
 
@@ -1696,7 +1699,7 @@ def _index_remove(extent_map, index_spec, oid, field_values):
     _index_clean(extent_map, index_spec, field_values)
 
 
-def _index_validate(extent_map, index_spec, oid, field_values):
+def _index_validate(extent_map, index_spec, oid, field_values, BTree):
     """Validate the index entry for uniqueness."""
     indices = extent_map['indices']
     unique, branch = indices[index_spec]
@@ -1709,7 +1712,7 @@ def _index_validate(extent_map, index_spec, oid, field_values):
             branch[field_value] = new_branch
             branch = new_branch
     # Raise error if unique index and not an empty leaf.
-    if unique and len(branch.keys()) > 1:
+    if unique and len(branch) > 1:
         _index_clean(extent_map, index_spec, field_values)
         raise error.KeyCollision(
             'Duplicate value %r for key %r'
@@ -1743,6 +1746,9 @@ def _walk_index(branch, ascending_seq, result_list):
             for key, inner_branch in branch.iteritems():
                 _walk_index(inner_branch, inner_ascending, result_list)
         else:
+            # XXX: SchevoZodb backend requires us to use
+            # `reversed(branch.keys())` rather than
+            # `reversed(branch)`.
             keys = reversed(branch.keys())
             for key in keys:
                 inner_branch = branch[key]
@@ -1771,14 +1777,14 @@ class DatabaseExtenders(NamespaceExtension):
                 self._set(name, function)
 
 
-def convert_from_format1(conn):
+def convert_from_format1(backend):
     """Convert a database from format 1 to format 2.
 
-    - `conn`: Open schevo.store connection to the database to convert.
+    - `backend`: Open backend connection to the database to convert.
       Assumes that the database has already been verified to be a format 1
       database.
     """
-    root = conn.get_root()
+    root = backend.get_root()
     schevo = root['SCHEVO']
     extent_name_id = schevo['extent_name_id']
     extents = schevo['extents']
@@ -1789,7 +1795,7 @@ def convert_from_format1(conn):
         # For each entity in the extent...
         for entity_oid, entity in extent['entities'].iteritems():
             fields = entity['fields']
-            related_entities = entity['related_entities'] = PDict()
+            related_entities = entity['related_entities'] = backend.PDict()
             # For each entity field in the entity...
             for field_id in entity_field_ids:
                 related_entity_set = set()
@@ -1816,7 +1822,7 @@ def convert_from_format1(conn):
 def _convert_index_from_format1(entity_field_ids, index_spec, index_tree):
     current_field_id, next_index_spec = index_spec[0], index_spec[1:]
     is_entity_field = current_field_id in entity_field_ids
-    for key in index_tree.keys():
+    for key in index_tree:
         child_tree = index_tree[key]
         if is_entity_field and isinstance(key, tuple):
             # Convert entity tuple to Placeholder.

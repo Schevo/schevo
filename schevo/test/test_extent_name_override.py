@@ -29,10 +29,14 @@ class BaseOverride(CreatesSchema):
 
 class TestOverride1(BaseOverride):
 
+    include = True
+
     format = 1
 
 
 class TestOverride2(BaseOverride):
+
+    include = True
 
     format = 2
 

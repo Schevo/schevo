@@ -11,24 +11,24 @@ from schevo.script.command import Command
 from schevo.script import opt
 
 usage = """\
-schevo db convert [options] DBFILE
+schevo db copy [options] SRCFILE DESTFILE
 
-DBFILE: The database file to convert to a new format."""
+SRCFILE: The database file to copy the internal structures from.
+
+DESTFILE: The empty file to copy internal structures to.
+
+Backend options given apply to DESTFILE. The backend for SRCFILE is
+determined automatically."""
 
 
 def _parser():
     p = opt.parser(usage)
-    p.add_option('-f', '--format', dest='format',
-                 help='Convert to a specific format. (Default: latest format.)',
-                 metavar='FORMAT',
-                 default=None,
-                 )
     return p
 
 
-class Format(Command):
+class Copy(Command):
 
-    name = 'Convert Format'
+    name = 'Copy'
     description = 'Convert a database file to a new storage format.'
 
     def main(self, arg0, args):
@@ -36,23 +36,20 @@ class Format(Command):
         print
         parser = _parser()
         options, args = parser.parse_args(list(args))
-        if len(args) != 1:
-            parser.error('Please specify DBFILE.')
-        db_filename = args[0]
-        format = options.format
-        if format is not None:
-            format = int(format)
-        print 'Converting %r to format %i...' % (db_filename, format)
-        schevo.database.convert_format(
-            filename = db_filename,
-            backend_name = options.backend_name,
-            backend_args = options.backend_args,
-            format = format,
+        if len(args) != 2:
+            parser.error('Please specify SRCFILE and DESTFILE.')
+        src_filename, dest_filename = args
+        print 'Copying %r to %r...' % (src_filename, dest_filename)
+        schevo.database.copy(
+            src_filename = src_filename,
+            dest_filename = dest_filename,
+            dest_backend_name = options.backend_name,
+            dest_backend_args = options.backend_args,
             )
-        print 'Conversion complete.'
+        print 'Copy complete.'
 
 
-start = Format
+start = Copy
 
 
 # Copyright (C) 2001-2007 Orbtech, L.L.C.

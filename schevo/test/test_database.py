@@ -12,7 +12,7 @@ class BaseDatabase(CreatesDatabase):
 
     def test_schevo_key_in_root(self):
         """A Durus database has a `SCHEVO` key in its root."""
-        assert 'SCHEVO' in self.connection.get_root()
+        assert 'SCHEVO' in self.db.backend.get_root()
 
     def test_empty(self):
         """A database should start out with very little."""
@@ -120,6 +120,8 @@ class BaseDatabase(CreatesDatabase):
 
 class TestDatabase1(BaseDatabase):
 
+    include = True
+
     format = 1
 
     def test_format_1(self):
@@ -129,6 +131,8 @@ class TestDatabase1(BaseDatabase):
 
 class TestDatabase2(BaseDatabase):
 
+    include = True
+    
     format = 2
 
     def test_format_2(self):

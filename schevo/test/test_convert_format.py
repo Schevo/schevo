@@ -3,6 +3,7 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
+from schevo.backend import backends
 from schevo.placeholder import Placeholder
 from schevo.test import CreatesSchema
 

@@ -126,30 +126,42 @@ class BaseSubclassTransactionCorrectness(CreatesSchema):
 
 class TestHiddenBases1(BaseHiddenBases):
 
+    include = True
+
     format = 1
 
 
 class TestHiddenBases2(BaseHiddenBases):
+
+    include = True
 
     format = 2
 
 
 class TestSameNameSubclasses1(BaseSameNameSubclasses):
 
+    include = True
+
     format = 1
 
 
 class TestSameNameSubclasses2(BaseSameNameSubclasses):
+
+    include = True
 
     format = 2
 
 
 class TestSubclassTransactionCorrectness1(BaseSubclassTransactionCorrectness):
 
+    include = True
+
     format = 1
 
 
 class TestSubclassTransactionCorrectness2(BaseSubclassTransactionCorrectness):
+
+    include = True
 
     format = 2
 

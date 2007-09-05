@@ -58,10 +58,14 @@ class BaseTransactionBeforeAfter(CreatesSchema):
 
 class TestTransactionBeforeAfter1(BaseTransactionBeforeAfter):
 
+    include = True
+
     format = 1
 
 
 class TestTransactionBeforeAfter2(BaseTransactionBeforeAfter):
+
+    include = True
 
     format = 2
 

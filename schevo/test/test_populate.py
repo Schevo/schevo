@@ -152,30 +152,42 @@ class BasePopulateHidden(CreatesSchema):
 
 class TestPopulateSimple1(BasePopulateSimple):
 
+    include = True
+
     format = 1
 
 
 class TestPopulateSimple2(BasePopulateSimple):
+
+    include = True
 
     format = 2
 
 
 class TestPopulateComplex1(BasePopulateComplex):
 
+    include = True
+
     format = 1
 
 
 class TestPopulateComplex2(BasePopulateComplex):
+
+    include = True
 
     format = 2
 
 
 class TestPopulateHidden1(BasePopulateHidden):
 
+    include = True
+
     format = 1
 
 
 class TestPopulateHidden2(BasePopulateHidden):
+
+    include = True
 
     format = 2
 

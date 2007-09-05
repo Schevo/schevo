@@ -54,6 +54,8 @@ help`_, or refer to the documentation for that package.
 Common options
 --------------
 
+The following options are available to all commands.
+
 **-h**, **--help**:
 
     Display help text for the subcommand.
@@ -64,6 +66,32 @@ Common options
     on tracing.  Tracing is a lightweight debugging tool built into
     Schevo whose footprint can be entirely removed when using
     optimized Python modules.
+
+**-B NAME**, **--backend=NAME**:
+
+    Use the named storage backend when creating or opening a
+    database. Use the `schevo backends`_ command to view a list of
+    backends and their available arguments.
+
+    You do not need to specify a backend if you desire to use the
+    default ``durus`` backend. You also do not need to specify a
+    backend when using an existing database as Schevo has an
+    auto-detection mechanism that determines it for you.
+
+**-A ARGS**, **--backend-args=ARGS**:
+
+    Pass the given comma-separated arguments to the backend. Use the
+    `schevo backends`_ command to view a list of backends and their
+    available arguments.
+
+
+schevo backends
+---------------
+
+Usage: ``schevo backends``
+
+Prints a list of available storage backends and their available
+arguments.
 
 
 schevo db compare
@@ -95,6 +123,22 @@ Options:
 **-f FORMAT**, **--format=FORMAT**:
 
     Convert to a specific format.  (Default: latest format.)
+
+
+schevo db copy 
+--------------
+
+Usage: ``schevo db copy [options] SRCFILE DESTFILE``
+
+Copies the internal structures verbatim from `SRCFILE` to
+`DESTFILE`.
+
+`SRCFILE`: The database file to copy the internal structures from.
+
+`DESTFILE`: The empty file to copy internal structures to.
+
+Backend options given apply to `DESTFILE`. The backend for `SRCFILE`
+is determined automatically.
 
 
 schevo db create

@@ -53,10 +53,14 @@ class BaseExtentWithoutFields(CreatesSchema):
 
 class TestExtentWithoutFields1(BaseExtentWithoutFields):
 
+    include = True
+
     format = 1
 
 
 class TestExtentWithoutFields2(BaseExtentWithoutFields):
+
+    include = True
 
     format = 2
 

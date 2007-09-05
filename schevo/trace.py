@@ -1,12 +1,26 @@
 """Efficient tracing of internal Schevo events.
 
-Usage::
+Usage for logging::
 
-  from schevo.trace import log
-  assert log(level, message)
+    from schevo.trace import log
+    assert log(level, message)
 
 The assert is necessary to completely remove calls to the tracer
 in production code.
+
+Programmatic usage for viewing messages as they occur::
+
+    import schevo.trace
+    schevo.trace.monitor_level = 0      # Turn off viewing.
+    schevo.trace.monitor_level = 1      # Turn on level 1 messages only.
+    schevo.trace.monitor_level = 2      # Turn on level 1 and level 2 messages.
+    schevo.trace.monitor_level = 3      # Turn on all messages.
+
+Usage examples for viewing messages as they occur when using the
+`schevo` command line::
+
+    $ schevo db create --app=myapp --trace=3 example.db
+    $ schevo db evolve -T2 example.db latest
 
 For copyright, license, and warranty, see bottom of file.
 """

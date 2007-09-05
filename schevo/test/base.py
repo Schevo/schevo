@@ -6,6 +6,7 @@ For copyright, license, and warranty, see bottom of file.
 import os
 import sys
 
+from schevo.backend import backends
 from schevo import database
 from schevo.lib import module
 import schevo.schema
@@ -21,12 +22,27 @@ from schevo.schema import *
 schevo.schema.prep(locals())
 """
 
+DEFAULT_BACKEND_NAME = 'schevo.store'
+
+DEFAULT_BACKEND_ARGS = dict()
+
+DEFAULT_FORMAT = 2
+
 
 def raises(exc_type, fn, *args, **kw):
+    """Raise an `AssertionError` if the call doesn't raise the
+    expected error.
+
+    - `exc_type`: The type of exception that the call is expected to
+      raise.
+    - `fn(*args, **kw)`: The call to test.
+    """
     try:
         fn(*args, **kw)
     except Exception, e:
-        assert isinstance(e, exc_type)
+        if not isinstance(e, exc_type):
+            raise AssertionError(
+                'expected %r, got %r %r %s' % (exc_type, type(e), e, e))
         return True
     else:
         raise AssertionError('Call did not raise an exception')
@@ -48,42 +64,33 @@ def troff():
     schevo.trace.monitor_level = 0
 
 
-_db_cache = {
-    # (format, version, evolve_skipped, schema_source, suffix):
-    #   (db, fp, connection),
-    }
-_cached_dbs = set(
-    # db,
-    )
-
-
 class BaseTest(object):
+    """Base class for all tests.
 
-    # XXX py.test support
-
-    def setup_method(self, method):
-        return self.setUp()
-
-    def teardown_method(self, method):
-        return self.tearDown()
-
-    def assertRaises(self, *args, **kw):
-        return raises(*args, **kw)
-
-    # /XXX
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
+    Previously used to provide *py.test* compatibility.  We now use
+    only *nose* for testing, but we keep this class around in case we
+    wish to extend all test classes in the future.
+    """
 
 
 class CreatesDatabase(BaseTest):
-    """A mixin to provide test directory and Durus database creation
-    and deletion per-method."""
+    """Provides database creation, opening, and closing for each test
+    case in the class.
 
-    format = None
+    Expects the backend specified in `backend_name` to have a
+    `TestMethods_CreatesDatabase` attribute that contains the
+    following callables:
+
+    - `backend_base_open(test_object, suffix, schema_source, schema_version)`
+    - `backend_close(test_object, suffix='')`
+    - `backend_reopen_finish(test_object, suffix)`
+    - `backend_reopen_save_state(test_object, suffix)`
+    - `backend_convert_format(test_object, suffix, format)`
+    """
+
+    backend_name = DEFAULT_BACKEND_NAME
+    backend_args = DEFAULT_BACKEND_ARGS
+    format = DEFAULT_FORMAT
 
     def setUp(self):
         self.suffixes = set()
@@ -98,6 +105,11 @@ class CreatesDatabase(BaseTest):
     def tearDown(self):
         for suffix in list(self.suffixes):
             self.close(suffix)
+
+    @property
+    def backend_class(self):
+        """Return the appropriate backend class for this type of test."""
+        return backends[self.backend_name].TestMethods_CreatesDatabase
 
     def check_entities(self, extent):
         """Check string, unicode, and programmer representations of entities
@@ -114,56 +126,36 @@ class CreatesDatabase(BaseTest):
             assert unicode(entity)
 
     def close(self, suffix=''):
-        """Close the database."""
+        """Close the database.
+
+        - `suffix`: The suffix to append to the name of variables; for
+          testing multiple databases open at once.
+        """
         db_name = 'db' + suffix
-        db = getattr(self, db_name)
-        if db not in _cached_dbs:
-            db.close()
+        self.backend_class.backend_close(self, suffix)
         delattr(self, db_name)
-        delattr(self, 'fp' + suffix)
-        delattr(self, 'connection' + suffix)
         # Also delete the global set in the class's module.
         modname = self.__class__.__module__
         mod = sys.modules[modname]
         delattr(mod, db_name)
         self.suffixes.remove(suffix)
 
-    def convert_format(self, suffix, format):
-        # Get the contents of the database from the fpv attribute.
-        contents = self.db_contents(suffix)
-        # Turn it into a fresh StringIO.
-        fp = StringIO(contents)
-        # Convert it to the requested format.
-        database.convert_format(fp, format)
-        # Turn it back into a fpv attribute.
-        setattr(self, 'fpv' + suffix, fp.getvalue())
-
-    def db_contents(self, suffix=''):
-        value = ''
-        if hasattr(self, 'fpv' + suffix):
-            value = getattr(self, 'fpv' + suffix)
-        return value
-
     def evolve(self, schema_source, version):
+        """Evolve the database to a new schema source and version."""
         db = self.reopen()
         database.evolve(db, schema_source, version)
 
     def _base_open(self, suffix='', schema_source=None, schema_version=None):
-        """Open and return the database, setting self.db if no suffix
-        is given.
+        """Open and return the database, setting `self.db` if no
+        suffix is given.
 
-        May be called more than once in a series of open/close calls.
+        May be called more than once in a series of `open`/`close`
+        calls.
         """
         # Create database.
-        contents = self.db_contents(suffix)
-        fp = StringIO(contents)
-        db = database.open(
-            fp=fp, schema_source=schema_source, schema_version=schema_version,
-            format_for_new=self.format)
+        db = self.backend_class.backend_base_open(
+            self, suffix, schema_source, schema_version)
         db_name = 'db' + suffix
-        setattr(self, db_name, db)
-        setattr(self, 'fp' + suffix, fp)
-        setattr(self, 'connection' + suffix, db.connection)
         self.suffixes.add(suffix)
         # Also set the global 'db...' and 'ex' variables in our
         # class's module namespace for convenience.
@@ -187,16 +179,17 @@ class CreatesDatabase(BaseTest):
     def reopen(self, suffix='', format=None):
         """Close and reopen self.db and return its new incarnation.
 
-        - `suffix`: The suffix to append to the name of variables; for testing
-          multiple databases open at once.
+        - `suffix`: The suffix to append to the name of variables; for
+          testing multiple databases open at once.
         - `format`: The format to convert to before reopening.
         """
-        setattr(self, 'fpv' + suffix, getattr(self, 'fp' + suffix).getvalue())
+        db = getattr(self, 'db' + suffix)
+        self.backend_class.backend_reopen_save_state(self, suffix)
         self.close(suffix)
         if format is not None:
-            self.convert_format(suffix, format)
+            self.backend_class.backend_convert_format(self, suffix, format)
         db = self._open(suffix)
-        delattr(self, 'fpv' + suffix)
+        self.backend_class.backend_reopen_finish(self, suffix)
         return db
 
     def sync(self, schema_source):
@@ -205,8 +198,26 @@ class CreatesDatabase(BaseTest):
 
 
 class CreatesSchema(CreatesDatabase):
-    """A mixin to provide test dir, Durus database, and schema
-    creation/deletion per-method."""
+    """Much like `CreatesDatabase`, but automatically synchronizes the
+    database with a schema.
+
+    This is the most common base class for Schevo tests.
+
+    By associating a fixed schema with a test class, it also
+    facilitates the use of a cache to speed up the execution of unit
+    tests.
+
+    Expects the backend specified in `backend_name` to have a
+    `TestMethods_CreatesDatabase` attribute that contains the
+    following callables:
+
+    - `backend_base_open(test_object, suffix, schema_source, schema_version)`
+    - `backend_close(test_object, suffix='')`
+    - `backend_convert_format(test_object, suffix, format)`
+    - `backend_reopen_finish(test_object, suffix)`
+    - `backend_reopen_save_state(test_object, suffix)`
+    - `backend_open(test_object, suffix, schema)`
+    """
 
     # If non-empty, use this as the schema body, and prepend the standard
     # schema preamble to it.
@@ -220,6 +231,10 @@ class CreatesSchema(CreatesDatabase):
     # each test case.
     _use_db_cache = True
 
+    @property
+    def backend_class(self):
+        return backends[self.backend_name].TestMethods_CreatesSchema
+
     def _open(self, suffix=''):
         format = self.format
         body_name = 'body' + suffix
@@ -229,33 +244,9 @@ class CreatesSchema(CreatesDatabase):
         if body:
             schema = PREAMBLE + dedent(body)
             setattr(self, schema_name, schema)
-        use_db_cache = self._use_db_cache
         db_name = 'db' + suffix
         ex_name = 'ex' + suffix
-        fpv_name = 'fpv' + suffix
-        cache_key = (format, 1, None, schema, suffix)
-        if (use_db_cache
-            and cache_key in _db_cache
-            and not hasattr(self, fpv_name)
-            ):
-            db, fp, connection = _db_cache[cache_key]
-            setattr(self, 'fp' + suffix, fp)
-            setattr(self, 'connection' + suffix, connection)
-            if not hasattr(self, db_name):
-                db._reset_all()
-            setattr(self, db_name, db)
-        else:
-            # Forget existing modules.
-            for m in module.MODULES:
-                module.forget(m)
-            db = self._base_open(suffix, schema)
-            if use_db_cache:
-                fp = getattr(self, 'fp' + suffix)
-                connection = getattr(self, 'connection' + suffix)
-                cache_key = (format, 1, None, schema, suffix)
-                db_info = (db, fp, connection)
-                _db_cache[cache_key] = db_info
-                _cached_dbs.add(db)
+        db = self.backend_class.backend_open(self, suffix, schema)
         # Also set the module-level global.
         modname = self.__class__.__module__
         mod = sys.modules[modname]
@@ -271,6 +262,20 @@ class CreatesSchema(CreatesDatabase):
 
 
 class EvolvesSchemata(CreatesDatabase):
+    """Much like `CreatesSchema`, but automatically evolves a database
+    to a specific schema version out of several available schemata.
+
+    Expects the backend specified in `backend_name` to have a
+    `TestMethods_CreatesDatabase` attribute that contains the
+    following callables:
+
+    - `backend_base_open(test_object, suffix, schema_source, schema_version)`
+    - `backend_close(test_object, suffix='')`
+    - `backend_convert_format(test_object, suffix, format)`
+    - `backend_reopen_finish(test_object, suffix)`
+    - `backend_reopen_save_state(test_object, suffix)`
+    - `backend_open(test_object)`
+    """
 
     # List of schema source strings, or a string containing the name of a
     # package to load schemata from.  Must be explicitly set.
@@ -318,52 +323,18 @@ class EvolvesSchemata(CreatesDatabase):
         # Attach the new schemata list to the instance.
         self.schemata = schemata
 
+    @property
+    def backend_class(self):
+        return backends[self.backend_name].TestMethods_EvolvesSchemata
+
     def _open(self):
-        format = self.format
-        use_db_cache = self._use_db_cache
-        db_name = 'db'
-        ex_name = 'ex'
-        fpv_name = 'fpv'
-        schema = self.schemata[-1]
-        version = self.schema_version
-        skip_evolution = self.skip_evolution
-        suffix = ''
-        cache_key = (format, version, skip_evolution, schema, suffix)
-        if (use_db_cache
-            and cache_key in _db_cache
-            and not hasattr(self, fpv_name)
-            ):
-            db, fp, connection = _db_cache[cache_key]
-            self.fp = fp
-            self.connection = connection
-            if not hasattr(self, 'db'):
-                db._reset_all()
-            self.db = db
-        else:
-            # Forget existing modules.
-            for m in module.MODULES:
-                module.forget(m)
-            if not skip_evolution:
-                # Open database with version 1.
-                db = self._base_open(suffix, self.schemata[0])
-                # Evolve to latest.
-                for i in xrange(1, len(self.schemata)):
-                    schema_source = self.schemata[i]
-                    database.evolve(db, schema_source, version=i+1)
-            else:
-                # Open database with target version.
-                db = self._base_open(suffix, schema, schema_version=version)
-            if use_db_cache:
-                fp = self.fp
-                connection = self.connection
-                _db_cache[cache_key] = (db, fp, connection)
-                _cached_dbs.add(db)
+        db = self.backend_class.backend_open(self)
         # Also set the module-level global.
         modname = self.__class__.__module__
         mod = sys.modules[modname]
         mod.db = db
         mod.ex = db.execute
-        self.suffixes.add(suffix)
+        self.suffixes.add('')
         return db
 
     def open(self):
@@ -386,7 +357,7 @@ class EvolvesSchemata(CreatesDatabase):
 
 
 class DocTest(CreatesSchema):
-    """Doctest-helping test class.
+    """Doctest-helping test class.  Uses the schevo.store backend.
 
     Call directly to override body for one test::
 
@@ -476,8 +447,10 @@ class ComparesDatabases(object):
             schema_N = schevo.schema.read(location, N)
             # Create a database directly at version N.
             fp_direct = StringIO()
-            db_direct = database.open(
-                fp = fp_direct,
+            db_direct = database.create(
+                filename = None,
+                backend_name = 'schevo.store',
+                backend_args = dict(fp=fp_direct, cache_size=100000),
                 schema_source = schema_N,
                 schema_version = N,
                 )
@@ -485,8 +458,10 @@ class ComparesDatabases(object):
             schema_N1 = schevo.schema.read(location, N - 1)
             # Create a database at version N - 1.
             fp_evolved = StringIO()
-            db_evolved = database.open(
-                fp = fp_evolved,
+            db_evolved = database.create(
+                filename = None,
+                backend_name = 'schevo.store',
+                backend_args = dict(fp=fp_evolved, cache_size=100000),
                 schema_source = schema_N1,
                 schema_version = N - 1,
                 )
@@ -507,6 +482,8 @@ class ComparesDatabases(object):
                         'evolved to version %i.'
                         % (N, N - 1, N)
                         )
+            db_direct.close()
+            db_evolved.close()
         # If failure expected, but no failures,
         if self.expected_failure and not failed:
             # Raise an exception.

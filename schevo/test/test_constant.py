@@ -7,7 +7,7 @@ import unittest
 
 from schevo.constant import UNASSIGNED
 from schevo.label import label
-from schevo.test import BaseTest
+from schevo.test import BaseTest, raises
 
 
 class TestConstant(BaseTest):
@@ -15,7 +15,7 @@ class TestConstant(BaseTest):
     def test_UNASSIGNED(self):
         assert label(UNASSIGNED) == '<UNASSIGNED>'
         assert str(UNASSIGNED) == ''
-        self.assertRaises(TypeError, UNASSIGNED)
+        assert raises(TypeError, UNASSIGNED)
 
 
 # Copyright (C) 2001-2007 Orbtech, L.L.C.

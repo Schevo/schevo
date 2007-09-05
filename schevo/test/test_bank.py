@@ -166,10 +166,14 @@ class BaseBank(CreatesSchema):
 
 class TestBank1(BaseBank):
 
+    include = True
+
     format = 1
 
 
 class TestBank2(BaseBank):
+
+    include = True
 
     format = 2
 

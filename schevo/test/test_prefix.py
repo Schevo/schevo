@@ -28,10 +28,14 @@ class BaseAlternatePrefixGood(EvolvesSchemata):
 
 class TestAlternatePrefixGood1(BaseAlternatePrefixGood):
 
+    include = True
+
     format = 1
 
 
 class TestAlternatePrefixGood2(BaseAlternatePrefixGood):
+
+    include = True
 
     format = 2
 

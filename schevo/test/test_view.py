@@ -108,10 +108,14 @@ class BaseView(CreatesSchema):
 
 class TestView1(BaseView):
 
+    include = True
+
     format = 1
 
 
 class TestView2(BaseView):
+
+    include = True
 
     format = 2
 

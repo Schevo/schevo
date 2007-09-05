@@ -1113,6 +1113,8 @@ class BaseTransaction(CreatesSchema):
 
 class TestTransaction1(BaseTransaction):
 
+    include = True
+
     format = 1
 
     def internal_update_entities_1(self, expected):
@@ -1136,6 +1138,8 @@ class TestTransaction1(BaseTransaction):
 
 
 class TestTransaction2(BaseTransaction):
+
+    include = True
 
     format = 2
 

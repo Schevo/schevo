@@ -42,10 +42,14 @@ class BaseDefaultValues(CreatesSchema):
 
 class TestDefaultValues1(BaseDefaultValues):
 
+    include = True
+
     format = 1
 
 
 class TestDefaultValues2(BaseDefaultValues):
+
+    include = True
 
     format = 2
 

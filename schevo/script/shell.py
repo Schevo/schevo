@@ -40,11 +40,15 @@ class Shell(Command):
         db_filename = args[0]
         # Open the database.
         print 'Opened database', db_filename
-        db = schevo.database.open(db_filename)
+        db = schevo.database.open(
+            filename = db_filename,
+            backend_name = options.backend_name,
+            backend_args = options.backend_args,
+            )
         # Set up environment.
         locals = dict(
-            __name__='schevo-shell',
-            db=db,
+            __name__ = 'schevo-shell',
+            db = db,
             )
         # sys.argv can clobber the shell if we're not careful.
         old_argv = sys.argv

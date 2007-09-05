@@ -7,6 +7,7 @@ from schevo.script.command import CommandSet
 from schevo.script import (
     db_compare,
     db_convert,
+    db_copy,
     db_create,
     db_inject,
     db_evolve,
@@ -23,6 +24,7 @@ class Database(CommandSet):
         self.commands = {
             'compare': db_compare.start,
             'convert': db_convert.start,
+            'copy': db_copy.start,
             'create': db_create.start,
             'inject': db_inject.start,
             'evolve': db_evolve.start,

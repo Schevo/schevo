@@ -515,6 +515,8 @@ class BaseOnDelete(CreatesSchema):
 
 class TestOnDelete1(BaseOnDelete):
 
+    include = True
+
     format = 1
 
     def internal_cascade_complex_1(self):
@@ -545,8 +547,10 @@ class TestOnDelete1(BaseOnDelete):
             (Baz_extent_id, Baz_boo_field_id),
             ])
         assert Boo1_links_keys == expected_Boo1_links_keys
-        assert Boo1['links'][(Bar_extent_id, Bar_boo_field_id)].keys() == [1]
-        assert Boo1['links'][(Baz_extent_id, Baz_boo_field_id)].keys() == [1]
+        assert list(
+            Boo1['links'][(Bar_extent_id, Bar_boo_field_id)].keys()) == [1]
+        assert list(
+            Boo1['links'][(Baz_extent_id, Baz_boo_field_id)].keys()) == [1]
         # Check for Bar[1] having backlink to Baz[1].bar
         Bar1 = Bar_extent['entities'][1]
         assert Bar1['link_count'] == 1
@@ -556,7 +560,8 @@ class TestOnDelete1(BaseOnDelete):
             (Baz_extent_id, Baz_bar_field_id),
             ])
         assert Bar1_links_keys == expected_Bar1_links_keys
-        assert Bar1['links'][(Baz_extent_id, Baz_bar_field_id)].keys() == [1]
+        assert list(
+            Bar1['links'][(Baz_extent_id, Baz_bar_field_id)].keys()) == [1]
         # Check for Baz[1] having backlink to Bar[1].bar
         Baz1 = Baz_extent['entities'][1]
         assert Baz1['link_count'] == 1
@@ -566,7 +571,8 @@ class TestOnDelete1(BaseOnDelete):
             (Bar_extent_id, Bar_baz_field_id),
             ])
         assert Baz1_links_keys == expected_Baz1_links_keys
-        assert Baz1['links'][(Bar_extent_id, Bar_baz_field_id)].keys() == [1]
+        assert list(
+            Baz1['links'][(Bar_extent_id, Bar_baz_field_id)].keys()) == [1]
         # Check for Bar[1].boo and Bar[1].baz having correct related entity
         # structures.
         Bar1_fields = Bar1['fields']
@@ -594,6 +600,8 @@ class TestOnDelete1(BaseOnDelete):
 
 
 class TestOnDelete2(BaseOnDelete):
+
+    include = True
 
     format = 2
 
@@ -625,8 +633,10 @@ class TestOnDelete2(BaseOnDelete):
             (Baz_extent_id, Baz_boo_field_id),
             ])
         assert Boo1_links_keys == expected_Boo1_links_keys
-        assert Boo1['links'][(Bar_extent_id, Bar_boo_field_id)].keys() == [1]
-        assert Boo1['links'][(Baz_extent_id, Baz_boo_field_id)].keys() == [1]
+        assert list(
+            Boo1['links'][(Bar_extent_id, Bar_boo_field_id)].keys()) == [1]
+        assert list(
+            Boo1['links'][(Baz_extent_id, Baz_boo_field_id)].keys()) == [1]
         # Check for Bar[1] having backlink to Baz[1].bar
         Bar1 = Bar_extent['entities'][1]
         assert Bar1['link_count'] == 1
@@ -636,7 +646,8 @@ class TestOnDelete2(BaseOnDelete):
             (Baz_extent_id, Baz_bar_field_id),
             ])
         assert Bar1_links_keys == expected_Bar1_links_keys
-        assert Bar1['links'][(Baz_extent_id, Baz_bar_field_id)].keys() == [1]
+        assert list(
+            Bar1['links'][(Baz_extent_id, Baz_bar_field_id)].keys()) == [1]
         # Check for Baz[1] having backlink to Bar[1].bar
         Baz1 = Baz_extent['entities'][1]
         assert Baz1['link_count'] == 1
@@ -646,7 +657,8 @@ class TestOnDelete2(BaseOnDelete):
             (Bar_extent_id, Bar_baz_field_id),
             ])
         assert Baz1_links_keys == expected_Baz1_links_keys
-        assert Baz1['links'][(Bar_extent_id, Bar_baz_field_id)].keys() == [1]
+        assert list(
+            Baz1['links'][(Bar_extent_id, Bar_baz_field_id)].keys()) == [1]
         # Check for Bar[1].boo and Bar[1].baz having correct related entity
         # structures.
         Bar1_related_entities = Bar1['related_entities']
@@ -673,6 +685,9 @@ class TestOnDelete2(BaseOnDelete):
         assert len(Boo_extent['entities']) == 0
         assert len(Bar_extent['entities']) == 0
         assert len(Baz_extent['entities']) == 0
+
+
+# --------------------------------------------------------------------
 
 
 class BaseOnDeleteKeyRelax(CreatesSchema):
@@ -735,15 +750,22 @@ class BaseOnDeleteKeyRelax(CreatesSchema):
 
 class TestOnDeleteKeyRelax1(BaseOnDeleteKeyRelax):
 
+    include = True
+
     format = 1
 
 
 class TestOnDeleteKeyRelax2(BaseOnDeleteKeyRelax):
 
+    include = True
+
     format = 2
 
 
-class TestOnDeleteEntityListRemove(CreatesSchema):
+# --------------------------------------------------------------------
+
+
+class BaseOnDeleteEntityListRemove(CreatesSchema):
 
     body = """
 
@@ -815,9 +837,22 @@ class TestOnDeleteEntityListRemove(CreatesSchema):
         fob1 = db.Fob.findone(name=u'fob 1')
         db.execute(bar3.t.delete())
         assert list(fob1.bars) == []
+
+
+# Not supported with format 1 databases.
         
 
-class TestOnDeleteUnassignReadonlyField(CreatesSchema):
+class TestOnDeleteEntityListRemove2(BaseOnDeleteEntityListRemove):
+
+    include = True
+
+    format = 2
+
+
+# --------------------------------------------------------------------
+
+
+class BaseOnDeleteUnassignReadonlyField(CreatesSchema):
 
     body = """
 
@@ -860,7 +895,24 @@ class TestOnDeleteUnassignReadonlyField(CreatesSchema):
         assert foo.bar is UNASSIGNED
 
 
-class TestOnDeleteUnassignEntityList(CreatesSchema):
+class TestOnDeleteUnassignReadonlyField1(BaseOnDeleteUnassignReadonlyField):
+
+    include = True
+
+    format = 1
+
+
+class TestOnDeleteUnassignReadonlyField2(BaseOnDeleteUnassignReadonlyField):
+
+    include = True
+
+    format = 2
+
+
+# --------------------------------------------------------------------
+
+
+class BaseOnDeleteUnassignEntityList(CreatesSchema):
 
     body = """
 
@@ -940,6 +992,16 @@ class TestOnDeleteUnassignEntityList(CreatesSchema):
         assert list(fee.bar_list) == [bar1, bar2, bar3, bar4, bar5, bar4, bar3]
         call = ex, bar4.t.delete()
         assert raises(ValueError, *call)
+
+
+# Not supported with format 1 databases.
+
+
+class TestOnDeleteUnassignEntityList2(BaseOnDeleteUnassignEntityList):
+
+    include = True
+
+    format = 2
 
 
 # Copyright (C) 2001-2007 Orbtech, L.L.C.

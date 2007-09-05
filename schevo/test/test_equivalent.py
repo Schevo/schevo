@@ -9,6 +9,7 @@ For copyright, license, and warranty, see bottom of file.
 
 from textwrap import dedent
 
+from schevo.backend import backends
 from schevo.database import equivalent
 from schevo.test import CreatesSchema, ComparesDatabases
 

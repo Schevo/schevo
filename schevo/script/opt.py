@@ -16,9 +16,24 @@ def set_trace(option, opt, value, parser):
 
 def parser(usage):
     p = OptionParser(usage)
+    p.add_option('-B', '--backend',
+                 dest = 'backend_name',
+                 help = 'Use the named backend.',
+                 metavar = 'NAME',
+                 default = None,
+                 )
+    p.add_option('-A', '--backend-args',
+                 dest = 'backend_args',
+                 help = 'Pass the given arguments to the backend.',
+                 metavar = 'ARGS',
+                 default = None,
+                 )
     p.add_option('-T', '--trace',
-                 help='Set Schevo tracing level.',
-                 action='callback', callback=set_trace, type=int)
+                 help = 'Set Schevo tracing level.',
+                 action = 'callback',
+                 callback = set_trace,
+                 type = int,
+                 )
     return p
 
 

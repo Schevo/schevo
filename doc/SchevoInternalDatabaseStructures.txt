@@ -14,6 +14,7 @@ At the root of the Durus connection a key called 'SCHEVO' contains the
 following structures::
 
   'SCHEVO': PersistentDict{
+      'label': <db-label>,          [*]
       'format': <db-format>,
       'version': <schema-version>,
       'schema_source': <schema-module-source>,
@@ -37,7 +38,7 @@ following structures::
                               ...,
                               },
                           },
-                      'related_entities': PersistentDict{       [2+]
+                      'related_entities': PersistentDict{       [**]
                           <field-id>: <related-entity-set>,
                           ...,
                           },
@@ -65,8 +66,11 @@ following structures::
           },
       }
 
-``[2]`` indicates that the structure is only present in databases of format
-2 or higher.
+``[*]``: Labels are not present in older databases, and a default
+label is assumed if a persistent label is not assigned.
+
+``[**]``: The related entities structure is only present in databases
+of format 2 or higher.
 
 
 Indices

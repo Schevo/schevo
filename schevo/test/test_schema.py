@@ -198,10 +198,14 @@ class BaseSchema(CreatesSchema):
 
 class TestSchema1(BaseSchema):
 
+    include = True
+
     format = 1
 
 
 class TestSchema2(BaseSchema):
+
+    include = True
 
     format = 2
 

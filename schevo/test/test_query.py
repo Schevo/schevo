@@ -219,10 +219,14 @@ class BaseQuery(CreatesSchema):
 
 class TestQuery1(BaseQuery):
 
+    include = True
+
     format = 1
 
 
 class TestQuery2(BaseQuery):
+
+    include = True
 
     format = 2
 

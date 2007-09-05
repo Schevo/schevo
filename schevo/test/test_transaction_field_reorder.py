@@ -33,10 +33,14 @@ class BaseTransactionFieldReorder(CreatesSchema):
 
 class TestTransactionFieldReorder1(BaseTransactionFieldReorder):
 
+    include = True
+
     format = 1
 
 
 class TestTransactionFieldReorder2(BaseTransactionFieldReorder):
+
+    include = True
 
     format = 2
 

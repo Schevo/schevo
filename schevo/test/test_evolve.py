@@ -1015,40 +1015,56 @@ class BaseEvolvesSchemataSkip(EvolvesSchemata):
 
 class TestEvolveIntraVersion1(BaseEvolveIntraVersion):
 
+    include = True
+
     format = 1
 
 
 class TestEvolveIntraVersion2(BaseEvolveIntraVersion):
+
+    include = True
 
     format = 2
 
 
 class TestEvolveInterVersion1(BaseEvolveInterVersion):
 
+    include = True
+
     format = 1
 
 
 class TestEvolveInterVersion2(BaseEvolveInterVersion):
+
+    include = True
 
     format = 2
 
 
 class TestEvolvesSchemataNoSkip1(BaseEvolvesSchemataNoSkip):
 
+    include = True
+
     format = 1
 
 
 class TestEvolvesSchemataNoSkip2(BaseEvolvesSchemataNoSkip):
+
+    include = True
 
     format = 2
 
 
 class TestEvolvesSchemataSkip1(BaseEvolvesSchemataSkip):
 
+    include = True
+
     format = 1
 
 
 class TestEvolvesSchemataSkip2(BaseEvolvesSchemataSkip):
+
+    include = True
 
     format = 2
 

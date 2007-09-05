@@ -109,6 +109,8 @@ class BaseFieldEntitySetSet(CreatesSchema):
 
 class TestFieldEntitySetSet2(BaseFieldEntitySetSet):
 
+    include = True
+
     format = 2
 
 

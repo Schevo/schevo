@@ -90,10 +90,14 @@ class BaseTransactionCDUSubclass(CreatesSchema):
 
 class TestTransactionCDUSubclass1(BaseTransactionCDUSubclass):
 
+    include = True
+
     format = 1
 
 
 class TestTransactionCDUSubclass2(BaseTransactionCDUSubclass):
+
+    include = True
 
     format = 2
 

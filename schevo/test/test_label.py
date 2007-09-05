@@ -3,8 +3,9 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
-from schevo.test import CreatesSchema
+from schevo.test import CreatesSchema, raises
 from schevo import base
+from schevo import error
 from schevo import label
 from schevo import transaction
 
@@ -336,13 +337,6 @@ class BaseDecoration(CreatesSchema):
         assert lfn('a__dog') == 'A Dog'
         assert lfn('is_a_b_c_dog') == 'Is A B C Dog'
 
-    def test_database_decoration(self):
-        # This label is assigned automatically.
-        assert label.label(db) == 'Schevo Database'
-        # It can be easily overridden.
-        label.relabel(db, 'Custom Label')
-        assert label.label(db) == 'Custom Label'
-
     def test_extent_decoration(self):
         # These labels were assigned automatically.
         assert label.label(db.Avatar) == 'Avatar'
@@ -462,12 +456,56 @@ class BaseDecoration(CreatesSchema):
         assert label.label('some string') == 'some string'
 
 
+class BaseDatabaseDecoration(CreatesSchema):
+
+    body = '''
+    class Foo(E.Entity):
+        pass
+    '''
+
+    _use_db_cache = False
+
+    def test_database_decoration(self):
+        # This label is assigned automatically.
+        assert label.label(db) == u'Schevo Database'
+        # It can be easily overridden.
+        label.relabel(db, 'Custom Label')
+        assert label.label(db) == u'Custom Label'
+        # When reopening the database, the label persists.
+        self.reopen()
+        assert label.label(db) == u'Custom Label'
+        # Cannot change the label during a transaction.
+        def fn(db):
+            label.relabel(db, u'Custom Label 2')
+        tx = transaction.CallableWrapper(fn)
+        raises(error.DatabaseExecutingTransaction,
+               db.execute, tx)
+
+
 class TestDecoration1(BaseDecoration):
+
+    include = True
 
     format = 1
 
 
 class TestDecoration2(BaseDecoration):
+
+    include = True
+
+    format = 2
+
+
+class TestDatabaseDecoration1(BaseDatabaseDecoration):
+
+    include = True
+
+    format = 1
+
+
+class TestDatabaseDecoration2(BaseDatabaseDecoration):
+
+    include = True
 
     format = 2
 

@@ -26,40 +26,47 @@ At a minimum, either the --app or the --schema option must be specified.
 
 def _parser():
     p = opt.parser(usage)
-    p.add_option('-a', '--app', dest='app_path',
-                 help='Use application in PATH.',
-                 metavar='PATH',
-                 default=None,
+    p.add_option('-a', '--app',
+                 dest = 'app_path',
+                 help = 'Use application in PATH.',
+                 metavar = 'PATH',
+                 default = None,
                  )
-    p.add_option('-c', '--icons', dest='icon_path',
-                 help='Use icons from PATH.',
-                 metavar='PATH',
-                 default=None,
+    p.add_option('-c', '--icons',
+                 dest = 'icon_path',
+                 help = 'Use icons from PATH.',
+                 metavar = 'PATH',
+                 default = None,
                  )
-    p.add_option('-e', '--evolve-from-version', dest='evolve_from_version',
-                 help='Begin database evolution at VERSION.',
-                 metavar='VERSION',
-                 default='latest',
+    p.add_option('-e', '--evolve-from-version',
+                 dest = 'evolve_from_version',
+                 help = 'Begin database evolution at VERSION.',
+                 metavar = 'VERSION',
+                 default = 'latest',
                  )
-    p.add_option('-p', '--sample', dest='create_sample_data',
-                 help='Create sample data.',
-                 action='store_true',
-                 default=False,
+    p.add_option('-p', '--sample',
+                 dest = 'create_sample_data',
+                 help = 'Create sample data.',
+                 action = 'store_true',
+                 default = False,
                  )
-    p.add_option('-s', '--schema', dest='schema_path',
-                 help='Use schema in PATH.',
-                 metavar='PATH',
-                 default=None,
+    p.add_option('-s', '--schema',
+                 dest = 'schema_path',
+                 help = 'Use schema in PATH.',
+                 metavar = 'PATH',
+                 default = None,
                  )
-    p.add_option('-v', '--version', dest='schema_version',
-                 help='Evolve database to VERSION.',
-                 metavar='VERSION',
-                 default='latest',
+    p.add_option('-v', '--version',
+                 dest = 'schema_version',
+                 help = 'Evolve database to VERSION.',
+                 metavar = 'VERSION',
+                 default = 'latest',
                  )
-    p.add_option('-x', '--delete', dest='delete_existing_database',
-                 help='Delete existing database file if one exists.',
-                 action='store_true',
-                 default=False,
+    p.add_option('-x', '--delete',
+                 dest = 'delete_existing_database',
+                 help = 'Delete existing database file if one exists.',
+                 action = 'store_true',
+                 default = False,
                  )
     return p
 
@@ -97,6 +104,11 @@ class Create(Command):
             if os.path.isfile(db_filename):
                 print 'Deleting existing file:', db_filename
                 os.remove(db_filename)
+        # Use a default backend if one was not specified on the
+        # command-line.
+        if options.backend_name is None:
+            options.backend_name = os.environ.get(
+                'SCHEVO_DEFAULT_BACKEND', 'durus')
         # Create the database.
         if os.path.isfile(db_filename):
             parser.error(
@@ -129,9 +141,13 @@ class Create(Command):
         print 'Creating new database at version %r.' % evolve_from_version
         schema_source = schevo.schema.read(
             schema_path, version=evolve_from_version)
-        db = schevo.database.open(
-            db_filename, schema_source=schema_source,
-            schema_version=evolve_from_version)
+        db = schevo.database.create(
+            filename = db_filename,
+            backend_name = options.backend_name,
+            backend_args = options.backend_args,
+            schema_source = schema_source,
+            schema_version = evolve_from_version,
+            )
         # Evolve if necessary.
         if final_version > evolve_from_version:
             print 'Evolving database...'

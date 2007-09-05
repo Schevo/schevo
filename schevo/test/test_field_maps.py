@@ -95,10 +95,14 @@ class BaseFieldMaps(CreatesSchema):
 
 class TestFieldMaps1(BaseFieldMaps):
 
+    include = True
+
     format = 1
 
 
 class TestFieldMaps2(BaseFieldMaps):
+
+    include = True
 
     format = 2
 

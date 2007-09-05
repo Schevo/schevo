@@ -47,10 +47,14 @@ class BaseTransactionRequireChanges(CreatesSchema):
 
 class TestTransactionRequireChanges1(BaseTransactionRequireChanges):
 
+    include = True
+
     format = 1
 
 
 class TestTransactionRequireChanges2(BaseTransactionRequireChanges):
+
+    include = True
 
     format = 2
 

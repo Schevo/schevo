@@ -83,7 +83,8 @@ setup(
 
     install_requires=[
     'Louie >= 1.0',
-    'PasteScript == dev, >= 1.1.1dev-r6221',
+    'PasteScript >= 1.3.5',
+    'SchevoDurus == dev, >= 3.1a1dev-r3496',
     ],
 
     tests_require=[
@@ -110,7 +111,11 @@ setup(
     [paste.paster_create_template]
     schevo = schevo.template:SchevoTemplate
 
+    [schevo.backend]
+    schevo.store = schevo.store.backend:SchevoStoreBackend
+
     [schevo.schevo_command]
+    backends = schevo.script.backends:start
     db = schevo.script.db:start
     shell = schevo.script.shell:start
     """,

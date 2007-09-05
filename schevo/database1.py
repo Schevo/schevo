@@ -14,8 +14,6 @@ from schevo.database2 import _index_add, _index_remove
 from schevo import error
 from schevo.field import Entity as EntityField
 from schevo.placeholder import Placeholder
-from schevo.store.btree import BTree
-from schevo.store.persistent_dict import PersistentDict as PDict
 from schevo.trace import log
 
 
@@ -64,6 +62,8 @@ class Database(database2.Database):
         ia_append = indices_added.append
         links_created = []
         lc_append = links_created.append
+        BTree = self._BTree
+        PDict = self._PDict
         try:
             if oid is None:
                 oid = extent_map['next_oid']
@@ -110,7 +110,8 @@ class Database(database2.Database):
                     txns, relaxed = relaxed_specs[index_spec]
                 else:
                     relaxed = None
-                _index_add(extent_map, index_spec, relaxed, oid, field_values)
+                _index_add(extent_map, index_spec, relaxed, oid, field_values,
+                           BTree)
                 ia_append((extent_map, index_spec, oid, field_values))
             # Update links from this entity to another entity.
             referrer_extent_id = extent_name_id[extent_name]
@@ -177,7 +178,7 @@ class Database(database2.Database):
                             for del_entity_cls, del_oid in tx._deletes])
             deletes.update([(extent_name_id[del_entity_cls.__name__], del_oid)
                             for del_entity_cls, del_oid in tx._known_deletes])
-        for (other_extent_id, other_field_id), others in links.items():
+        for (other_extent_id, other_field_id), others in links.iteritems():
             for other_oid in others:
                 if (other_extent_id, other_oid) in deletes:
                     continue
@@ -290,13 +291,10 @@ class Database(database2.Database):
         if not criteria:
             # Return all of them.
             assert log(2, 'Return all oids.')
-            return entity_maps.keys()
+            return list(entity_maps.keys())
         extent_name_id = self._extent_name_id
         indices = extent_map['indices']
-        assert log(3, 'indices.keys()', indices.keys())
         normalized_index_map = extent_map['normalized_index_map']
-        assert log(3, 'normalized_index_map.keys()',
-                   normalized_index_map.keys())
         entity_field_ids = extent_map['entity_field_ids']
         field_name_id = extent_map['field_name_id']
         # Convert from field_name:value to field_id:value.
@@ -345,14 +343,13 @@ class Database(database2.Database):
                 field_value = field_id_value[field_id]
                 if field_value not in branch:
                     # No matches found.
-                    assert log(3, field_value, 'not found in', branch.keys())
                     match = False
                     break
                 branch = branch[field_value]
             if match:
                 # Now we're at a leaf that matches all of the
                 # criteria, so return the OIDs in that leaf.
-                results = branch.keys()
+                results = list(branch.keys())
         else:
             # Fields aren't indexed, so use brute force.
             assert log(2, 'Use brute force.')
@@ -406,6 +403,7 @@ class Database(database2.Database):
         nl_append = new_links.append
         lc_append = links_created.append
         ld_append = links_deleted.append
+        BTree = self._BTree
         try:
             # Get old values for use in a potential inversion.
             old_fields = self._entity_fields(extent_name, oid)
@@ -478,7 +476,8 @@ class Database(database2.Database):
                     txns, relaxed = relaxed_specs[index_spec]
                 else:
                     relaxed = None
-                _index_add(extent_map, index_spec, relaxed, oid, field_values)
+                _index_add(extent_map, index_spec, relaxed, oid, field_values,
+                           BTree)
                 ia_append((extent_map, index_spec, oid, field_values))
             # Update links from this entity to another entity.
             referrer_extent_id = extent_name_id[extent_name]
@@ -519,7 +518,7 @@ class Database(database2.Database):
             for _e, _i, _o, _f in indices_added:
                 _index_remove(_e, _i, _o, _f)
             for _e, _i, _r, _o, _f in indices_removed:
-                _index_add(_e, _i, _r, _o, _f)
+                _index_add(_e, _i, _r, _o, _f, BTree)
             for other_entity_map, links, link_key, oid in links_created:
                 del links[link_key][oid]
                 other_entity_map['link_count'] -= 1
@@ -531,7 +530,8 @@ class Database(database2.Database):
     def _create_schevo_structures(self):
         """Create or update Schevo structures in the database."""
         root = self._root
-        if 'SCHEVO' not in root.keys():
+        PDict = self._PDict
+        if 'SCHEVO' not in root:
             schevo = root['SCHEVO'] = PDict()
             schevo['format'] = 1
             schevo['version'] = 0

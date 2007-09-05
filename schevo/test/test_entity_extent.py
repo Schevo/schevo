@@ -799,10 +799,14 @@ class BaseEntityExtent(CreatesSchema):
 
 class TestEntityExtent1(BaseEntityExtent):
 
+    include = True
+
     format = 1
 
 
 class TestEntityExtent2(BaseEntityExtent):
+
+    include = True
 
     format = 2
 

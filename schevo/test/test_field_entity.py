@@ -75,10 +75,14 @@ class BaseEntity(CreatesSchema):
 
 class TestEntity1(BaseEntity):
 
+    include = True
+
     format = 1
 
 
 class TestEntity2(BaseEntity):
+
+    include = True
 
     format = 2
 

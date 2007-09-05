@@ -43,10 +43,14 @@ class BaseCalculatedUnicode(CreatesSchema):
 
 class TestCalculatedUnicode1(BaseCalculatedUnicode):
 
+    include = True
+
     format = 1
 
 
 class TestCalculatedUnicode2(BaseCalculatedUnicode):
+
+    include = True
 
     format = 2
 

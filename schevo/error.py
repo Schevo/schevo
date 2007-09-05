@@ -8,8 +8,26 @@ class Restricted(RuntimeError):
     """The attempted operation was restricted."""
 
 
+class DatabaseAlreadyExists(RuntimeError):
+    """The database already exists."""
+
+
 class DatabaseClosed(RuntimeError):
     """The database or database connection was closed."""
+
+
+class DatabaseDoesNotExist(RuntimeError):
+    """The database does not exist."""
+
+
+class DatabaseExecutingTransaction(RuntimeError):
+    """The operation cannot be completed while the database is
+    executing a transaction."""
+
+
+class DatabaseFormatMismatch(RuntimeError):
+    """The internal structure of the database is not in the correct
+    format."""
 
 
 class DatabaseMismatch(RuntimeError):

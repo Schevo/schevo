@@ -1,44 +1,29 @@
-"""Database namespace unit tests.
+"""Backend management and selection.
 
 For copyright, license, and warranty, see bottom of file.
 """
 
-from schevo.test import CreatesSchema
+import sys
+from schevo.lib import optimize
+
+import pkg_resources
 
 
-class BaseDatabaseNamespaces(CreatesSchema):
-
-    body = '''
-
-    class Foo(E.Entity):
-        bar = f.string()
-
-    def t_create_foo():
-        return CreateFoo()
-
-    class CreateFoo(T.Transaction):
-        def _execute(self, db):
-            return db.execute(db.Foo.t.create(bar='baz'))
-    '''
-
-    def test_database_t_namespace(self):
-        tx = db.t.create_foo()
-        foo = db.execute(tx)
-        assert foo.bar == 'baz'
+backends = dict(
+    # backend-name = backend-class,
+    (p.name, p.load())
+    for p in pkg_resources.iter_entry_points('schevo.backend')
+    )
 
 
-class TestDatabaseNamespaces1(BaseDatabaseNamespaces):
+def test_backends_dict():
+    """Durus and schevo.store backends are always present after Schevo
+    is installed."""
+    assert 'durus' in backends
+    assert 'schevo.store' in backends
 
-    include = True
 
-    format = 1
-
-
-class TestDatabaseNamespaces2(BaseDatabaseNamespaces):
-
-    include = True
-
-    format = 2
+optimize.bind_all(sys.modules[__name__])  # Last line of module.
 
 
 # Copyright (C) 2001-2007 Orbtech, L.L.C.

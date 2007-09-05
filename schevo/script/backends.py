@@ -1,44 +1,43 @@
-"""Database namespace unit tests.
+"""Installed backends command.
 
 For copyright, license, and warranty, see bottom of file.
 """
 
-from schevo.test import CreatesSchema
+from textwrap import dedent
+
+from schevo.script.command import Command
+from schevo.script import opt
+
+usage = """\
+schevo backends
+
+Shows a list of installed backends and the options that each one
+accepts."""
 
 
-class BaseDatabaseNamespaces(CreatesSchema):
-
-    body = '''
-
-    class Foo(E.Entity):
-        bar = f.string()
-
-    def t_create_foo():
-        return CreateFoo()
-
-    class CreateFoo(T.Transaction):
-        def _execute(self, db):
-            return db.execute(db.Foo.t.create(bar='baz'))
-    '''
-
-    def test_database_t_namespace(self):
-        tx = db.t.create_foo()
-        foo = db.execute(tx)
-        assert foo.bar == 'baz'
+def _parser():
+    p = opt.parser(usage)
+    return p
 
 
-class TestDatabaseNamespaces1(BaseDatabaseNamespaces):
+class Backends(Command):
 
-    include = True
+    name = 'Installed Backends'
+    description = 'Show a list of installed backends.'
 
-    format = 1
+    def main(self, arg0, args):
+        print
+        print
+        from schevo.backend import backends
+        for backend_name, backend_class in sorted(backends.iteritems()):
+            print backend_name, '-', backend_class.description
+            print '=' * (len(backend_name) + len(backend_class.description) + 3)
+            print 'Available options for --backend-args:'
+            print dedent(backend_class.backend_args_help).strip()
+            print
 
 
-class TestDatabaseNamespaces2(BaseDatabaseNamespaces):
-
-    include = True
-
-    format = 2
+start = Backends
 
 
 # Copyright (C) 2001-2007 Orbtech, L.L.C.
