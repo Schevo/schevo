@@ -342,10 +342,11 @@ def new_backend(filename, backend_name=None, backend_args=None):
     elif isinstance(backend_args, basestring):
         backend_args = BackendClass.args_from_string(backend_args)
     backend_args.update(additional_args)
+    print backend_args
     return BackendClass(filename, **backend_args)
 
 
-def open(filename, backend_name=None, backend_args={}):
+def open(filename, backend_name=None, backend_args=None):
     """Open an existing database and return it.
 
     - `filename`: Name of the file containing the database.
