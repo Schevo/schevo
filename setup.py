@@ -84,7 +84,7 @@ setup(
     install_requires=[
     'Louie >= 1.0',
     'PasteScript >= 1.3.5',
-    'SchevoDurus == dev, >= 3.1a1dev-r3496',
+    'SchevoDurus == dev, >= 3.1a1dev-r3527',
     ],
 
     tests_require=[
