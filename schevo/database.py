@@ -342,7 +342,6 @@ def new_backend(filename, backend_name=None, backend_args=None):
     elif isinstance(backend_args, basestring):
         backend_args = BackendClass.args_from_string(backend_args)
     backend_args.update(additional_args)
-    print backend_args
     return BackendClass(filename, **backend_args)
 
 
