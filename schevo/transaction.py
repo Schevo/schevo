@@ -680,37 +680,49 @@ class _Populate(Transaction):
             # Since a callable data might resolve entity fields
             # itself, we only do a lookup here if the value supplied
             # is not an Entity instance.
-            if (issubclass(FieldClass, field.Entity)
+            if (issubclass(FieldClass, field._EntityBase)
                 and not isinstance(value, base.Entity)
-                and value is not UNASSIGNED):
-                allow = FieldClass.allow
-                if len(allow) > 1:
-                    # With more than one allow we need to have been
-                    # told which extent to use.
-                    extent_name, value = value
+                and value is not UNASSIGNED
+                ):
+                if isinstance(value, list):
+                    value = [
+                        resolve(field_name, v, FieldClass, field_names)
+                        for v in value
+                        ]
+                elif isinstance(value, set):
+                    value = set([
+                        resolve(field_name, v, FieldClass, field_names)
+                        for v in value
+                        ])
                 else:
-                    # Only one Entity is allowed so we do not expect
-                    # the extent name in the data.
-                    extent_name = set(allow).pop()
-                lookup_extent = db.extent(extent_name)
-                default_key = lookup_extent.default_key
-                if isinstance(value, dict):
-                    kw = value
-                elif isinstance(value, tuple):
-                    if len(default_key) != len(value):
-                        msg = 'mismatch between default key %r and value %r'
-                        raise ValueError, msg % (default_key, value)
-                    kw = dict(zip(default_key, value))
-                    for key_field_name in default_key:
-                        FClass = lookup_extent.field_spec[key_field_name]
-                        v = resolve(key_field_name, kw[key_field_name], FClass,
-                                    default_key)
-                        kw[key_field_name] = v
-                else:
-                    msg = 'value %r is not valid for field %r in %r' % (
-                        value, field_name, field_names)
-                    raise TypeError(msg)
-                value = lookup_extent.findone(**kw)
+                    allow = FieldClass.allow
+                    if len(allow) > 1:
+                        # With more than one allow we need to have been
+                        # told which extent to use.
+                        extent_name, value = value
+                    else:
+                        # Only one Entity is allowed so we do not expect
+                        # the extent name in the data.
+                        extent_name = set(allow).pop()
+                    lookup_extent = db.extent(extent_name)
+                    default_key = lookup_extent.default_key
+                    if isinstance(value, dict):
+                        kw = value
+                    elif isinstance(value, tuple):
+                        if len(default_key) != len(value):
+                            msg = 'mismatch between default key %r and value %r'
+                            raise ValueError, msg % (default_key, value)
+                        kw = dict(zip(default_key, value))
+                        for key_field_name in default_key:
+                            FClass = lookup_extent.field_spec[key_field_name]
+                            v = resolve(key_field_name, kw[key_field_name],
+                                        FClass, default_key)
+                            kw[key_field_name] = v
+                    else:
+                        msg = 'value %r is not valid for field %r in %r' % (
+                            value, field_name, field_names)
+                        raise TypeError(msg)
+                    value = lookup_extent.findone(**kw)
             return value
         # Main processing loop.  Process extents by highest priority first.
         priority_attr = self._data_attr + '_priority'

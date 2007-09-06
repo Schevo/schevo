@@ -64,6 +64,64 @@ class BaseFieldEntityList(CreatesSchema):
             name = f.unicode()
 
             _key(name)
+
+
+        class FooFoo(E.Entity):
+
+            name = f.unicode()
+
+            _key(name)
+
+            _initial = [
+                ('foofoo1', ),
+                ('foofoo2', ),
+                ]
+
+            _initial_priority = 1
+
+
+        class BarBar(E.Entity):
+
+            name = f.unicode()
+            foo_foos = f.entity_list('FooFoo')
+
+            _key(name)
+
+            _initial = [
+                ('barbar1', [('foofoo1',), ('foofoo2',)]),
+                ('barbar2', [('foofoo2',), ('foofoo1',)]),
+                ]
+
+
+        class BazBaz(E.Entity):
+
+            name = f.unicode()
+
+            _key(name)
+
+            _initial = [
+                ('bazbaz1', ),
+                ('bazbaz2', ),
+                ]
+
+            _initial_priority = 1
+
+
+        class BofBof(E.Entity):
+
+            name = f.unicode()
+            foo_foos_or_bar_bars = f.entity_list('FooFoo', 'BazBaz')
+
+            _key(name)
+
+            _initial = [
+                ('bofbof1', [('FooFoo', ('foofoo1',)),
+                             ('BazBaz', ('bazbaz2',)),
+                             ]),
+                ('bofbof2', [('FooFoo', ('foofoo2',)),
+                             ('BazBaz', ('bazbaz1',)),
+                             ]),
+                ]
         '''
 
     def test_store_and_retrieve_UNASSIGNED(self):
@@ -156,6 +214,32 @@ class BaseFieldEntityList(CreatesSchema):
         tx = db.Boo.t.create(foo_list=[foo, UNASSIGNED])
         boo = db.execute(tx)
         assert list(boo.foo_list) == [foo, UNASSIGNED]
+
+    def test_initial_values(self):
+        barbar1 = db.BarBar.findone(name='barbar1')
+        expected = [
+            db.FooFoo.findone(name='foofoo1'),
+            db.FooFoo.findone(name='foofoo2'),
+            ]
+        assert list(barbar1.foo_foos) == expected
+        barbar2 = db.BarBar.findone(name='barbar2')
+        expected = [
+            db.FooFoo.findone(name='foofoo2'),
+            db.FooFoo.findone(name='foofoo1'),
+            ]
+        assert list(barbar2.foo_foos) == expected
+        bofbof1 = db.BofBof.findone(name='bofbof1')
+        expected = [
+            db.FooFoo.findone(name='foofoo1'),
+            db.BazBaz.findone(name='bazbaz2'),
+            ]
+        assert list(bofbof1.foo_foos_or_bar_bars) == expected
+        bofbof2 = db.BofBof.findone(name='bofbof2')
+        expected = [
+            db.FooFoo.findone(name='foofoo2'),
+            db.BazBaz.findone(name='bazbaz1'),
+            ]
+        assert list(bofbof2.foo_foos_or_bar_bars) == expected
 
 
 class TestFieldEntityList2(BaseFieldEntityList):

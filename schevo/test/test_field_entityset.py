@@ -45,6 +45,64 @@ class BaseFieldEntitySet(CreatesSchema):
             name = f.unicode()
 
             _key(name)
+
+
+        class FooFoo(E.Entity):
+
+            name = f.unicode()
+
+            _key(name)
+
+            _initial = [
+                ('foofoo1', ),
+                ('foofoo2', ),
+                ]
+
+            _initial_priority = 1
+
+
+        class BarBar(E.Entity):
+
+            name = f.unicode()
+            foo_foos = f.entity_set('FooFoo')
+
+            _key(name)
+
+            _initial = [
+                ('barbar1', set([('foofoo1',), ('foofoo2',)])),
+                ('barbar2', set([('foofoo2',), ('foofoo1',)])),
+                ]
+
+
+        class BazBaz(E.Entity):
+
+            name = f.unicode()
+
+            _key(name)
+
+            _initial = [
+                ('bazbaz1', ),
+                ('bazbaz2', ),
+                ]
+
+            _initial_priority = 1
+
+
+        class BofBof(E.Entity):
+
+            name = f.unicode()
+            foo_foos_or_bar_bars = f.entity_set('FooFoo', 'BazBaz')
+
+            _key(name)
+
+            _initial = [
+                ('bofbof1', set([('FooFoo', ('foofoo1',)),
+                                 ('BazBaz', ('bazbaz2',)),
+                                 ])),
+                ('bofbof2', set([('FooFoo', ('foofoo2',)),
+                                 ('BazBaz', ('bazbaz1',)),
+                                 ])),
+                ]
         '''
 
     def test_store_and_retrieve_UNASSIGNED(self):
@@ -119,6 +177,32 @@ class BaseFieldEntitySet(CreatesSchema):
         tx = db.Baz.t.create(foo_set=set([]))
         call = ex, tx
         assert raises(ValueError, *call)
+
+    def test_initial_values(self):
+        barbar1 = db.BarBar.findone(name='barbar1')
+        expected = set([
+            db.FooFoo.findone(name='foofoo1'),
+            db.FooFoo.findone(name='foofoo2'),
+            ])
+        assert barbar1.foo_foos == expected
+        barbar2 = db.BarBar.findone(name='barbar2')
+        expected = set([
+            db.FooFoo.findone(name='foofoo2'),
+            db.FooFoo.findone(name='foofoo1'),
+            ])
+        assert barbar2.foo_foos == expected
+        bofbof1 = db.BofBof.findone(name='bofbof1')
+        expected = set([
+            db.FooFoo.findone(name='foofoo1'),
+            db.BazBaz.findone(name='bazbaz2'),
+            ])
+        assert bofbof1.foo_foos_or_bar_bars == expected
+        bofbof2 = db.BofBof.findone(name='bofbof2')
+        expected = set([
+            db.FooFoo.findone(name='foofoo2'),
+            db.BazBaz.findone(name='bazbaz1'),
+            ])
+        assert bofbof2.foo_foos_or_bar_bars == expected
 
 
 class TestFieldEntitySet2(BaseFieldEntitySet):
