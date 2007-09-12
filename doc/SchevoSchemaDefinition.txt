@@ -7,6 +7,8 @@
 
 .. contents::
 
+.. Quick reference: Order of section delineators is === --- ... ~~~
+
 
 Overview
 ========
@@ -325,8 +327,92 @@ Extension methods
 Initial/sample data
 -------------------
 
-Initial and sample data for a child entity can be supplied by
-specifying the value of the first key of the parent.  For example::
+Initial data is data that Schevo uses when creating a new database.
+Initial data is *always* processed during new database creation.
+Specify initial data for an extent by assigning an `_initial`
+attribute to the entity class in your database schema.
+
+Sample data is data that Schevo uses to populate a database after its
+creation.  Sample data is only processed if the ``-p`` or ``--sample``
+option is passed to the ``schevo db create`` command-line tool, or if
+you call the `populate` method on an open database.  Specify sample
+data for an extent by assigning a `_sample` attribute to the entity
+class in your database schema.
+
+Unit test sample data is data that Schevo populates a database with
+when running a suite of unit tests against a database schema.  Specify
+unit test sample data for an extent by assigning a
+`_sample_unittest` attribute to the entity class in your database
+schema.
+
+You may also specify sample data with a custom attribute name, such as
+`_sample_abc`. Populate a database with your custom sample data by
+passing the suffix to the call to `populate` on your database.
+For the example, to populate `db` with the `abc` sample data, call
+``db.populate('abc')``.
+
+Specify each collection of initial or sample data as a list of tuples,
+where each tuple contains values for the fields that the extent's
+`create` transaction expects, in the order that it expects
+them. Normally, those fields are the same as the fields specified in
+the entity class, but in complex database schemata the fields may
+differ.
+
+To specify the default value for a field, use the constant
+`DEFAULT`. For example, the `Foo` entities that have the names
+``'c'`` and ``'d'`` will have a `size` of ``5``::
+
+    class Foo(E.Entity):
+
+        name = f.string()
+        size = f.integer(default=5)
+
+        _key(name)
+
+        _initial = [
+            ('a', 1),
+            ('b', 2),
+            ('c', DEFAULT),
+            ('d', DEFAULT),
+            ]
+
+To specify a value for an `Entity` field that allows only one entity
+type, use a tuple containing the values of the fields of the first key
+of that entity type.  For example::
+
+    class Foo(E.Entity):
+
+        name = f.string()
+        for_rainy_days = f.boolean()
+
+        _key(name, for_rainy_days)
+
+        _initial = [
+            ('One', False),
+            ('Two', False),
+            ('Buckle', False),
+            ('Shoe', False),
+            ('Shoe', True),
+            ]
+
+    class Bar(E.Entity):
+
+        foo = f.entity('Foo')
+        baz = f.string()
+
+        _key(foo, bar)
+
+        _initial = [
+            (('One', False), 'This is how it starts.'),
+            (('Shoe', False), 'This is how it ends.'),
+            (('Shoe', False), 'Need to have two shoes.'),
+            (('Shoe', True), 'And one for a rainy day.'),
+            ]
+
+To specify a value for an `Entity` field that allows more than one
+entity type, use a two-tuple that first gives the entity type, then
+gives a tuple of the values of the fields of the first key of that
+entity type.  For example::
 
     class Foo(E.Entity):
 
@@ -335,29 +421,36 @@ specifying the value of the first key of the parent.  For example::
         _key(name)
 
         _initial = [
-            ('One', ),
-            ('Two', ),
-            ('Buckle', ),
-            ('Shoe', ),
+            ('one',),
+            ('two',),
             ]
 
-    class FooChild(E.Entity):
+    class Bar(E.Entity):
 
-        foo = f.entity('Foo')
-        bar = f.string()
+        number = f.integer()
 
-        _key(foo, bar)
+        _key(number)
 
         _initial = [
-            (('One',), 'This is how it starts.'),
-            (('Shoe',), 'This is how it ends.'),
-            (('Shoe',), 'Need to have two shoes.'),
-            (('Shoe',), 'And one for a rainy day.'),
+            (1,),
+            (2,),
             ]
 
-The appearance of a tuple tells the data generator to find a ``Foo``
-entity whose first unique key matches the values supplied in the
-tuple.
+    class Baz(E.Entity):
+
+        foo_or_bar = f.entity('Foo', 'Bar')
+        notes = f.string()
+
+        _initial = [
+            (('Foo', ('one',)), 'This is the Foo that is named one.'),
+            (('Foo', ('two',)), 'This is the Foo that is named two.'),
+            (('Bar', (1,)), 'This is the Bar that is numbered 1.'),
+            (('Bar', (2,)), 'This is the Bar that is numbered 2.'),
+            ]
+
+To specify values for `EntityList` and `EntitySet` fields, simply
+enclose the representations of entities within a list or a set,
+respectively.
 
 
 Field definitions
@@ -379,7 +472,8 @@ For example, this Entity subclass defines three fields::
         name = f.unicode()                        # [1]
         birthdate = f.date(required=False)        # [2]
         disposition = f.entity('Disposition', on_delete=UNASSIGN,
-                               required=False)    # [3]
+                               required=False,
+                               default=('Cheerful',))    # [3]
 
 1. The `name` field is a required `Unicode` field.  By default, all
    fields are required.
@@ -387,9 +481,14 @@ For example, this Entity subclass defines three fields::
 2. The `birthdate` field is an optional `Date` field.
 
 3. The `disposition` field is an optional `Entity` field that can
-   store a reference to a `Disposition` entity.  When the referenced
-   `Disposition` entity is deleted, this field's value is set to
-   `UNASSIGNED`. See also `cascading delete rules for Entity fields`_.
+   store a reference to a `Disposition` entity.  
+
+   When the referenced `Disposition` entity is deleted, this field's
+   value is set to `UNASSIGNED`. See also `cascading delete rules for
+   Entity fields`_.
+
+   The default value of this field is the `Disposition` entity that
+   matches ``('Cheerful',)``.  See `Default field values`_ below.
 
 
 Calculated field methods
@@ -411,6 +510,21 @@ happen to the field or entity that refers to the deleted entity.
 The default rule of the `available rules`_ is `RESTRICT`, which is the
 safest operation, since it prevents accidental deletion of an entity
 if it is being referred to by another entity.
+
+
+Default field values
+....................
+
+Default field values are assigned to fields in `Create` transactions.
+
+Specify default field values in a field definition by giving either a
+default value in the same notation as you would for initial or sample
+data, or by specifying a callable that returns the actual value to be
+used as the default value.
+
+Default values are not assigned to a field if a value has been
+supplied for that field in the keyword arguments specified when
+creating the `Create` transaction.
 
 
 Specifying type-specific rules

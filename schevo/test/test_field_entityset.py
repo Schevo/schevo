@@ -61,6 +61,12 @@ class BaseFieldEntitySet(CreatesSchema):
             _initial_priority = 1
 
 
+        class BooBoo(E.Entity):
+
+            foo_foos = f.entity_set('FooFoo',
+                                    default=set([('foofoo2', ), ('foofoo1', )]))
+
+
         class BarBar(E.Entity):
 
             name = f.unicode()
@@ -104,6 +110,11 @@ class BaseFieldEntitySet(CreatesSchema):
                                  ])),
                 ]
         '''
+
+    def test_default(self):
+        tx = db.BooBoo.t.create()
+        assert tx.foo_foos == set([db.FooFoo.findone(name='foofoo2'),
+                                   db.FooFoo.findone(name='foofoo1')])
 
     def test_store_and_retrieve_UNASSIGNED(self):
         bar = ex(db.Bar.t.create(foo_set=UNASSIGNED))

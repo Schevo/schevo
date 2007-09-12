@@ -1,4 +1,3 @@
-
 """EntityList field unit tests.
 
 For copyright, license, and warranty, see bottom of file.
@@ -80,6 +79,12 @@ class BaseFieldEntityList(CreatesSchema):
             _initial_priority = 1
 
 
+        class BooBoo(E.Entity):
+
+            foo_foos = f.entity_list('FooFoo',
+                                     default=[('foofoo2', ), ('foofoo1', )])
+
+
         class BarBar(E.Entity):
 
             name = f.unicode()
@@ -123,6 +128,11 @@ class BaseFieldEntityList(CreatesSchema):
                              ]),
                 ]
         '''
+
+    def test_default(self):
+        tx = db.BooBoo.t.create()
+        assert tx.foo_foos == [db.FooFoo.findone(name='foofoo2'),
+                               db.FooFoo.findone(name='foofoo1')]
 
     def test_store_and_retrieve_UNASSIGNED(self):
         bar = ex(db.Bar.t.create(foo_list=UNASSIGNED))

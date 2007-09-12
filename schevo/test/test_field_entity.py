@@ -18,6 +18,8 @@ class BaseEntity(CreatesSchema):
 
         thing = f.string()
 
+        _key(thing)
+
         _sample_unittest = [
             ('a', ),
             ('b', ),
@@ -38,7 +40,7 @@ class BaseEntity(CreatesSchema):
 
     class Baz(E.Entity):
 
-        foo = f.entity('Foo')
+        foo = f.entity('Foo', default=('a', ))
         bar = f.entity('Bar', default=default_bar)
         foobar = f.entity('Foo', 'Bar', required=False)
     '''
@@ -54,6 +56,11 @@ class BaseEntity(CreatesSchema):
         f = tx.f.foo
         assert f.convert('Foo-1', db) == db.Foo[1]
         assert f.convert(u'Foo-1', db) == db.Foo[1]
+
+    def test_default(self):
+        tx = db.Baz.t.create()
+        assert tx.foo == db.Foo.findone(thing='a')
+        assert tx.bar == db.Bar.findone(stuff=1)
 
     def test_reversible_valid_values(self):
         tx = db.Baz.t.create()

@@ -207,20 +207,25 @@ class Create(Transaction):
         for name, value in kw.iteritems():
             setattr(self, name, value)
         # Look for matching field values in objects passed as args.
-        for field_name, field in field_map.iteritems():
-            if not field.assigned and not field.readonly:
+        for field_name, f in field_map.iteritems():
+            if not f.assigned and not f.readonly:
                 for arg in args:
                     if hasattr(arg, field_name):
                         value = getattr(arg, field_name)
                         setattr(self, field_name, value)
         # Assign default values for fields that haven't yet been
         # assigned a value.
-        for field in field_map.itervalues():
-            if not field.assigned and not field.readonly:
-                default = field.default[0]
+        field_spec = self._field_spec
+        for f in field_map.itervalues():
+            if not f.assigned and not f.readonly:
+                default = f.default[0]
+                if f.may_store_entities and not callable(default):
+                    field_name = f._name
+                    default = resolve(f._instance._db, field_name, default,
+                                      field_spec[field_name])
                 while callable(default) and default is not UNASSIGNED:
                     default = default()
-                field.set(default)
+                f.set(default)
 
     def _setup(self):
         """Override this in subclasses to customize a transaction."""
@@ -614,116 +619,7 @@ class _Populate(Transaction):
         Transaction.__init__(self)
 
     def _execute(self, db):
-        execute = db.execute
-        processing = []
         data_attr = self._data_attr
-        def process_data(extent):
-            """Recursively process data, parents before children."""
-            if extent in processing or extent not in self._extents:
-                return
-            processing.append(extent)
-            # Get the field spec from the extent's create transaction
-            # by instantiating a new create transaction.
-            create = extent.t.create
-            tx = create()
-            field_spec = tx._field_spec.copy()
-            # Remove readonly fields since we can't set them, and
-            # remove hidden fields since we can't "see" them.
-            for name in field_spec.keys():
-                delete = False
-                if not hasattr(tx.f, name):
-                    # The create transaction's _setup() might delete a
-                    # field without deleting the field_spec entry.
-                    delete = True
-                else:
-                    f = getattr(tx.f, name)
-                if delete or f.readonly or f.hidden:
-                    del field_spec[name]
-            field_names = field_spec.keys()
-            field_classes = field_spec.values()
-            has_entity_field = False
-            for FieldClass in field_classes:
-                if issubclass(FieldClass, field.Entity):
-                    has_entity_field = True
-                    allow = FieldClass.allow
-                    for extent_name in allow:
-                        parent_extent = db.extent(extent_name)
-                        process_data(parent_extent)
-            # Get the data we need to process.
-            data = []
-            if hasattr(extent._EntityClass, data_attr):
-                data = getattr(extent._EntityClass, data_attr)
-            if callable(data):
-                data = data(db)
-            if not data:
-                return
-            for values in data:
-                value_map = {}
-                for field_name, value, FieldClass in zip(
-                    field_names, values, field_classes
-                    ):
-                    if value is not DEFAULT:
-                        value = resolve(field_name, value, FieldClass,
-                                        field_names)
-                        value_map[field_name] = value
-                new = create(**value_map)
-                try:
-                    execute(new)
-                except:
-                    print '-' * 40
-                    print 'extent:', extent
-                    print 'data:', data
-                    print 'field_spec:', field_spec
-                    print 'value_map:', value_map
-                    raise
-        def resolve(field_name, value, FieldClass, field_names):
-            # Since a callable data might resolve entity fields
-            # itself, we only do a lookup here if the value supplied
-            # is not an Entity instance.
-            if (issubclass(FieldClass, field._EntityBase)
-                and not isinstance(value, base.Entity)
-                and value is not UNASSIGNED
-                ):
-                if isinstance(value, list):
-                    value = [
-                        resolve(field_name, v, FieldClass, field_names)
-                        for v in value
-                        ]
-                elif isinstance(value, set):
-                    value = set([
-                        resolve(field_name, v, FieldClass, field_names)
-                        for v in value
-                        ])
-                else:
-                    allow = FieldClass.allow
-                    if len(allow) > 1:
-                        # With more than one allow we need to have been
-                        # told which extent to use.
-                        extent_name, value = value
-                    else:
-                        # Only one Entity is allowed so we do not expect
-                        # the extent name in the data.
-                        extent_name = set(allow).pop()
-                    lookup_extent = db.extent(extent_name)
-                    default_key = lookup_extent.default_key
-                    if isinstance(value, dict):
-                        kw = value
-                    elif isinstance(value, tuple):
-                        if len(default_key) != len(value):
-                            msg = 'mismatch between default key %r and value %r'
-                            raise ValueError, msg % (default_key, value)
-                        kw = dict(zip(default_key, value))
-                        for key_field_name in default_key:
-                            FClass = lookup_extent.field_spec[key_field_name]
-                            v = resolve(key_field_name, kw[key_field_name],
-                                        FClass, default_key)
-                            kw[key_field_name] = v
-                    else:
-                        msg = 'value %r is not valid for field %r in %r' % (
-                            value, field_name, field_names)
-                        raise TypeError(msg)
-                    value = lookup_extent.findone(**kw)
-            return value
         # Main processing loop.  Process extents by highest priority first.
         priority_attr = self._data_attr + '_priority'
         # Check if a subclass has limited the entities to be initialized.
@@ -739,12 +635,84 @@ class _Populate(Transaction):
             (getattr(extent._EntityClass, priority_attr, 0), extent)
             for extent in extents
             ))
+        # Process data in order of priority.
+        processing = []
         for priority, extent in priority_extents:
-            process_data(extent)
+            self._process_data(db, extent, processing)
         # Call module-level handlers.
         fn = getattr(db._schema_module, 'on' + data_attr, None)
         if callable(fn):
             fn(db)
+
+    def _process_data(self, db, extent, processing):
+        """Recursively process initial/sample data, parents before children.
+
+        - `db`: Database to work within.
+        - `extent`: Extent to process.
+        - `processing`: List of extents that are being processed higher up
+          in the call stack.
+        """
+        if extent in processing:
+            return
+        processing.append(extent)
+        # Get the data we need to process, and short-circuit if no
+        # data is specified.
+        data = []
+        data_attr = self._data_attr
+        if hasattr(extent._EntityClass, data_attr):
+            data = getattr(extent._EntityClass, data_attr)
+        if callable(data):
+            data = data(db)
+        if not data:
+            return
+        # Get the field spec from the extent's create transaction
+        # by instantiating a new create transaction.
+        create = extent.t.create
+        tx = create()
+        field_spec = tx._field_spec.copy()
+        # Remove readonly fields since we can't set them, and
+        # remove hidden fields since we can't "see" them.
+        for name in field_spec.keys():
+            delete = False
+            if not hasattr(tx.f, name):
+                # The create transaction's _setup() might delete a
+                # field without deleting the field_spec entry.
+                delete = True
+            else:
+                f = getattr(tx.f, name)
+            if delete or f.readonly or f.hidden:
+                del field_spec[name]
+        field_names = field_spec.keys()
+        field_classes = field_spec.values()
+        has_entity_field = False
+        for FieldClass in field_classes:
+            if issubclass(FieldClass, field.Entity):
+                has_entity_field = True
+                allow = FieldClass.allow
+                for extent_name in allow:
+                    parent_extent = db.extent(extent_name)
+                    self._process_data(db, parent_extent, processing)
+        # Process the data.
+        execute = db.execute
+        for values in data:
+            value_map = {}
+            for field_name, value, FieldClass in zip(
+                field_names, values, field_classes
+                ):
+                if value is not DEFAULT:
+                    value = resolve(db, field_name, value, FieldClass,
+                                    field_names)
+                    value_map[field_name] = value
+            new = create(**value_map)
+            try:
+                execute(new)
+            except:
+                print '-' * 40
+                print 'extent:', extent
+                print 'data:', data
+                print 'field_spec:', field_spec
+                print 'value_map:', value_map
+                raise
 
 
 class Initialize(_Populate):
@@ -788,6 +756,75 @@ class CallableWrapper(Transaction):
 
     def _execute(self, db):
         return self._fn(db)
+
+
+# ---------------------------------------------------------------------
+
+
+def resolve(db, field_name, value, FieldClass, field_names=None):
+    """Resolve the entity reference(s) in `value` and return the
+    actual entity references.
+
+    - `db`: Database to search within.
+    - `field_name`: Field name for the field whose value we are
+      resolving.
+    - `value`: Value to resolve.
+    - `FieldClass`: Class of the field whose value we are
+      resolving.
+    - `field_names`: (optional) Full list of field names for each data
+      population record, if resolving within initial or sample data.
+      Used to make error messages more useful.
+    """
+    # Since a callable data might resolve entity fields
+    # itself, we only do a lookup here if the value supplied
+    # is not an Entity instance.
+    if (issubclass(FieldClass, field._EntityBase)
+        and not isinstance(value, base.Entity)
+        and value is not UNASSIGNED
+        ):
+        if isinstance(value, list):
+            value = [
+                resolve(db, field_name, v, FieldClass, field_names)
+                for v in value
+                ]
+        elif isinstance(value, set):
+            value = set([
+                resolve(db, field_name, v, FieldClass, field_names)
+                for v in value
+                ])
+        else:
+            allow = FieldClass.allow
+            if len(allow) > 1:
+                # With more than one allow we need to have been
+                # told which extent to use.
+                extent_name, value = value
+            else:
+                # Only one Entity is allowed so we do not expect
+                # the extent name in the data.
+                extent_name = set(allow).pop()
+            lookup_extent = db.extent(extent_name)
+            default_key = lookup_extent.default_key
+            if isinstance(value, dict):
+                kw = value
+            elif isinstance(value, tuple):
+                if len(default_key) != len(value):
+                    msg = 'mismatch between default key %r and value %r'
+                    raise ValueError, msg % (default_key, value)
+                kw = dict(zip(default_key, value))
+                for key_field_name in default_key:
+                    FClass = lookup_extent.field_spec[key_field_name]
+                    v = resolve(db, key_field_name, kw[key_field_name],
+                                FClass, default_key)
+                    kw[key_field_name] = v
+            else:
+                msg = 'value %r is not valid for field %r in %r' % (
+                    value, field_name, field_names)
+                raise TypeError(msg)
+            value = lookup_extent.findone(**kw)
+            if value is None:
+                raise ValueError('no entity %s found in %s' %
+                                 (kw, lookup_extent))
+    return value
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
