@@ -103,7 +103,7 @@ class Evolve(Command):
         db.pack()
         # Done.
         db.close()
-        print 'Database created.'
+        print 'Database evolution complete.'
 
 
 start = Evolve
