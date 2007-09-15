@@ -1362,8 +1362,17 @@ class EntityList(_EntityBase):
 
     def _transform(self, transform_entity):
         value = self._value
-        if isinstance(value, list):
-            self._value = [transform_entity(entity) for entity in value]
+        if isinstance(value, (list, tuple)):
+            L = []
+            for entity in value:
+                if entity is not UNASSIGNED:
+                    L.append(transform_entity(entity))
+                else:
+                    L.append(UNASSIGNED)
+            if isinstance(value, tuple):
+                self._value = tuple(L)
+            else:
+                self._value = L
 
     def _unassign(self, member):
         value = self._value
@@ -1473,7 +1482,8 @@ class EntitySet(_EntityBase):
     def _transform(self, transform_entity):
         value = self._value
         if isinstance(value, (set, frozenset)):
-            self._value = set(transform_entity(entity) for entity in value)
+            self._value = type(value)(
+                transform_entity(entity) for entity in value)
 
     def validate(self, value):
         """Validate the value, raising an error on failure."""
@@ -1576,7 +1586,7 @@ class EntitySetSet(_EntityBase):
     def _transform(self, transform_entity):
         value = self._value
         if isinstance(value, (set, frozenset)):
-            self._value = set(
+            self._value = type(value)(
                 frozenset(transform_entity(entity) for entity in item_set)
                 for item_set in value
                 )

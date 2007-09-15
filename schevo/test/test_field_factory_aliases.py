@@ -7,16 +7,15 @@ from schevo.test import BaseTest
 
 
 class TestFieldFactoryDeprecatedNames(BaseTest):
-
     """
-    Change `showwarning` to log to a list instead of to stderr, so we can
-    test the deprecation warning below::
+    Change `showwarning` to record deprecation warnings somewhere
+    other than stderr, so we can test the deprecation warning below::
 
         >>> import warnings
         >>> old_showwarning = warnings.showwarning
-        >>> captured_warnings = []
         >>> def showwarning(message, category, filename, lineno, file=None):
-        ...     captured_warnings.append((message, category, filename, lineno))
+        ...     warnings.last_lineno = lineno
+        ...     warnings.last_message = message
         >>> warnings.showwarning = showwarning
 
     Create a schema that has a custom field class, and uses it with both
@@ -32,31 +31,23 @@ class TestFieldFactoryDeprecatedNames(BaseTest):
         ...         code = f.someUnicodeThing()         # Deprecated.
         ...     '''
 
-    When using the schema, a deprecation warning is given for the field
-    definition that used the camelCase version of the name, which is now
-    deprecated::
+    When using the schema, a deprecation warning is given for the
+    field definition that used the camelCase version of the name,
+    which is now deprecated. The line number that the warning is on
+    appears to be line eight above, but since a two-line header is
+    prepended to the body during unit testing, it's actually line 10
+    that the warning occurs at::
 
         >>> from schevo.test import DocTest
-        >>> len_before = len(captured_warnings)
         >>> t = DocTest(body)
-        >>> len_after = len(captured_warnings)
-        >>> len_after - len_before
-        1
-        >>> message, category, filename, lineno = captured_warnings[-1]
-        >>> print str(message)  #doctest: +ELLIPSIS
+        >>> print warnings.last_message  #doctest: +ELLIPSIS
         'someUnicodeThing' is a deprecated field definition name. ...
-
-    The line number that the warning is on appears to be line eight above,
-    but since a two-line header is prepended to the body during unit testing,
-    it's actually line 10 that the warning occurs at::
-
-        >>> lineno
+        >>> warnings.last_lineno
         10
 
     Place the old `showwarning` function back into the `warnings` module::
 
         >>> warnings.showwarning = old_showwarning
-
     """
 
 # Copyright (C) 2001-2007 Orbtech, L.L.C.
