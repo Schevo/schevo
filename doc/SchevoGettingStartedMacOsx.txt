@@ -6,24 +6,27 @@
 Below, we describe in detail how to install Schevo for Mac OSX. The
 instructions have been tested on the following operating systems:
 
-* Mac OSX 10.4.9 on Intel-chip Based Mac
+* Mac OSX 10.4.10 on Intel-chip Based Mac
+
+
+Notes on running Python
+=======================
+
+Unless you change your `PATH` environment variable, do not run Python
+by running ``python``, as that will invoke the system-installed
+Python, which is version 2.3.5 in OSX 10.4.
+
+Instead, run ``python2.5`` as shown in examples below.
 
 
 Install Python packages
 =======================
 
-We recommend using the `Universal MacPython packages`_ available at
-the `pythonmac.org`_ site.
-
-.. _Universal MacPython packages: http://pythonmac.org/packages/
-
-.. _pythonmac.org: http://pythonmac.org/
-
-.. _Universal MacPython 2.4: http://pythonmac.org/packages/py24-fat/index.html
-
-1. At the `Universal MacPython 2.4`_ page, download the disk image
+1. At the `Python 2.5.1 release page`_, download the disk image
    (``dmg``) file for Python. For instance, the file at the time of
-   this writing is ``python-2.4.4-macosx2006-10-18.dmg``.
+   this writing is ``python-2.5.1-macosx.dmg``.
+
+.. _Python 2.5.1 release page: http://www.python.org/download/releases/2.5.1/
 
 2. Open the disk image.
 
@@ -48,7 +51,7 @@ Download workingenv and set up an environment for Schevo
 
 3. In a terminal, create the environment::
 
-    $ python ~/workingenv.py ~/env/schevo
+    $ python2.5 ~/workingenv.py ~/env/schevo
 
 
 Activate the Schevo environment

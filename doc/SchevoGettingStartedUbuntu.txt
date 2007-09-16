@@ -9,12 +9,24 @@ tested on the following operating systems:
 
 * Ubuntu Linux 6.10
 
-* Ubuntu Linux 7.04 prerelease
+* Ubuntu Linux 7.04
 
 Users of other UNIX-derived or UNIX-like operating systems not listed
 above can use this document as a guideline.
 
 Mac users, see `SchevoGettingStartedMacOsx`:trac:.
+
+
+Notes on running Python
+=======================
+
+With Ubuntu 7.04, or any Linux distribution that uses Python 2.5 as
+the default Python, so just run ``python`` when invoking Python as per
+the directions below.
+
+With Ubuntu 6.10, or any Linux distribution that uses Python 2.4 as
+the default Python, run ``python2.5`` when invoking Python as per the
+directions below.
 
 
 Install Python packages
@@ -23,7 +35,7 @@ Install Python packages
 Run the following in a terminal to install the required Python
 packages and compiler tools::
 
-    $ sudo aptitude install build-essential python2.4-dev
+    $ sudo aptitude install build-essential python2.5 python2.5-dev
 
 If you do not have administrator privileges, request to have them
 installed (or the equivalents on the operating system you are using).

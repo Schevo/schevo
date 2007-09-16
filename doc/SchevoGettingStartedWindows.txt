@@ -13,10 +13,10 @@ systems:
 Install Python
 ==============
 
-1. Download the Windows installer for Python 2.4 by visiting the
-   `2.4.4 release page
-   <http://www.python.org/download/releases/2.4.4/>`__ and downloading
-   the ``python-2.4.4.msi`` file.
+1. Download the Windows installer for Python 2.5 by visiting the
+   `2.5.1 release page
+   <http://www.python.org/download/releases/2.5.1/>`__ and downloading
+   the ``python-2.5.1.msi`` file.
 
 2. Open the ``msi`` file to start the installation process.
 
@@ -26,16 +26,16 @@ Install Python
 4. Add the following directories to your `PATH` environment variable
    (see `Setting Environment Variables`_ below):
 
-   * ``c:\python24``
+   * ``c:\python25``
 
-   * ``c:\python24\scripts``
+   * ``c:\python25\scripts``
 
 5. Test your Python installation by clicking *Start*, *Run...*, and
    entering ``cmd`` to start a command prompt. When the command prompt
    window appears, enter ``python``. You should the be greeted with
    the Python interactive shell, which will look similar to this::
 
-     Python 2.4.4 (#71, Oct 18 2006, 08:34:43) ...
+     Python 2.5.1 (r251:54863, Apr 18 2007, 08:51:08) ...
      Type "help", "copyright", "credits", or "license" ...
      >>>
 
@@ -46,15 +46,32 @@ Install `pywin32` extensions
 ============================
 
 1. Visit the `pywin32 download page
-   <http://sourceforge.net/project/showfiles.php?group_id=78018>`__
-   and download the most recent package that ends with ``py2.4.exe``.
+   <http://sourceforge.net/project/showfiles.php?group_id=78018&package_id=79063>`__
+   and download the most recent package that ends with ``py2.5.exe``.
    For example, at the time of this writing that file would be
-   ``pywin32-210.win32-py2.4.exe``.
+   ``pywin32-210.win32-py2.5.exe``.
 
 2. Open the file you downloaded in step 1 to start the installation
    process.
 
 3. Step through the installer, accepting default values for each step.
+
+4. At the end of the installer, check the install log to see if it
+   contains this message at the bottom of the log::
+
+     ******************** WARNING ********************
+     It appears that the MFC DLL 'mfc71.dll' is not installed
+     Pythonwin will not work without this DLL, and I haven't had the
+     time to package it in with the installer.
+
+     You can download this DLL from:
+     http://starship.python.net/crew/mhammond/win32/
+     **************************************************
+
+   If you see that message, browse to the `URL it mentions
+   <http://starship.python.net/crew/mhammond/win32/>`__ and follow the
+   instructions under the `MFC DLLs for Pythonwin` heading for
+   downloading and installing the ``mfc71.dll` file.
 
 
 Download workingenv and set up an environment for Schevo
@@ -62,14 +79,14 @@ Download workingenv and set up an environment for Schevo
 
 1. Download `workingenv.py
    <http://svn.colorstudy.com/home/ianb/workingenv/workingenv.py>`__
-   to ``c:\python24\scripts``.
+   to ``c:\python25\scripts``.
 
 2. If it doesn't exist, create a ``c:\env`` folder using Windows
    Explorer or a command prompt.
 
 3. In a command prompt, create the environment::
 
-    python c:\python24\scripts\workingenv.py --site-packages c:\env\schevo
+    python c:\python25\scripts\workingenv.py --site-packages c:\env\schevo
 
 
 Activate the Schevo environment
@@ -107,7 +124,7 @@ environment variables.
 
 This is how you do so using Microsoft XP:
 
-1. Right-click your `My Computer` icon.
+1. Click Start, then right-click your `My Computer` icon.
 
 2. Choose `Properties`.
 
