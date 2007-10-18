@@ -403,7 +403,8 @@ class Entity(base.Entity, LabelMixin):
     def __unicode__(self):
         key = self._default_key
         if key:
-            return u' :: '.join([unicode(getattr(self, name)) for name in key])
+            return u' :: '.join([unicode(getattr(self.f, name))
+                                 for name in key])
         else:
             return repr(self)
 
