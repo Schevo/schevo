@@ -854,23 +854,37 @@ class Database(base.Database):
         try:
             # Get old values for use in a potential inversion.
             old_fields = self._entity_fields(extent_name, oid)
-            old_related_entities = self._entity_related_entities(
-                extent_name, oid)
+            updating_related = len(related_entities) > 0
+            if updating_related:
+                old_related_entities = self._entity_related_entities(
+                    extent_name, oid)
+            else:
+                old_related_entities = {}
             old_rev = entity_map['rev']
             # Manage entity references.
-            for name, related_entity_set in related_entities.iteritems():
-                field_id = field_name_id[name]
-                for placeholder in related_entity_set:
-                    other_extent_id = placeholder.extent_id
-                    other_oid = placeholder.oid
-                    nl_append((field_id, other_extent_id, other_oid))
+            if updating_related:
+                for name, related_entity_set in related_entities.iteritems():
+                    field_id = field_name_id[name]
+                    for placeholder in related_entity_set:
+                        other_extent_id = placeholder.extent_id
+                        other_oid = placeholder.oid
+                        nl_append((field_id, other_extent_id, other_oid))
             # Get fields, and set UNASSIGNED for any fields that are
             # new since the last time the entity was stored.
             fields_by_id = entity_map['fields']
-            all_field_ids = set(extent_map['field_id_name'].iterkeys())
-            new_fields = all_field_ids - set(fields_by_id.iterkeys())
+            all_field_ids = set(extent_map['field_id_name'])
+            new_field_ids = all_field_ids - set(fields_by_id)
             fields_by_id.update(dict(
-                (field_id, UNASSIGNED) for field_id in new_fields))
+                (field_id, UNASSIGNED) for field_id in new_field_ids))
+            # Create ephemeral fields for creating new mappings.
+            new_fields_by_id = dict(fields_by_id)
+            for name, value in fields.iteritems():
+                new_fields_by_id[field_name_id[name]] = value
+            if updating_related:
+                new_related_entities_by_id = dict(
+                    (field_name_id[name], related_entities[name])
+                    for name in related_entities
+                    )
             # Remove existing index mappings.
             indices = extent_map['indices']
             for index_spec in indices.iterkeys():
@@ -884,35 +898,39 @@ class Database(base.Database):
                     relaxed = None
                 _index_remove(extent_map, index_spec, oid, field_values)
                 ir_append((extent_map, index_spec, relaxed, oid, field_values))
-            # Delete links from this entity to other entities.
-            related_entities_by_id = entity_map['related_entities']
-            referrer_extent_id = extent_name_id[extent_name]
-            for (referrer_field_id,
-                 related_set) in related_entities_by_id.iteritems():
-                # If a field once existed, but no longer does, there will
-                # still be a related entity set for it in related_entities.
-                # Only process the fields that still exist.
-                if referrer_field_id in all_field_ids:
-                    for other_value in related_set:
-                        # Remove the link to the other entity.
-                        other_extent_id = other_value.extent_id
-                        other_oid = other_value.oid
-                        link_key = (referrer_extent_id, referrer_field_id)
-                        other_extent_map = extent_maps_by_id[other_extent_id]
-                        other_entity_map = other_extent_map['entities'][
-                            other_oid]
-                        links = other_entity_map['links']
-                        other_links = links[link_key]
-                        del other_links[oid]
-                        other_entity_map['link_count'] -= 1
-                        ld_append((other_entity_map, links, link_key, oid))
-            # Create ephemeral fields for creating new index mappings.
-            new_fields = dict(fields_by_id)
-            for name, value in fields.iteritems():
-                new_fields[field_name_id[name]] = value
+            if updating_related:
+                # Delete links from this entity to other entities.
+                related_entities_by_id = entity_map['related_entities']
+                referrer_extent_id = extent_name_id[extent_name]
+                new_field_ids = frozenset(new_fields_by_id)
+                for (referrer_field_id,
+                     related_set) in related_entities_by_id.iteritems():
+                    # If a field once existed, but no longer does, there will
+                    # still be a related entity set for it in related_entities.
+                    # Only process the fields that still exist.
+                    if referrer_field_id in all_field_ids:
+##                         for other_value in related_set:
+                        # Remove only the links that no longer exist.
+                        for other_value in (
+                            related_set
+                            - new_related_entities_by_id[referrer_field_id]
+                            ):
+                            # Remove the link to the other entity.
+                            other_extent_id = other_value.extent_id
+                            other_oid = other_value.oid
+                            link_key = (referrer_extent_id, referrer_field_id)
+                            other_extent_map = extent_maps_by_id[
+                                other_extent_id]
+                            other_entity_map = other_extent_map['entities'][
+                                other_oid]
+                            links = other_entity_map['links']
+                            other_links = links[link_key]
+                            del other_links[oid]
+                            other_entity_map['link_count'] -= 1
+                            ld_append((other_entity_map, links, link_key, oid))
             # Create new index mappings.
             for index_spec in indices.iterkeys():
-                field_values = tuple(new_fields[field_id]
+                field_values = tuple(new_fields_by_id[field_id]
                                      for field_id in index_spec)
                 # Find out if the index has been relaxed.
                 relaxed_specs = self._relaxed[extent_name]
@@ -923,31 +941,38 @@ class Database(base.Database):
                 _index_add(extent_map, index_spec, relaxed, oid, field_values,
                            BTree)
                 ia_append((extent_map, index_spec, oid, field_values))
-            # Update links from this entity to another entity.
-            referrer_extent_id = extent_name_id[extent_name]
-            for referrer_field_id, other_extent_id, other_oid in new_links:
-                other_extent_map = extent_maps_by_id[other_extent_id]
-                try:
-                    other_entity_map = other_extent_map['entities'][other_oid]
-                except KeyError:
-                    field_id_name = extent_map['field_id_name']
-                    field_name = field_id_name[referrer_field_id]
-                    raise error.EntityDoesNotExist(
-                        'Entity referenced in %r does not exist.'
-                        % field_name)
-                # Add a link to the other entity.
-                links = other_entity_map['links']
-                link_key = (referrer_extent_id, referrer_field_id)
-                if link_key not in links:  # XXX Should already be there.
-                    links[link_key] = BTree()
-                links[link_key][oid] = None
-                other_entity_map['link_count'] += 1
-                lc_append((other_entity_map, links, link_key, oid))
+            if updating_related:
+                # Update links from this entity to another entity.
+                referrer_extent_id = extent_name_id[extent_name]
+                for referrer_field_id, other_extent_id, other_oid in new_links:
+                    other_extent_map = extent_maps_by_id[other_extent_id]
+                    try:
+                        other_entity_map = other_extent_map['entities'][
+                            other_oid]
+                    except KeyError:
+                        field_id_name = extent_map['field_id_name']
+                        field_name = field_id_name[referrer_field_id]
+                        raise error.EntityDoesNotExist(
+                            'Entity referenced in %r does not exist.'
+                            % field_name)
+                    # Add a link to the other entity.
+                    links = other_entity_map['links']
+                    link_key = (referrer_extent_id, referrer_field_id)
+                    if link_key not in links:  # XXX Should already be there.
+                        mapping = links[link_key] = BTree()
+                    else:
+                        mapping = links[link_key]
+                    if oid not in mapping:
+                        # Only add the link if it's not already there.
+                        links[link_key][oid] = None
+                        other_entity_map['link_count'] += 1
+                        lc_append((other_entity_map, links, link_key, oid))
             # Update actual fields and related entities.
             for name, value in fields.iteritems():
                 fields_by_id[field_name_id[name]] = value
-            for name, value in related_entities.iteritems():
-                related_entities_by_id[field_name_id[name]] = value
+            if updating_related:
+                for name, value in related_entities.iteritems():
+                    related_entities_by_id[field_name_id[name]] = value
             # Update revision.
             if rev is None:
                 entity_map['rev'] += 1
