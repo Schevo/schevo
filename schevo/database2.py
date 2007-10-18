@@ -719,6 +719,7 @@ class Database(base.Database):
         extent_name_id = self._extent_name_id
         indices = extent_map['indices']
         normalized_index_map = extent_map['normalized_index_map']
+        field_id_name = extent_map['field_id_name']
         field_name_id = extent_map['field_name_id']
         # Convert from field_name:value to field_id:value.
         field_id_value = {}
@@ -739,21 +740,33 @@ class Database(base.Database):
             field.set(value)
             value = field._dump()
             field_id_value[field_id] = value
-        # First, see if the fields given can be found in an index. If
-        # so, use the index to return matches.
-        #
-        # XXX: Should be updated to use partial search via an index,
-        # and brute-force on the subset found via that index.
+        # Get results, using indexes and shortcuts where possible.
+        results = []
         field_ids = tuple(sorted(field_id_value))
         assert log(3, 'field_ids', field_ids)
         len_field_ids = len(field_ids)
+        # First, see if we can take advantage of entity links.
+        if len_field_ids == 1:
+            field_id = field_ids[0]
+            field_name = field_id_name[field_id]
+            value = criteria[field_name]
+            if isinstance(value, Entity):
+                # We can take advantage of entity links.
+                entity_map = self._entity_map(value._extent.name, value._oid)
+                entity_links = entity_map['links']
+                extent_id = extent_map['id']
+                key = (extent_id, field_id)
+                linkmap = entity_links.get(key, {})
+                results = linkmap.keys()
+                return results
+        # Next, see if the fields given can be found in an index. If
+        # so, use the index to return matches.
         index_spec = None
         if field_ids in normalized_index_map:
             for spec in normalized_index_map[field_ids]:
                 if len(spec) == len_field_ids:
                     index_spec = spec
                     break
-        results = []
         if index_spec is not None:
             # We found an index to use.
             assert log(2, 'Use index spec:', index_spec)
