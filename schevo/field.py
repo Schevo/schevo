@@ -1267,6 +1267,20 @@ class EntityList(_EntityBase):
     # True if UNASSIGNED values are allowed in the list.
     allow_unassigned = False
 
+    def __str__(self):
+        v = self.get()
+        if v is UNASSIGNED:
+            return '<UNASSIGNED>'
+        else:
+            return ', '.join(str(item) for item in v)
+
+    def __unicode__(self):
+        v = self.get()
+        if v is UNASSIGNED:
+            return u'<UNASSIGNED>'
+        else:
+            return u', '.join(unicode(item) for item in v)
+
     def convert(self, value, db=None):
         if isinstance(value, (list, tuple)):
             new_values = []
@@ -1423,6 +1437,20 @@ class EntityList(_EntityBase):
 class EntitySet(_EntityBase):
     """Set of Entity instances field class."""
 
+    def __str__(self):
+        v = self.get()
+        if v is UNASSIGNED:
+            return '<UNASSIGNED>'
+        else:
+            return ', '.join(str(item) for item in v)
+
+    def __unicode__(self):
+        v = self.get()
+        if v is UNASSIGNED:
+            return u'<UNASSIGNED>'
+        else:
+            return u', '.join(unicode(item) for item in v)
+
     def convert(self, value, db=None):
         if isinstance(value, (set, frozenset)):
             new_values = set()
@@ -1512,6 +1540,22 @@ class EntitySet(_EntityBase):
 
 class EntitySetSet(_EntityBase):
     """Set of EntitySet instances field class."""
+
+    def __str__(self):
+        v = self.get()
+        if v is UNASSIGNED:
+            return '<UNASSIGNED>'
+        else:
+            return '; '.join(', '.join(str(item) for item in items)
+                             for items in v)
+
+    def __unicode__(self):
+        v = self.get()
+        if v is UNASSIGNED:
+            return u'<UNASSIGNED>'
+        else:
+            return '; '.join(u', '.join(unicode(item) for item in items)
+                             for items in v)
 
     def convert(self, value, db=None):
         if isinstance(value, (set, frozenset)):
