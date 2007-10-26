@@ -17,7 +17,7 @@ class Indicator(object):
 
     def __init__(self, total):
         self.total = total
-        self.step = (total / 100) or 1  # Cannot be zero.
+        self.step = (total / 10000) or 1  # Cannot be zero.
         self.processed = 0
         self.twirly_sequence = 0
 
