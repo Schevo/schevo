@@ -36,6 +36,12 @@ def _parser():
                  metavar='PATH',
                  default=None,
                  )
+    p.add_option('-k', '--pack',
+                 dest = 'pack',
+                 help = 'Pack the database.',
+                 action = 'store_true',
+                 default = False,
+                 )
     p.add_option('-s', '--schema', dest='schema_path',
                  help='Use schema in PATH.',
                  metavar='PATH',
@@ -93,9 +99,10 @@ class Update(Command):
         if icon_path and os.path.exists(icon_path):
             print 'Importing icons...'
             schevo.icon.install(db, icon_path)
-        # Pack the database.
-        print 'Packing the database...'
-        db.pack()
+        if options.pack:
+            # Pack the database.
+            print 'Packing the database...'
+            db.pack()
         # Done.
         db.close()
         print 'Database updated.'
