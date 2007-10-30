@@ -85,8 +85,9 @@ class FieldMeta(type):
             schevo.namespace.SCHEMADEF.F._set(cls.__name__, cls)
             # Add a field constructor to the field constructors namespace.
             schevo.namespace.SCHEMADEF.f._set(def_name, def_class)
-            schevo.namespace.SCHEMADEF.f._set(
-                deprecated_def_name, deprecated_def_class)
+            if def_name != deprecated_def_name:
+                schevo.namespace.SCHEMADEF.f._set(
+                    deprecated_def_name, deprecated_def_class)
 
 
 class Field(base.Field):
