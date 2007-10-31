@@ -74,28 +74,30 @@ Install `pywin32` extensions
    downloading and installing the ``mfc71.dll`` file.
 
 
-Download workingenv and set up an environment for Schevo
-========================================================
+Download Easy Install and virtualenv and set up an environment for Schevo
+=========================================================================
 
-1. Download `workingenv.py
-   <http://svn.colorstudy.com/home/ianb/workingenv/workingenv.py>`__
-   to ``c:\python25\scripts``.
+1. Install `Easy Install
+   <http://peak.telecommunity.com/DevCenter/EasyInstall#installing-easy-install>`__
+   per the instructions at that link.
 
-2. If it doesn't exist, create a ``c:\env`` folder using Windows
-   Explorer or a command prompt.
+2. Install `virtualenv <http://pypi.python.org/pypi/virtualenv>`__ by
+   running this at a command prompt::
+
+     easy_install virtualenv
 
 3. In a command prompt, create the environment::
 
-    python c:\python25\scripts\workingenv.py --site-packages c:\env\schevo
+     virtualenv c:\env\schevo
 
 
 Activate the Schevo environment
 ===============================
 
-In a command prompt, run these commands to activate the Schevo
+In a command prompt, run this command to activate the Schevo
 environment and change to its source directory::
 
-    c:\env\schevo\bin\activate.bat
+    c:\env\schevo\scripts\activate
 
 You'll see ``(schevo)`` added to your prompt.  Repeat this section
 every time you want to access the ``schevo`` working environment.
