@@ -71,7 +71,7 @@ Install `pywin32` extensions
    If you see that message, browse to the `URL it mentions
    <http://starship.python.net/crew/mhammond/win32/>`__ and follow the
    instructions under the `MFC DLLs for Pythonwin` heading for
-   downloading and installing the ``mfc71.dll` file.
+   downloading and installing the ``mfc71.dll`` file.
 
 
 Download workingenv and set up an environment for Schevo
