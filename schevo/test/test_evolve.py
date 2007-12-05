@@ -84,13 +84,13 @@ class BaseEvolveIntraVersion(CreatesDatabase):
     def test_add_entity_field(self):
         schema1 = fix("""
         class Foo(E.Entity):
-            name = f.unicode()
+            name = f.string()
         """)
         schema2 = fix("""
         class Bar(E.Entity):
-            name = f.unicode()
+            name = f.string()
         class Foo(E.Entity):
-            name = f.unicode()
+            name = f.string()
             bar = f.entity('Bar')
         """)
         self.sync(schema1)
@@ -409,13 +409,13 @@ class BaseEvolveInterVersion(CreatesDatabase):
     def test_add_entity_field(self):
         schema1 = fix("""
         class Foo(E.Entity):
-            name = f.unicode()
+            name = f.string()
         """)
         schema2 = fix("""
         class Bar(E.Entity):
-            name = f.unicode()
+            name = f.string()
         class Foo(E.Entity):
-            name = f.unicode()
+            name = f.string()
             bar = f.entity('Bar')
         """)
         self.sync(schema1)

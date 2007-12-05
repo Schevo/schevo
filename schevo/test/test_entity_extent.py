@@ -23,7 +23,7 @@ class BaseEntityExtent(CreatesSchema):
 
         realm = f.entity('Realm')
         user = f.entity('User')
-        name = f.unicode()
+        name = f.string()
 
         _key(user, realm, name)
 
@@ -33,7 +33,7 @@ class BaseEntityExtent(CreatesSchema):
 
     class Batch_Job(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
         priority = f.integer(label='Pri.')
 
         _key(name)
@@ -53,7 +53,7 @@ class BaseEntityExtent(CreatesSchema):
 
     class Realm(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
 
         _key(name)
 
@@ -65,7 +65,7 @@ class BaseEntityExtent(CreatesSchema):
 
     class User(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
         age = f.integer(required=False)
 
         _key(name)
@@ -93,7 +93,7 @@ class BaseEntityExtent(CreatesSchema):
         """Bank account."""
 
         owner = f.entity('Person')
-        name = f.unicode()
+        name = f.string()
         balance = f.money()
         overdraft_protection = f.boolean(default=False) # XXX
         suspended = f.boolean(default=False) # XXX
@@ -126,7 +126,7 @@ class BaseEntityExtent(CreatesSchema):
 
     class Foo(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
         user = f.entity('User', required=False)
 
         _key(name, user)
@@ -135,8 +135,8 @@ class BaseEntityExtent(CreatesSchema):
     class Gender(E.Entity):
         """Gender of a person."""
 
-        code = f.unicode()
-        name = f.unicode()
+        code = f.string()
+        name = f.string()
         @f.integer()
         def count(self):
             return self.sys.count('Person', 'gender')
@@ -148,7 +148,7 @@ class BaseEntityExtent(CreatesSchema):
     class Person(E.Entity):
         """Bank account owner."""
 
-        name = f.unicode()
+        name = f.string()
         gender = f.entity('Gender', required=False)
 
         _key(name)

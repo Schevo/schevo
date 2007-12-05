@@ -14,7 +14,7 @@ class BaseBank(CreatesSchema):
         """Bank account."""
 
         owner = f.entity('Person')
-        name = f.unicode()
+        name = f.string()
         balance = f.money()
         overdraft_protection = f.boolean(default=False) # XXX
         suspended = f.boolean(default=False) # XXX
@@ -48,8 +48,8 @@ class BaseBank(CreatesSchema):
     class Gender(E.Entity):
         """Gender of a person."""
 
-        code = f.unicode()
-        name = f.unicode()
+        code = f.string()
+        name = f.string()
         @f.integer()
         def count(self):
             return self.sys.count('Person', 'gender')
@@ -61,7 +61,7 @@ class BaseBank(CreatesSchema):
     class Person(E.Entity):
         """Bank account owner."""
 
-        name = f.unicode()
+        name = f.string()
         gender = f.entity('Gender', required=False)
 
         _key(name)

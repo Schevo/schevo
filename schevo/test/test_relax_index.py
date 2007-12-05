@@ -12,7 +12,7 @@ class BaseRelaxIndex(CreatesSchema):
 
     class Foo(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
 
         _key(name)
 

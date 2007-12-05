@@ -16,7 +16,7 @@ from schevo.transaction import Transaction
 BODY = '''
 class User(E.Entity):
 
-    name = f.unicode()
+    name = f.string()
     age = f.integer(required=False)
 
     _key(name)
@@ -44,7 +44,7 @@ class Account(E.Entity):
     """Bank account."""
 
     owner = f.entity('Person')
-    name = f.unicode()
+    name = f.string()
     balance = f.money()
     overdraft_protection = f.boolean(default=False) # XXX
     suspended = f.boolean(default=False) # XXX
@@ -78,8 +78,8 @@ class Account(E.Entity):
 class Gender(E.Entity):
     """Gender of a person."""
 
-    code = f.unicode()
-    name = f.unicode()
+    code = f.string()
+    name = f.string()
     @f.integer()
     def count(self):
         return self.sys.count('Person', 'gender')
@@ -91,7 +91,7 @@ class Gender(E.Entity):
 class Person(E.Entity):
     """Bank account owner."""
 
-    name = f.unicode()
+    name = f.string()
     gender = f.entity('Gender', required=False)
 
     _key(name)

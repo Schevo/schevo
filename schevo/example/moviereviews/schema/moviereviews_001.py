@@ -8,7 +8,7 @@ class SchevoIcon(E.Entity):
 
     _hidden = True
 
-    name = f.unicode()
+    name = f.string()
     data = f.image()
 
     _key(name)
@@ -16,7 +16,7 @@ class SchevoIcon(E.Entity):
 
 class Actor(E.Entity):
 
-    name = f.unicode()
+    name = f.string()
 
     _key(name)
 
@@ -27,17 +27,17 @@ class Actor(E.Entity):
 
 class Director(E.Entity):
 
-    name = f.unicode()
+    name = f.string()
 
     _key(name)
 
 
 class Movie(E.Entity):
 
-    title = f.unicode()
+    title = f.string()
     release_date = f.date()
     director = f.entity('Director')
-    description = f.memo(required=False)
+    description = f.string(multiline=True, required=False)
 
     _key(title)
 

@@ -22,13 +22,13 @@ class TestFieldFactoryDeprecatedNames(BaseTest):
     styles of field factory names::
 
         >>> body = '''
-        ...     class SomeUnicodeThing(F.Unicode):
+        ...     class SomeStringThing(F.String):
         ...         pass
         ...
         ...     class Foo(E.Entity):
         ...
-        ...         name = f.some_unicode_thing()       # Preferred.
-        ...         code = f.someUnicodeThing()         # Deprecated.
+        ...         name = f.some_string_thing()       # Preferred.
+        ...         code = f.someStringThing()         # Deprecated.
         ...     '''
 
     When using the schema, a deprecation warning is given for the
@@ -41,7 +41,7 @@ class TestFieldFactoryDeprecatedNames(BaseTest):
         >>> from schevo.test import DocTest
         >>> t = DocTest(body)
         >>> print warnings.last_message  #doctest: +ELLIPSIS
-        'someUnicodeThing' is a deprecated field definition name. ...
+        'someStringThing' is a deprecated field definition name. ...
         >>> warnings.last_lineno
         10
 

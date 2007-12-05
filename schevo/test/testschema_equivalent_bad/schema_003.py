@@ -7,7 +7,7 @@ schevo.schema.prep(locals())
 
 class Foo(E.Entity):
 
-    name = f.unicode()
+    name = f.string()
 
     _key(name)
 

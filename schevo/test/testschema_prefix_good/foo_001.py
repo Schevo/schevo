@@ -7,4 +7,4 @@ schevo.schema.prep(locals())
 
 class Bar(E.Entity):
 
-    name = f.unicode()
+    name = f.string()

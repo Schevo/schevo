@@ -44,7 +44,7 @@ class BaseOnDelete(CreatesSchema):
     class AlphaFoo(E.Entity):
         """A reference to AlphaFoo is maintained by AlphaBravo."""
 
-        name = f.unicode()
+        name = f.string()
 
         _key(name)
 
@@ -232,7 +232,7 @@ class BaseOnDelete(CreatesSchema):
                         `---------------`
         """
 
-        name = f.unicode()
+        name = f.string()
 
         class _Create(T.Create):
 
@@ -295,7 +295,7 @@ class BaseOnDelete(CreatesSchema):
                                    `---------------`
         """
 
-        name = f.unicode()
+        name = f.string()
 
         class _Create(T.Create):
 
@@ -356,7 +356,7 @@ class BaseOnDelete(CreatesSchema):
                        `---------------`
         """
 
-        name = f.unicode()
+        name = f.string()
 
         class _Create(T.Create):
 
@@ -771,7 +771,7 @@ class BaseOnDeleteEntityListRemove(CreatesSchema):
 
     class Foo(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
         bars = f.entity_list(('Bar', REMOVE), min_size=1)
 
         _key(name)
@@ -787,7 +787,7 @@ class BaseOnDeleteEntityListRemove(CreatesSchema):
 
     class Fob(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
         bars = f.entity_list(('Bar', REMOVE), min_size=0)
 
         _key(name)
@@ -802,7 +802,7 @@ class BaseOnDeleteEntityListRemove(CreatesSchema):
 
     class Bar(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
 
         _key(name)
 
@@ -858,7 +858,7 @@ class BaseOnDeleteUnassignReadonlyField(CreatesSchema):
 
     class Foo(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
         bar = f.entity('Bar', required=False, on_delete=UNASSIGN)
 
         _key(name)
@@ -873,7 +873,7 @@ class BaseOnDeleteUnassignReadonlyField(CreatesSchema):
 
     class Bar(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
 
         _key(name)
 
@@ -918,7 +918,7 @@ class BaseOnDeleteUnassignEntityList(CreatesSchema):
 
     class Foo(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
         bar_list = f.entity_list('Bar', on_delete=UNASSIGN,
                                  allow_unassigned=True)
 
@@ -927,7 +927,7 @@ class BaseOnDeleteUnassignEntityList(CreatesSchema):
 
     class Fee(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
         bar_list = f.entity_list('Bar', on_delete=UNASSIGN)
 
         _key(name)
@@ -935,7 +935,7 @@ class BaseOnDeleteUnassignEntityList(CreatesSchema):
 
     class Fum(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
         bar_list = f.entity_list('Bar', on_delete=UNASSIGN,
                                  allow_unassigned=True,
                                  allow_duplicates=False)
@@ -945,7 +945,7 @@ class BaseOnDeleteUnassignEntityList(CreatesSchema):
 
     class Bar(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
 
         _key(name)
 

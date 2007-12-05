@@ -19,12 +19,12 @@ class BaseFieldMaps(CreatesSchema):
 
     class Foo(E.Entity):
 
-        aaa = f.unicode()
-        bbb = f.unicode(hidden=True)
-        @f.unicode(hidden=True)
+        aaa = f.string()
+        bbb = f.string(hidden=True)
+        @f.string(hidden=True)
         def ccc(self):
             return 'abc'
-        @f.unicode(expensive=True)
+        @f.string(expensive=True)
         def ddd(self):
             return 'def'
     '''

@@ -134,7 +134,7 @@ entity class name associated with the extent::
     >>> t = DocTest("""
     ...     class GreatPerson(E.Entity):
     ...
-    ...         name = f.unicode()
+    ...         name = f.string()
     ...     """)
     >>> print label(t.db.GreatPerson)
     Great Person
@@ -149,7 +149,7 @@ entity class::
     >>> t = DocTest("""
     ...     class GreatPerson(E.Entity):
     ...      
-    ...         name = f.unicode()
+    ...         name = f.string()
     ...
     ...         _label = 'Great PERSON'
     ...         _plural = 'Great PEOPLE'
@@ -209,8 +209,8 @@ entity class::
     >>> t = DocTest("""
     ...     class State(E.Entity):
     ...     
-    ...         name = f.unicode()
-    ...         abbreviation = f.unicode()
+    ...         name = f.string()
+    ...         abbreviation = f.string()
     ...         
     ...         _key(name)
     ...         _key(abbreviation)
@@ -229,7 +229,7 @@ colons::
     >>> t = DocTest("""
     ...     class City(E.Entity):
     ...
-    ...         name = f.unicode()
+    ...         name = f.string()
     ...         state = f.entity('State')
     ...         
     ...         _key(name, state)
@@ -240,8 +240,8 @@ colons::
     ...
     ...     class State(E.Entity):
     ...     
-    ...         name = f.unicode()
-    ...         abbreviation = f.unicode()
+    ...         name = f.string()
+    ...         abbreviation = f.string()
     ...         
     ...         _key(name)
     ...         _key(abbreviation)
@@ -261,7 +261,7 @@ label::
     >>> t = DocTest("""
     ...     class City(E.Entity):
     ...
-    ...         name = f.unicode()
+    ...         name = f.string()
     ...         state = f.entity('State')
     ...         
     ...         _key(name, state)
@@ -275,8 +275,8 @@ label::
     ...
     ...     class State(E.Entity):
     ...     
-    ...         name = f.unicode()
-    ...         abbreviation = f.unicode()
+    ...         name = f.string()
+    ...         abbreviation = f.string()
     ...         
     ...         _key(name)
     ...         _key(abbreviation)
@@ -331,7 +331,7 @@ the following schema for this section::
   ...
   ... class Person(E.Entity):
   ... 
-  ...     name = f.unicode()
+  ...     name = f.string()
   ...     birthdate = f.date()
   ... 
   ...     _key(name)
@@ -350,7 +350,7 @@ the following schema for this section::
   ...     
   ... class Location(E.Entity):
   ... 
-  ...     name = f.unicode()
+  ...     name = f.string()
   ...     
   ...     _key(name)
   ... 
@@ -410,7 +410,7 @@ constructor::
   >>> person_name = Q.Match(db.Person, 'name', 'startswith', u'Robert')
 
 It is worth noting that at any point, you can get a human language
-version of the query by converting it to a string or unicode::
+version of the query by converting it to a string::
 
   >>> print person_name
   People where Name starts with Robert
@@ -627,9 +627,9 @@ A field container ``obj`` implements the following:
     ``obj.f``, then reassign them to ``obj.f``, as in this example::
 
       # Assume original declaration order was:
-      #    foo = f.unicode()
-      #    bar = f.unicode()
-      #    baz = f.unicode()
+      #    foo = f.string()
+      #    bar = f.string()
+      #    baz = f.string()
 
       bar, baz = obj.f.bar, obj.f.baz
       del obj.f.bar, obj.f.baz
@@ -637,9 +637,9 @@ A field container ``obj`` implements the following:
       obj.f.bar = bar
 
       # Now the order is the following:
-      #    foo = f.unicode()
-      #    baz = f.unicode()
-      #    bar = f.unicode()
+      #    foo = f.string()
+      #    baz = f.string()
+      #    bar = f.string()
 
 * They have a method, ``obj.sys.fields()``, that returns a
   `schevo.fieldspec.FieldMap` ordered dictionary for the fields in

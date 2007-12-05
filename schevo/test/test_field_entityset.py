@@ -19,7 +19,7 @@ class BaseFieldEntitySet(CreatesSchema):
 
         class Foo(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
@@ -42,14 +42,14 @@ class BaseFieldEntitySet(CreatesSchema):
 
         class Bof(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
 
         class FooFoo(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
@@ -69,7 +69,7 @@ class BaseFieldEntitySet(CreatesSchema):
 
         class BarBar(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
             foo_foos = f.entity_set('FooFoo')
 
             _key(name)
@@ -82,7 +82,7 @@ class BaseFieldEntitySet(CreatesSchema):
 
         class BazBaz(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
@@ -96,7 +96,7 @@ class BaseFieldEntitySet(CreatesSchema):
 
         class BofBof(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
             foo_foos_or_bar_bars = f.entity_set('FooFoo', 'BazBaz')
 
             _key(name)
@@ -232,7 +232,7 @@ class TestFieldEntitySet1(BaseTest):
         >>> body = '''
         ...     class Foo(E.Entity):
         ...
-        ...         name = f.unicode()
+        ...         name = f.string()
         ...
         ...         _key(name)
         ...
@@ -242,7 +242,7 @@ class TestFieldEntitySet1(BaseTest):
         ...
         ...     class Bof(E.Entity):
         ...
-        ...         name = f.unicode()
+        ...         name = f.string()
         ...
         ...         _key(name)
         ...     '''

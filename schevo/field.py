@@ -584,28 +584,36 @@ class HashedPassword(HashedValue):
 
 
 class String(Field):
-    """String field class.
+    """Unicode string field class.
 
-    monospace: Hint to a UI to display contents using a monospace
-    font.
+    - `monospace`: Hint to a UI to display contents using a monospace
+      font.
+    - `multiline`: None (default) to accept newlines and render as
+      single-line widget. True to accept newlines and render as
+      multi-line widget. False to not accept newlines and to render as
+      single-line widget.
     """
 
-    data_type = str
+    data_type = unicode
     monospace = False
+    multiline = None
 
     def convert(self, value, db=None):
-        """Convert the value to a string."""
+        """Convert the value to a Unicode string."""
         if value is UNASSIGNED:
             return value
-        return str(value)
+        return unicode(value)
 
     def db_equivalence_value(self, stop_entities):
         return self._value
 
     def validate(self, value):
         Field.validate(self, value)
-        if not self.allow_empty and value == '':
+        if not self.allow_empty and value == u'':
             msg = '%s value must not be empty.' % self._name
+            self._raise(ValueError, msg)
+        if self.multiline == False and u'\n' in value:
+            msg = '%s value must be a single line.' % self._name
             self._raise(ValueError, msg)
         self._validate_min_max_size(value)
 
@@ -622,55 +630,18 @@ class Path(String):
     file_only: True if only a file path should be stored in the field.
     """
 
-    data_type = str
+    data_type = unicode
     directory_only = False
     file_only = False
-
-
-class Unicode(Field):
-    """Unicode field class.
-
-    monospace: Hint to a UI to display contents using a monospace
-    font.
-    """
-
-    data_type = unicode
-    monospace = False
-
-    def convert(self, value, db=None):
-        """Convert the value to a Unicode string."""
-        if value is UNASSIGNED:
-            return value
-        return unicode(value)
-
-    def db_equivalence_value(self, stop_entities):
-        return self._value
-
-    def validate(self, value):
-        Field.validate(self, value)
-        if not self.allow_empty and value == u'':
-            msg = '%s value must not be empty.' % self._name
-            self._raise(ValueError, msg)
-        self._validate_min_max_size(value)
-
-
-class Memo(Unicode):
-    """Memo field class.
-
-    Intended to designate a unicode string field as something that
-    stores a multi-line memo rather than a single-line string.
-    """
-
-    data_type = unicode
 
 
 # --------------------------------------------------------------------
 
 
-class Blob(Field):
+class Bytes(Field):
     """Binary large object field class."""
 
-    data_type = object
+    data_type = str
 
     def convert(self, value, db=None):
         """Convert the value to a string."""
@@ -696,10 +667,10 @@ class Blob(Field):
             return u'(Binary data)'
 
 
-class Image(Blob):
+class Image(Bytes):
     """Image field class."""
 
-    data_type = object
+    data_type = str
 
 
 # --------------------------------------------------------------------
@@ -1671,14 +1642,32 @@ class EntitySetSet(_EntityBase):
 # --------------------------------------------------------------------
 
 
-class Password(Unicode):
-    """Password field class.
+class Blob(Bytes):
+    """Blob field, deprecated in favor of Bytes."""
+
+    _deprecated_class = True
+    _deprecated_class_see_also = 'http://schevo.org/wiki/SchevoSchemaDefinition'
+
+
+class Memo(String):
+    """Memo field class, deprecated in favor of String(multiline=True).
+
+    Intended to designate a unicode string field as something that
+    stores a multi-line memo rather than a single-line string.
+    """
+
+    multiline = True
+
+    _deprecated_class = True
+    _deprecated_class_see_also = 'http://schevo.org/wiki/SchevoSchemaDefinition'
+
+
+class Password(String):
+    """Password field class, deprecated in favor of HashedPassword.
 
     Intended to designate a unicode field as something that stores a
     plaintext string, but whose value shouldn't be exposed in a UI.
     """
-
-    data_type = unicode
 
     _deprecated_class = True
     _deprecated_class_see_also = 'http://schevo.org/wiki/SchevoSchemaDefinition'
@@ -1692,6 +1681,13 @@ class Password(Unicode):
 
     def reversible(self, value=None):
         return u''
+
+
+class Unicode(String):
+    """Unicode field class, deprecated in favor of String."""
+
+    _deprecated_class = True
+    _deprecated_class_see_also = 'http://schevo.org/wiki/SchevoSchemaDefinition'
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

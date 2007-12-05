@@ -20,7 +20,7 @@ class BaseFieldEntityList(CreatesSchema):
 
         class Foo(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
@@ -60,14 +60,14 @@ class BaseFieldEntityList(CreatesSchema):
 
         class Bof(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
 
         class FooFoo(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
@@ -87,7 +87,7 @@ class BaseFieldEntityList(CreatesSchema):
 
         class BarBar(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
             foo_foos = f.entity_list('FooFoo')
 
             _key(name)
@@ -100,7 +100,7 @@ class BaseFieldEntityList(CreatesSchema):
 
         class BazBaz(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
@@ -114,7 +114,7 @@ class BaseFieldEntityList(CreatesSchema):
 
         class BofBof(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
             foo_foos_or_bar_bars = f.entity_list('FooFoo', 'BazBaz')
 
             _key(name)
@@ -268,7 +268,7 @@ class TestFieldEntityList1(BaseTest):
         >>> body = '''
         ...     class Foo(E.Entity):
         ...
-        ...         name = f.unicode()
+        ...         name = f.string()
         ...
         ...         _key(name)
         ...
@@ -278,7 +278,7 @@ class TestFieldEntityList1(BaseTest):
         ...
         ...     class Bof(E.Entity):
         ...
-        ...         name = f.unicode()
+        ...         name = f.string()
         ...
         ...         _key(name)
         ...     '''

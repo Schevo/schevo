@@ -23,7 +23,7 @@ interpreter. Here is what the final schema will look like:
 
         _hidden = True
 
-        name = f.unicode()
+        name = f.string()
         data = f.image()
 
         _key(name)
@@ -31,7 +31,7 @@ interpreter. Here is what the final schema will look like:
 
     class Actor(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
 
         _key(name)
 
@@ -42,17 +42,17 @@ interpreter. Here is what the final schema will look like:
 
     class Director(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
 
         _key(name)
 
 
     class Movie(E.Entity):
 
-        title = f.unicode()
+        title = f.string()
         release_date = f.date()
         director = f.entity('Director')
-        description = f.memo(required=False)
+        description = f.string(multiline=True, required=False)
 
         _key(title)
 
@@ -195,7 +195,7 @@ classes you'll add to your schema::
     ...
     ...         _hidden = True              # [2]
     ...
-    ...         name = f.unicode()          # [3]
+    ...         name = f.string()           # [3]
     ...         data = f.image()            # [4]
     ...
     ...         _key(name)                  # [5]
@@ -210,8 +210,8 @@ classes you'll add to your schema::
    based on this class will be designated as hidden. A user interface
    *may* honor this and hide this extent from the user in some way.
 
-3. ``name`` is a Unicode string *field*. See `SchevoNamespaces`:trac:
-   to read more about the ``f`` namespace.
+3. ``name`` is a string *field*. See `SchevoNamespaces`:trac: to read
+   more about the ``f`` namespace.
 
 4. ``data`` is an Image field.
 
@@ -256,18 +256,19 @@ Add the following class to the database schema::
     >>> schema += '''
     ...     class Movie(E.Entity):
     ...
-    ...         title = f.unicode()
+    ...         title = f.string()
     ...         release_date = f.date()
-    ...         description = f.memo(required=False)    # [1], [2]
+    ...         description = f.string(required=False,
+    ...                                multiline=True)  # [1], [2]
     ...
     ...         _key(title)                             # [3]
     ...     '''
 
 
-1. ``memo`` fields are a subclass of ``Unicode`` fields; the fact that
-   ``description`` is a ``Memo`` field is a hint that a user interface
-   *may* use to render a multi-line input widget rather than a
-   single-line one.
+1. By default, `String` fields will store multi-line values, but user
+   interfaces typically render them as single-line widgets. We can
+   hint to the user interface that it may use a multi-line input
+   widget by setting ``multiline=True``.
 
 2. By default, all fields are required. ``description`` isn't.
 
@@ -392,9 +393,9 @@ add the ``__unicode__`` method to the ``Movie`` class::
     >>> schema += '''
     ...     class Movie(E.Entity):
     ...
-    ...         title = f.unicode()
+    ...         title = f.string()
     ...         release_date = f.date()
-    ...         description = f.memo(required=False)
+    ...         description = f.string(multiline=True, required=False)
     ...
     ...         _key(title)
     ...
@@ -462,24 +463,24 @@ schema by assigning ``_sample`` data lists to each entity class::
     >>> schema += '''
     ...     class Actor(E.Entity):
     ...
-    ...         name = f.unicode()
+    ...         name = f.string()
     ...
     ...         _key(name)
     ...
     ...
     ...     class Director(E.Entity):
     ...
-    ...         name = f.unicode()
+    ...         name = f.string()
     ...
     ...         _key(name)
     ...
     ...
     ...     class Movie(E.Entity):
     ...
-    ...         title = f.unicode()
+    ...         title = f.string()
     ...         release_date = f.date()
     ...         director = f.entity('Director')
-    ...         description = f.memo(required=False)
+    ...         description = f.string(multiline=True, required=False)
     ...
     ...         _key(title)
     ...
@@ -606,7 +607,7 @@ model. Add a new method called ``x_movies`` to the bottom of the
     >>> schema += '''
     ...     class Actor(E.Entity):
     ...
-    ...         name = f.unicode()
+    ...         name = f.string()
     ...
     ...         _key(name)
     ...
@@ -620,10 +621,10 @@ Add a new method to the ``Movie`` class::
     >>> schema += '''
     ...     class Movie(E.Entity):
     ...
-    ...         title = f.unicode()
+    ...         title = f.string()
     ...         release_date = f.date()
     ...         director = f.entity('Director')
-    ...         description = f.memo(required=False)
+    ...         description = f.string(multiline=True, required=False)
     ...
     ...         _key(title)
     ...

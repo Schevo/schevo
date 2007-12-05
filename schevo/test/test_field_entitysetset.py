@@ -14,7 +14,7 @@ class BaseFieldEntitySetSet(CreatesSchema):
     body = '''
         class Foo(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
@@ -33,7 +33,7 @@ class BaseFieldEntitySetSet(CreatesSchema):
 
         class Bof(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
         '''
@@ -123,7 +123,7 @@ class TestFieldEntitySetSet1(BaseTest):
         >>> body = '''
         ...     class Foo(E.Entity):
         ...
-        ...         name = f.unicode()
+        ...         name = f.string()
         ...
         ...         _key(name)
         ...
@@ -133,7 +133,7 @@ class TestFieldEntitySetSet1(BaseTest):
         ...
         ...     class Bof(E.Entity):
         ...
-        ...         name = f.unicode()
+        ...         name = f.string()
         ...
         ...         _key(name)
         ...     '''

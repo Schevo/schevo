@@ -109,7 +109,7 @@ definition::
 
       _hidden = True
 
-      name = f.unicode()
+      name = f.string()
       data = f.image()
 
       _key(name)
@@ -226,7 +226,7 @@ The entity/extent definition may further contain the following types
 of declarations:
 
 - `Field definitions`_.  Here is a ``Foo`` extent where each entity
-  has a ``name`` field of ``unicode`` type, and a ``FooChild`` extent
+  has a ``name`` field of ``string`` type, and a ``FooChild`` extent
   where each entity has a reference to a ``Foo`` entity and also has a
   ``bar`` field of ``integer`` type::
 
@@ -246,15 +246,15 @@ of declarations:
 
       class Gender(E.Entity):
 
-          code = f.unicode()
-          name = f.unicode()
+          code = f.string()
+          name = f.string()
           @f.integer()
           def count(self):
               return self.sys.count('Person', 'gender')
 
       class Person(E.Entity):
       
-          name = f.unicode()
+          name = f.string()
           gender = f.entity('Gender', required=False)
       
 - Key/index specifications.  Here is a ``Person`` extent whose
@@ -263,7 +263,7 @@ of declarations:
 
       class Person(E.Entity):
 
-          name = f.unicode()
+          name = f.string()
           age = f.integer()
 
           _key(name)
@@ -469,13 +469,13 @@ For example, this Entity subclass defines three fields::
 
     class Dog(E.Entity):
     
-        name = f.unicode()                        # [1]
+        name = f.string()                         # [1]
         birthdate = f.date(required=False)        # [2]
         disposition = f.entity('Disposition', on_delete=UNASSIGN,
                                required=False,
                                default=('Cheerful',))    # [3]
 
-1. The `name` field is a required `Unicode` field.  By default, all
+1. The `name` field is a required `String` field.  By default, all
    fields are required.
 
 2. The `birthdate` field is an optional `Date` field.
@@ -599,56 +599,39 @@ a database schema.  You can also create `custom field types`_ when
 your schema has unique requirements for data types.
 
 
-HashedValue field types
-.......................
-
-A **HashedValue** field, upon having its value set, will store a
-one-way hash of that value.
-
-Use the `compare(value)` method of a `HashedValue` field instance to
-see if the hash matches a value.
-
-It is not possible to retrieve the original value from the one-way
-hash.
-
-**HashedPassword** fields are a convenience class to show that a field
-specifically stores hashed values of passwords.  
-
-This is useful for storing information about a user's password in a
-reasonably secure manner, preventing immediate discovery of passwords
-if a proprietary Schevo database were stolen or otherwise accessed by
-unauthorized users.
-
-
 String field types
 ..................
 
-**String** fields are used to store Python ASCII strings. An
-application may assume that a `String` field's value can be displayed
-to a user as text.
+**String** fields are used to store Unicode strings. An application
+may assume that a `String` field's value can be displayed to a user as
+text.
+
+String fields accept a `multiline` attribute that you can set to one
+of the following:
+
+* `None`: (default) The string field accepts newlines in its
+  value. User interfaces are encouraged to render the field as a
+  single-line widget.
+
+* `True`: The string field accepts newlines in its value. User
+  interfaces are encouraged to render the field as a multi-line
+  widget.
+
+* `False`: The string field does not accept newlines in its
+  value. User interfaces are encouraged to render the field as a
+  single-line widget.
 
 **Path** fields are `String` fields used to store filesystem paths.
 
 
-Unicode fields
-..............
+Bytes fields
+............
 
-**Unicode** fields are used to store Unicode strings. An application
-may assume that a `Unicode` field is a single-line field.
+**Bytes** fields are used to store 8-bit byte sequences. An
+application should not assume that a `Bytes` field can be displayed to
+a user as text.
 
-**Memo** fields are used to store Unicode strings. An application may
-assume that a `Memo` field is identical in operation to a `Unicode`
-field, but that it is a multiple-line field.
-
-
-Blob fields
-...........
-
-**Blob** fields are used to store binary large objects as Python
-strings. An application should not assume that a `Blog` field can be
-displayed to a user as text.
-
-**Image** fields are `Blob` fields that store binary data for an
+**Image** fields are `Bytes` fields that store binary data for an
 image.
 
 
@@ -687,6 +670,27 @@ An **EntityList** field stores a list of references to other entities.
 An **EntitySet** field stores a set of references to other entities.
 
 
+HashedValue field types
+.......................
+
+A **HashedValue** field, upon having its value set, will store a
+one-way hash of that value.
+
+Use the `compare(value)` method of a `HashedValue` field instance to
+see if the hash matches a value.
+
+It is not possible to retrieve the original value from the one-way
+hash.
+
+**HashedPassword** fields are a convenience class to show that a field
+specifically stores hashed values of passwords.  
+
+This is useful for storing information about a user's password in a
+reasonably secure manner, preventing immediate discovery of passwords
+if a proprietary Schevo database were stolen or otherwise accessed by
+unauthorized users.
+
+
 Custom field types
 ..................
 
@@ -707,23 +711,31 @@ different field type.
 
 The following types of fields are deprecated:
 
+- **Blob**: Use `Bytes fields`_ instead.
+
+- **Memo**: Use `Unicode fields`_ instead, setting ``multiline=True``
+  in your field definition.
+
 - **Password**: Use one of the `HashedValue field types`_ instead.
 
   If you wish to store a plain-text password in your schema, you can
   do one of the following:
 
-  * Use the `Unicode` field type::
+  * Use the `String` field type::
 
         class Foo(E.Entity):
-            password = f.unicode()
+            password = f.string()
 
   * Create a custom `PlaintextPassword` field type::
 
-        class PlaintextPassword(F.Unicode):
+        class PlaintextPassword(F.String):
             pass
 
         class Foo(E.Entity):
             password = f.plaintext_password()
+
+- **Unicode**: Use `String fields`_ to store text, or `Bytes fields`_
+  to store 8-bit byte sequences.
 
 
 Key and index specifications

@@ -16,7 +16,7 @@ class BaseView(CreatesSchema):
     class EchoAlpha(E.Entity):
         """A plain extent that has a default view like any other."""
 
-        unicode = f.unicode(required=False)
+        unicode = f.string(required=False)
         integer = f.integer(required=False)
         float = f.float(required=False)
 
@@ -29,7 +29,7 @@ class BaseView(CreatesSchema):
     class EchoBravo(E.Entity):
         """An extent that has its default view hidden."""
 
-        unicode = f.unicode(required=False)
+        unicode = f.string(required=False)
 
         _hide('v_default')
 
@@ -59,7 +59,7 @@ class BaseView(CreatesSchema):
                 # is for.
                 self.double = entity.single * 2
                 # Do the same, creating a unicode field.
-                self.f.single_text = f.unicode()
+                self.f.single_text = f.string()
                 self.single_text = unicode(entity.single)
 
         class _DefaultView(V.View):

@@ -39,7 +39,7 @@ in the ``T`` namespace.  For example::
 
     class Foo(E.Entity):
 
-        bar = f.unicode()
+        bar = f.string()
         count = f.integer()
 		
         class _Create(T.Create):
@@ -57,7 +57,7 @@ so you can create instances of your new transaction::
 
     class Foo(E.Entity):
 
-        bar = f.unicode()
+        bar = f.string()
         count = f.integer()
 
         def t_custom_update(self, **kw):
@@ -77,7 +77,7 @@ is not allowed.  If you attempt to do so, Schevo will raise a
     >>> t = DocTest("""
     ...     class Foo(E.Entity):
     ...
-    ...         bar = f.unicode()
+    ...         bar = f.string()
     ...
     ...         class _Create(T.Create):
     ...
@@ -123,7 +123,7 @@ Update class here has three fields, ``bar``, ``count``, and ``baz``::
 
     class Foo(E.Entity):
 
-        bar = f.unicode()
+        bar = f.string()
         count = f.integer()
 	
         class _Update(T.Update):
@@ -136,7 +136,7 @@ two fields, ``count`` and ``bar``::
 
     class Foo(E.Entity):
 
-        bar = f.unicode()
+        bar = f.string()
         count = f.integer()
 
         class _Update(T.Update):
@@ -148,7 +148,7 @@ make those changes in the ``_setup`` method by using the ``f`` namespace::
 
     class Foo(E.Entity):
 
-        bar = f.unicode()
+        bar = f.string()
         count = f.integer()
 
         class _Update(T.Update):

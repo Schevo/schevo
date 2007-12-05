@@ -39,7 +39,7 @@ class TestIsEquivalent(CreatesSchema):
         class Foo(E.Entity):
             """Unicode field, with key."""
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
@@ -126,8 +126,7 @@ class TestIsEquivalent(CreatesSchema):
             """Every built-in non-may_store_entities field."""
 
             string = f.string(required=False)
-            unicode = f.unicode(required=False)
-            blob = f.unicode(required=False)
+            bytes = f.bytes(required=False)
             integer = f.integer(required=False)
             float = f.float(required=False)
             money = f.money(required=False)
@@ -144,10 +143,8 @@ class TestIsEquivalent(CreatesSchema):
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
-                 UNASSIGNED,
                  ),
-                ('string',
-                 UNASSIGNED,
+                (u'string',
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
@@ -157,18 +154,7 @@ class TestIsEquivalent(CreatesSchema):
                  UNASSIGNED,
                  ),
                 (UNASSIGNED,
-                 u'unicode',
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 ),
-                (UNASSIGNED,
-                 UNASSIGNED,
-                 'blob',
+                 'bytes',
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
@@ -177,7 +163,6 @@ class TestIsEquivalent(CreatesSchema):
                  UNASSIGNED,
                  ),
                 (UNASSIGNED,
-                 UNASSIGNED,
                  UNASSIGNED,
                  42,
                  UNASSIGNED,
@@ -189,7 +174,6 @@ class TestIsEquivalent(CreatesSchema):
                 (UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
-                 UNASSIGNED,
                  42.424242,
                  UNASSIGNED,
                  UNASSIGNED,
@@ -197,7 +181,6 @@ class TestIsEquivalent(CreatesSchema):
                  UNASSIGNED,
                  ),
                 (UNASSIGNED,
-                 UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
@@ -211,13 +194,11 @@ class TestIsEquivalent(CreatesSchema):
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
-                 UNASSIGNED,
                  '2005-04-03',
                  UNASSIGNED,
                  UNASSIGNED,
                  ),
                 (UNASSIGNED,
-                 UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
@@ -233,7 +214,6 @@ class TestIsEquivalent(CreatesSchema):
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
-                 UNASSIGNED,
                  True,
                  ),
                 ]
@@ -243,7 +223,7 @@ class TestIsEquivalent(CreatesSchema):
         class Foo(E.Entity):
             """Unicode field, with key."""
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
@@ -330,8 +310,7 @@ class TestIsEquivalent(CreatesSchema):
             """Every built-in non-may_store_entities field."""
 
             string = f.string(required=False)
-            unicode = f.unicode(required=False)
-            blob = f.unicode(required=False)
+            bytes = f.bytes(required=False)
             integer = f.integer(required=False)
             float = f.float(required=False)
             money = f.money(required=False)
@@ -340,28 +319,7 @@ class TestIsEquivalent(CreatesSchema):
             boolean = f.boolean(required=False)
 
             _initial = [
-                ('string',
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 ),
-                (UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 UNASSIGNED,
-                 ),
-                (UNASSIGNED,
-                 u'unicode',
+                (u'string',
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
@@ -372,6 +330,14 @@ class TestIsEquivalent(CreatesSchema):
                  ),
                 (UNASSIGNED,
                  UNASSIGNED,
+                 UNASSIGNED,
+                 UNASSIGNED,
+                 UNASSIGNED,
+                 UNASSIGNED,
+                 UNASSIGNED,
+                 UNASSIGNED,
+                 ),
+                (UNASSIGNED,
                  UNASSIGNED,
                  42,
                  UNASSIGNED,
@@ -383,7 +349,6 @@ class TestIsEquivalent(CreatesSchema):
                 (UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
-                 UNASSIGNED,
                  42.424242,
                  UNASSIGNED,
                  UNASSIGNED,
@@ -391,8 +356,7 @@ class TestIsEquivalent(CreatesSchema):
                  UNASSIGNED,
                  ),
                 (UNASSIGNED,
-                 UNASSIGNED,
-                 'blob',
+                 'bytes',
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
@@ -401,7 +365,6 @@ class TestIsEquivalent(CreatesSchema):
                  UNASSIGNED,
                  ),
                 (UNASSIGNED,
-                 UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
@@ -417,11 +380,9 @@ class TestIsEquivalent(CreatesSchema):
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
-                 UNASSIGNED,
                  True,
                  ),
                 (UNASSIGNED,
-                 UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
@@ -431,7 +392,6 @@ class TestIsEquivalent(CreatesSchema):
                  UNASSIGNED,
                  ),
                 (UNASSIGNED,
-                 UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
                  UNASSIGNED,
@@ -494,43 +454,12 @@ class TestDataNotEquivalentString(BaseDataNotEquivalent):
         '''
 
 
-class TestDataNotEquivalentUnicode(BaseDataNotEquivalent):
+class TestDataNotEquivalentBytes(BaseDataNotEquivalent):
 
     body = '''
         class Foo(E.Entity):
 
-            name = f.unicode()
-
-            _key(name)
-
-            _initial = [
-                (u'one', ),
-                (u'two', ),
-                (u'three', ),
-                ]
-        '''
-
-    body2 = '''
-        class Foo(E.Entity):
-
-            name = f.unicode()
-
-            _key(name)
-
-            _initial = [
-                (u'four', ),
-                (u'two', ),
-                (u'one', ),
-                ]
-        '''
-
-
-class TestDataNotEquivalentBlob(BaseDataNotEquivalent):
-
-    body = '''
-        class Foo(E.Entity):
-
-            thing = f.blob()
+            thing = f.bytes()
 
             _key(thing)
 
@@ -544,7 +473,7 @@ class TestDataNotEquivalentBlob(BaseDataNotEquivalent):
     body2 = '''
         class Foo(E.Entity):
 
-            thing = f.blob()
+            thing = f.bytes()
 
             _key(thing)
 
@@ -763,7 +692,7 @@ class TestDataNotEquivalentEntity(BaseDataNotEquivalent):
 
         class Faz(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
             
@@ -790,7 +719,7 @@ class TestDataNotEquivalentEntity(BaseDataNotEquivalent):
 
         class Faz(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
             

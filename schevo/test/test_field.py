@@ -11,7 +11,7 @@ import sys
 from schevo.constant import UNASSIGNED
 from schevo import field
 from schevo import fieldspec
-from schevo.test import BaseTest, raises
+from schevo.test import BaseTest, DocTest, raises
 
 
 class TestField(BaseTest):
@@ -111,14 +111,14 @@ class Base:
             except ValueError, e:
                 assert e.args[0] != self.error_message
             else:
-                raise 'ValueError not raised for value', value
+                raise Exception('ValueError not raised for value', value)
             f = self.empty_field(error_message = self.error_message)
             try:
                 f.validate(value)
             except ValueError, e:
                 assert e.args[0] == self.error_message
             else:
-                raise 'ValueError not raised for value', value
+                raise Exception('ValueError not raised for value', value)
 
     def test_str_values_default(self):
         for value, strValue in self.str_values_default:
@@ -144,7 +144,8 @@ class Base:
                 assert raises(ValueError, f.validate, value)
 
     def test_min_max_sizes(self):
-        for value, min_size, max_size, allow_empty, is_valid in self.min_max_sizes:
+        for (value, min_size, max_size,
+             allow_empty, is_valid) in self.min_max_sizes:
             kw = {}
             if min_size:
                 kw['min_size'] = min_size
@@ -163,36 +164,10 @@ class Base:
                 assert raises(ValueError, f.validate, value)
 
 
-class TestString(Base, BaseTest):
+class TestStringMultilineNone(Base, BaseTest):
 
-    class FieldClass(field.String): pass
-
-    convert_values_default = [(0., '0.0'),
-                              (555.55, '555.55'),
-                              (-555.55, '-555.55'),
-                              (555, '555'),
-                              (-555, '-555'),
-                              (u'abcdefg', 'abcdefg'),
-                              ]
-    good_values_default = ['abcdefg']
-    bad_values_default = ['']
-    min_max_sizes = [
-        # (value, min, max, allow_empty, is_valid),
-        ('test', None, None, True, True),
-        ('test', None, None, False, True),
-        ('', None, None, True, True),
-        ('', None, None, False, False),
-        ('test', 2, 8, False, True),
-        ('', 5, 8, False, False),
-        ('', 5, 8, True, True),
-        ('test', 5, None, False, False),
-        ('test_test', None, 8, False, False),
-        ]
-
-
-class TestUnicode(Base, BaseTest):
-
-    class FieldClass(field.Unicode): pass
+    class FieldClass(field.String):
+        multiline = None                # (The default value.)
 
     # More Unicode expertise needed.
 
@@ -203,7 +178,8 @@ class TestUnicode(Base, BaseTest):
                               (-555, u'-555'),
                               ('abcdefg', u'abcdefg'),
                               ]
-    good_values_default = [u'abcdefg']
+    good_values_default = [u'abcdefg',
+                           u'abcdefg\nhijklmno']
     min_max_sizes = [
         # (value, min, max, allow_empty, is_valid),
         (u'test', None, None, True, True),
@@ -216,6 +192,22 @@ class TestUnicode(Base, BaseTest):
         (u'test', 5, None, False, False),
         (u'test_test', None, 8, False, False),
         ]
+
+
+class TestStringMultilineTrue(TestStringMultilineNone):
+
+    class FieldClass(field.String):
+        multiline = True
+
+
+class TestStringMultilineFalse(TestStringMultilineNone):
+
+    class FieldClass(field.String):
+        multiline = False
+
+    good_values_default = [u'abcdefg']
+
+    bad_values_default = [u'abcdefg\nhijklmno']
 
 
 class TestInteger(Base, BaseTest):
@@ -544,44 +536,66 @@ class TestHashedPassword(object):
         assert f.compare(value)
 
 
-class TestPasswordIsDeprecated(object):
-    """
-    Change `showwarning` to record deprecation warnings somewhere
-    other than stderr, so we can test the deprecation warning below::
+class TestDeprecatedFields(object):
 
-        >>> import warnings
-        >>> old_showwarning = warnings.showwarning
-        >>> def showwarning(message, category, filename, lineno, file=None):
-        ...     warnings.last_lineno = lineno
-        ...     warnings.last_message = message
-        >>> warnings.showwarning = showwarning
+    def showwarning(self, message, category, filename, lineno, file=None):
+        self.last_lineno = lineno
+        self.last_message = str(message)
 
-    Create a schema that has a `password` field class::
+    def setUp(self):
+        # Change `showwarning` to record deprecation warnings
+        # somewhere other than stderr, so we can test for deprecation
+        # warnings programmatically.
+        import warnings
+        self.old_showwarning = warnings.showwarning
+        warnings.showwarning = self.showwarning
+        self.warnings = warnings
 
-        >>> body = '''
-        ...     class Foo(E.Entity):
-        ...
-        ...         p = f.password()
-        ...     '''
+    def tearDown(self):
+        # Replace `showwarning` with the original.
+        import warnings
+        warnings.showwarning = self.old_showwarning
+        del self.warnings
 
-    When using the schema, a deprecation warning is given for the `p`
-    field definition.  The line number that the warning is on appears
-    to be line four above, but since a two-line header is prepended to
-    the body during unit testing, it's actually line six that the
-    warning occurs at::
+    def test_blob(self):
+        body = '''
+            class Foo(E.Entity):
+        
+                blob = f.blob()
+            '''
+        t = DocTest(body)
+        assert self.last_message.startswith("'blob' is a deprecated")
+        assert self.last_lineno == 6
 
-        >>> from schevo.test import DocTest
-        >>> t = DocTest(body)
-        >>> print warnings.last_message  #doctest: +ELLIPSIS
-        'password' is a deprecated field type.  See ...
-        >>> warnings.last_lineno
-        6
+    def test_memo(self):
+        body = '''
+            class Foo(E.Entity):
+        
+                memo = f.memo()
+            '''
+        t = DocTest(body)
+        assert self.last_message.startswith("'memo' is a deprecated")
+        assert self.last_lineno == 6
 
-    Place the old `showwarning` function back into the `warnings`
-    module::
+    def test_password(self):
+        body = '''
+            class Foo(E.Entity):
+        
+                password = f.password()
+            '''
+        t = DocTest(body)
+        assert self.last_message.startswith("'password' is a deprecated")
+        assert self.last_lineno == 6
 
-        >>> warnings.showwarning = old_showwarning
-    """
+    def test_unicode(self):
+        body = '''
+            class Foo(E.Entity):
+        
+                name = f.unicode()
+            '''
+        t = DocTest(body)
+        assert self.last_message.startswith("'unicode' is a deprecated")
+        assert self.last_lineno == 6
 
 
 # Copyright (C) 2001-2007 Orbtech, L.L.C.

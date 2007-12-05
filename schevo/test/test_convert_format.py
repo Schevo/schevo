@@ -16,7 +16,7 @@ class TestFormat1Format2ConversionSimple(CreatesSchema):
     body = '''
         class Foo(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
@@ -147,7 +147,7 @@ class TestFormat1Format2ConversionComplex(CreatesSchema):
     body = '''
         class Foo(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 
@@ -158,7 +158,7 @@ class TestFormat1Format2ConversionComplex(CreatesSchema):
 
         class Gee(E.Entity):
 
-            name = f.unicode()
+            name = f.string()
 
             _key(name)
 

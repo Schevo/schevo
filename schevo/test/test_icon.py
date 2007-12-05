@@ -27,7 +27,7 @@ class BaseFsIconMap(CreatesSchema):
 
         _hidden = True
 
-        name = f.unicode()
+        name = f.string()
         data = f.image()
 
         _key(name)

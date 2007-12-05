@@ -17,7 +17,7 @@ class BaseTransactionFieldReorder(CreatesSchema):
 
         class _Create(T.Create):
 
-            field3 = f.memo()
+            field3 = f.bytes()
             field2 = f.integer()
     '''
 

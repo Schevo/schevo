@@ -21,7 +21,7 @@ class BaseTransaction(CreatesSchema):
         """Bank account."""
 
         owner = f.entity('Person')
-        name = f.unicode()
+        name = f.string()
         balance = f.money()
         overdraft_protection = f.boolean(default=False) # XXX
         suspended = f.boolean(default=False) # XXX
@@ -55,8 +55,8 @@ class BaseTransaction(CreatesSchema):
     class Gender(E.Entity):
         """Gender of a person."""
 
-        code = f.unicode()
-        name = f.unicode()
+        code = f.string()
+        name = f.string()
         @f.integer()
         def count(self):
             return self.sys.count('Person', 'gender')
@@ -68,7 +68,7 @@ class BaseTransaction(CreatesSchema):
     class Person(E.Entity):
         """Bank account owner."""
 
-        name = f.unicode()
+        name = f.string()
         gender = f.entity('Gender', required=False)
 
         _key(name)
@@ -121,7 +121,7 @@ class BaseTransaction(CreatesSchema):
 
         realm = f.entity('Realm')
         user = f.entity('User')
-        name = f.unicode()
+        name = f.string()
 
         _key(user, realm, name)
 
@@ -131,7 +131,7 @@ class BaseTransaction(CreatesSchema):
 
     class Batch_Job(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
         priority = f.integer(label='Pri.')
 
         _key(name)
@@ -143,7 +143,7 @@ class BaseTransaction(CreatesSchema):
 
     class Realm(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
 
         _key(name)
 
@@ -155,7 +155,7 @@ class BaseTransaction(CreatesSchema):
 
     class User(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
         age = f.integer(required=False)
 
         _key(name)
@@ -414,7 +414,7 @@ class BaseTransaction(CreatesSchema):
     class Cog(E.Entity):
         """A cog with sprockets."""
 
-        name = f.unicode()
+        name = f.string()
 
         _key(name)
 
@@ -448,8 +448,8 @@ class BaseTransaction(CreatesSchema):
     class ProblemGender(E.Entity):
         """Gender of a person, with a problematic _Create transaction."""
 
-        code = f.unicode()
-        name = f.unicode()
+        code = f.string()
+        name = f.string()
         @f.integer()
         def count(self):
             return self.sys.count('Person', 'gender')
@@ -460,20 +460,20 @@ class BaseTransaction(CreatesSchema):
         class _Create(T.Create):
 
             # Bogus fields here, to trigger potential problems.
-            count = f.unicode()
+            count = f.string()
             foo = f.integer()
 
         class _Update(T.Update):
 
             # Bogus fields here, to trigger potential problems.
-            count = f.unicode()
+            count = f.string()
             foo = f.integer()
 
 
     class Folder(E.Entity):
         """Folder that could have a parent."""
 
-        name = f.unicode(error_message=u'Please enter the name of the folder.')
+        name = f.string(error_message=u'Please enter the name of the folder.')
         parent = f.entity('Folder', required=False)
 
         _key(name, parent)
@@ -489,7 +489,7 @@ class BaseTransaction(CreatesSchema):
 
     class FooWithCalc(E.Entity):
 
-        name = f.unicode()
+        name = f.string()
 
         _key(name)
 
@@ -501,7 +501,7 @@ class BaseTransaction(CreatesSchema):
 
         class _Update(T.Update):
 
-            @f.unicode()
+            @f.string()
             def baz(self):
                 return u'BAZ'
 

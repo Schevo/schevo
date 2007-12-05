@@ -9,7 +9,7 @@ class SchevoIcon(E.Entity):
 
     _hidden = True
 
-    name = f.unicode()
+    name = f.string()
     data = f.image()
 
     _key(name)

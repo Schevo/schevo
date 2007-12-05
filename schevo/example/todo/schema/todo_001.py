@@ -7,7 +7,7 @@ class SchevoIcon(E.Entity):
 
     _hidden = True
 
-    name = f.unicode()
+    name = f.string()
     data = f.image()
 
     _key(name)
@@ -16,8 +16,8 @@ class SchevoIcon(E.Entity):
 class Gender(E.Entity):
     """Gender of a person."""
 
-    code = f.unicode()
-    name = f.unicode()
+    code = f.string()
+    name = f.string()
 
     @f.integer(label=u'Person Count')
     def count(self):
@@ -37,11 +37,11 @@ class Item(E.Entity):
     """Something that must be done."""
 
     done = f.boolean(default=False)
-    name = f.unicode()
+    name = f.string()
     topic = f.entity('Topic', required=False)
     priority = f.entity('Priority')
     person = f.entity('Person', required=False)
-    notes = f.memo(required=False)
+    notes = f.string(multiline=True, required=False)
 
 
 class Person(E.Entity):
@@ -49,7 +49,7 @@ class Person(E.Entity):
 
     _plural = u'People'
 
-    name = f.unicode()
+    name = f.string()
     gender = f.entity('Gender')
 
     _key(name)
@@ -66,7 +66,7 @@ class Priority(E.Entity):
     _plural = u'Priorities'
 
     code = f.integer()
-    name = f.unicode()
+    name = f.string()
 
     @f.integer(label=u'# Open Items')
     def open(self):
@@ -92,7 +92,7 @@ class Priority(E.Entity):
 class Topic(E.Entity):
     """Subject area for todo items."""
 
-    name = f.unicode()
+    name = f.string()
 
     _sample = [
         ('Home', ),

@@ -18,7 +18,7 @@ class BaseHiddenBases(CreatesSchema):
 
     class _GolfBase(E.Entity):
 
-        beta = f.unicode()
+        beta = f.string()
 
         _key(beta)
 
@@ -79,7 +79,7 @@ class BaseSameNameSubclasses(CreatesSchema):
 
     class Something(E.Entity):
 
-        field1 = f.unicode()
+        field1 = f.string()
 
         _key(field1)
 
