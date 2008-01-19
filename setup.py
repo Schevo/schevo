@@ -49,8 +49,7 @@ setup(
       database without writing a single line of code outside your database
       schema. Build customized UIs using Schevo-aware widgets and UI tools.
 
-    The latest development version is available in a `Subversion
-    repository 
+    You can also get the `latest development version
     <http://getschevo.org/hg/repos.cgi/schevo-dev/archive/tip.tar.gz#egg=Schevo-dev>`__.
     """),
 
