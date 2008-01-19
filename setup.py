@@ -50,7 +50,8 @@ setup(
       schema. Build customized UIs using Schevo-aware widgets and UI tools.
 
     The latest development version is available in a `Subversion
-    repository <http://schevo.org/svn/trunk/Schevo#egg=Schevo-dev>`__.
+    repository 
+    <http://getschevo.org/hg/repos.cgi/schevo-dev/archive/tip.tar.gz#egg=Schevo-dev>`__.
     """),
 
     classifiers=[
