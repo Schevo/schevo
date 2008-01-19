@@ -82,13 +82,13 @@ setup(
     zip_safe=False,
 
     install_requires=[
-    'Louie >= 1.0',
-    'PasteScript >= 1.3.5',
-    'SchevoDurus == dev, >= 3.1a1dev-r3527',
+    'Louie >= 1.1',
+    'PasteScript >= 1.6.1.1',
+    'SchevoDurus == dev, >= 3.1a1dev',
     ],
 
     tests_require=[
-    'nose >= 0.9.0',
+    'nose >= 0.10.1',
     ],
     test_suite='nose.collector',
 
@@ -96,8 +96,6 @@ setup(
     },
 
     dependency_links = [
-    'http://schevo.org/files/thirdparty/',
-    'http://schevo.org/wiki/SchevoDurus',
     ],
 
     ext_modules = [
