@@ -20,11 +20,11 @@ setup(
     url = '',
     
     install_requires = [
-    'Schevo==dev,>=3.0b4dev-r2831',
+    'Schevo >= 3.1a1',
     ],
     
     tests_require = [
-    'nose >= 0.9.0',
+    'nose >= 0.10.1',
     ],
 
     test_suite = 'nose.collector',
