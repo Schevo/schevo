@@ -19,8 +19,7 @@ Here is what the final schema will look like:
 
     ...
 
-If you have not done so already, follow the steps in
-`SchevoTutorialMovieReviews1`:trac:.
+If you have not done so already, follow the steps in `Part One <part1.txt>`__.
 
 This tutorial is also a doctest, so let us set up doctest
 environment::

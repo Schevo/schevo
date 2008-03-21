@@ -47,8 +47,8 @@ For your convenience, we include a detailed reference for all of the
 `schevo` subcommands that are included with Schevo itself.
 
 For subcommands that are made available by auxiliary packages such as
-`SchevoGtk`:trac:, please use the information described in `obtaining
-help`_, or refer to the documentation for that package.
+`SchevoGtk </schevogtk/>`__, please use the information described in
+`obtaining help`_, or refer to the documentation for that package.
 
 
 Common options

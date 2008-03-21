@@ -1,6 +1,6 @@
-===========================================
- Getting Started with Schevo using Windows
-===========================================
+=====================================
+ Install Schevo on Microsoft Windows 
+=====================================
 
 
 Below, we describe in detail how to install Schevo for Microsoft
@@ -115,7 +115,7 @@ of Schevo::
 What to do after Schevo is installed
 ====================================
 
-Take a tour by choosing one of the `SchevoTutorials`:trac:.
+Take a tour by choosing one of the `Schevo tutorials <../tutorial/>`__.
 
 
 Setting Environment Variables

@@ -1,6 +1,6 @@
-==========================================
- Getting Started with Schevo Using Ubuntu
-==========================================
+==========================
+ Install Schevo on Ubuntu
+==========================
 
 
 Below, we describe in detail how to install Schevo for Ubuntu Linux
@@ -14,7 +14,7 @@ tested on the following operating systems:
 Users of other UNIX-derived or UNIX-like operating systems not listed
 above can use this document as a guideline.
 
-Mac users, see `SchevoGettingStartedMacOsx`:trac:.
+Mac users, see `Install Schevo on Mac OS X <macosx.txt>`__.
 
 
 Notes on running Python
@@ -80,4 +80,4 @@ of Schevo::
 What to do after Schevo is installed
 ====================================
 
-Take a tour by choosing one of the `SchevoTutorials`:trac:.
+Take a tour by choosing one of the `Schevo tutorials <../tutorial/>`__.

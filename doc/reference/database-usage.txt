@@ -1,6 +1,6 @@
-===============
- API Reference
-===============
+=================================
+ Schevo Database Usage Reference
+=================================
 
 
 .. sectnum::
@@ -30,7 +30,7 @@ structures defined by the database's schema definition.
 
 .. _Durus: http://www.mems-exchange.org/software/durus/
 
-.. _internal database structures: reference-database.html
+.. _internal database structures: ../design/structures.txt
 
 
 Doctest Setup

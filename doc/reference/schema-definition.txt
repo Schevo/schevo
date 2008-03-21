@@ -1,6 +1,6 @@
-=============================
- Schema Definition Reference
-=============================
+====================================
+ Schevo Schema Definition Reference
+====================================
 
 
 .. sectnum::
@@ -32,7 +32,7 @@ structures defined by the database's schema definition.
 
 .. _Durus: http://www.mems-exchange.org/software/durus/
 
-.. _internal database structures: reference-database.html
+.. _internal database structures: ../design/structures.txt
 
 
 Doctest Setup
@@ -798,19 +798,19 @@ Transaction definitions
 Customizing standard Create transactions
 ........................................
 
-See `SchevoTransactionHookMethods`:trac:.
+See `Transaction Hook Methods <transaction-hook-methods.txt>`__.
 
 
 Customizing standard Delete transactions
 ........................................
 
-See `SchevoTransactionHookMethods`:trac:.
+See `Transaction Hook Methods <transaction-hook-methods.txt>`__.
 
 
 Customizing standard Update transactions
 ........................................
 
-See `SchevoTransactionHookMethods`:trac:.
+See `Transaction Hook Methods <transaction-hook-methods.txt>`__.
 
 
 Creating new transactions

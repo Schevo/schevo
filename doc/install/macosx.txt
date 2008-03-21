@@ -1,6 +1,6 @@
-===========================================
- Getting Started with Schevo Using Mac OSX
-===========================================
+============================
+ Install Schevo on Mac OS X
+============================
 
 
 Below, we describe in detail how to install Schevo for Mac OSX. The
@@ -78,4 +78,4 @@ of Schevo::
 What to do after Schevo is installed
 ====================================
 
-Take a tour by choosing one of the `SchevoTutorials`:trac:.
+Take a tour by choosing one of the `Schevo tutorials <../tutorial/>`__.

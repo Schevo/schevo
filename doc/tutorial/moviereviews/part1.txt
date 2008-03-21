@@ -101,7 +101,7 @@ interpreter. Here is what the final schema will look like:
 
 
 If you have not done so already, set up a Schevo environment as
-described in `SchevoGettingStarted`:trac:.
+described in `Getting Started With Schevo <../../install/>`__.
 
 This tutorial is also a doctest, so let us set up doctest
 environment::
@@ -202,15 +202,17 @@ classes you'll add to your schema::
     ...     '''
 
 
-1. ``SchevoIcon`` is an *entity class*. All entity classes subclass
-   from ``E.Entity``. See `SchevoNamespaces`:trac: to find out more
-   about the ``E`` namespace.
+1. ``SchevoIcon`` is an *entity class*. All entity classes subclass from
+   ``E.Entity``. See `Schevo Namespaces`_ to find out more about the ``E``
+   namespace.
+
+.. _Schevo Namespaces: ../../reference/namespaces.txt
 
 2. When the database is open, the ``SchevoIcon`` *extent* that is
    based on this class will be designated as hidden. A user interface
    *may* honor this and hide this extent from the user in some way.
 
-3. ``name`` is a string *field*. See `SchevoNamespaces`:trac: to read
+3. ``name`` is a string *field*. See `Schevo Namespaces`_ to read
    more about the ``f`` namespace.
 
 4. ``data`` is an Image field.
@@ -228,7 +230,7 @@ but may not be familiar for those accustomed to working with SQL. Here
 are some basic definitions of those terms. We've left out some details
 to keep this tutorial simple.
 
-For more detail, visit the `SchevoGlossary`:trac:.
+For more detail, visit the `Schevo Glossary <../../reference/glossary.txt>`__.
 
 Entity class
     A class definition in a schema that describes the fields,
@@ -317,11 +319,11 @@ inserted into the namespace of the interactive session.
 Transactions
 ------------
 
-All changes to a Schevo database are done via *transaction* objects
-that are responsible for ensuring that changes made to the database
-follow the rules you specify. See `SchevoTransactions`:trac: for
-further discussion about this design decision and the benefits you
-gain from it.
+All changes to a Schevo database are done via *transaction* objects that are
+responsible for ensuring that changes made to the database follow the rules
+you specify. See `Schevo Transactions <../../reference/transactions.txt>`__
+for further discussion about this design decision and the benefits you gain
+from it.
 
 Make a new ``create`` transaction for creating a new ``Movie``
 entity. Assign values to fields, then tell the database to execute the
@@ -434,10 +436,11 @@ Find the movie, and inspect it::
    view of things, suitable not only for interactive use but also for
    user interface code.
 
-Schevo likes to make things easy for humans to read, so you can go
-beyond thinking of it as a "unicode representation" of something, and
-think of it instead as a singular or plural *label* of an object. See
-`ObjectLabels`:trac: for further discussion about this feature.
+Schevo likes to make things easy for humans to read, so you can go beyond
+thinking of it as a "unicode representation" of something, and think of it
+instead as a singular or plural *label* of an object. See `Object Labels
+<../../reference/object-labels.txt>`__ for further discussion about this
+feature.
 
 
 Relationships

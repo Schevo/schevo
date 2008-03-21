@@ -1,19 +1,8 @@
-==================
- Schevo Tutorials
-==================
+=======================
+ Movie Review Tutorial
+=======================
 
-To help you learn Schevo, we have begun writing tutorials to introduce you
-to various concepts and features of Schevo, from starting a new project
-all the way to turning it into a usable application.
-
-
-Movie Reviews
-=============
-
-This tutorial shows you how to use Schevo to build a movie rating
-database.
-
-* Session 1 (`SchevoTutorialMovieReviews1`:trac:) covers the following:
+* `Part One <part1.txt>`__ covers the following:
 
     * Creating a skeleton for a new Schevo app
 
