@@ -485,7 +485,7 @@ For example, this Entity subclass defines three fields::
 
    When the referenced `Disposition` entity is deleted, this field's
    value is set to `UNASSIGNED`. See also `cascading delete rules for
-   Entity fields`_.
+   Entity field types`_.
 
    The default value of this field is the `Disposition` entity that
    matches ``('Cheerful',)``.  See `Default field values`_ below.
@@ -624,8 +624,8 @@ of the following:
 **Path** fields are `String` fields used to store filesystem paths.
 
 
-Bytes fields
-............
+Bytes field types
+.................
 
 **Bytes** fields are used to store 8-bit byte sequences. An
 application should not assume that a `Bytes` field can be displayed to
@@ -635,8 +635,8 @@ a user as text.
 image.
 
 
-Numeric fields
-..............
+Numeric field types
+...................
 
 **Integer** fields store integer values.
 
@@ -646,22 +646,22 @@ Numeric fields
 used to store values representing monetary amounts.
 
 
-Date and time fields
-....................
+Date and time field types
+.........................
 
 **Date** fields store `datetime.date` objects.
 
 **Datetime** fields store `datetime.datetime` objects.
 
 
-Boolean field
-.............
+Boolean field types
+...................
 
 A **Boolean** field stores a boolean value.
 
 
-Entity fields
-.............
+Entity field types
+..................
 
 An **Entity** field stores a reference to another entity.
 
@@ -711,10 +711,10 @@ different field type.
 
 The following types of fields are deprecated:
 
-- **Blob**: Use `Bytes fields`_ instead.
+- **Blob**: Use `Bytes field types`_ instead.
 
-- **Memo**: Use `Unicode fields`_ instead, setting ``multiline=True``
-  in your field definition.
+- **Memo**: Use `String field types`_ instead, setting ``multiline=True`` in your
+  field definition.
 
 - **Password**: Use one of the `HashedValue field types`_ instead.
 
@@ -734,7 +734,7 @@ The following types of fields are deprecated:
         class Foo(E.Entity):
             password = f.plaintext_password()
 
-- **Unicode**: Use `String fields`_ to store text, or `Bytes fields`_
+- **Unicode**: Use `String field types`_ to store text, or `Bytes field types`_
   to store 8-bit byte sequences.
 
 
