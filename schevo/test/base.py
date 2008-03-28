@@ -3,6 +3,7 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
+import inspect
 import os
 import sys
 
@@ -357,7 +358,8 @@ class EvolvesSchemata(CreatesDatabase):
 
 
 class DocTest(CreatesSchema):
-    """Doctest-helping test class.  Uses the schevo.store backend.
+    """Doctest-helping test class with intra-version evolution support
+    only.  Uses the schevo.store backend.
 
     Call directly to override body for one test::
 
@@ -384,14 +386,33 @@ class DocTest(CreatesSchema):
       >>> t.db.extent_names()
       ['Foo']
       >>> t.done()
+
+    Use the `schema` argument along with the `schevo.schema` tools to
+    read a schema from disk::
+
+      >>> from schevo.schema import read
+      >>> schema = read('schevo.test.testschema_prefix_good', 1)
+      >>> t = DocTest(schema=schema)
+      >>> t.db.extent_names()
+      ['Bar']
+      >>> t.done()
     """
 
     body = ''
 
-    def __init__(self, body=None, format=None):
+    def __init__(self, body=None, schema=None, format=None):
         super(DocTest, self).__init__()
+        if not (body or schema):
+            body = self.body
+            schema = self.schema
         if body:
             self.body = body
+            self.schema = None
+        elif schema:
+            self.body = None
+            self.schema = schema
+        else:
+            raise ValueError("Either 'body' or 'schema' must be specified.")
         self.format = format
         self.setUp()
 
@@ -399,11 +420,62 @@ class DocTest(CreatesSchema):
         """Test case is done; free up resources."""
         self.tearDown()
 
-    def update(self, body):
+    def update(self, body=None, schema=None):
         """Update database with new schema, keeping same schema version."""
-        self.body = body
-        schema_source = PREAMBLE + dedent(self.body)
-        self.sync(schema_source)
+        if body:
+            self.body = body
+            self.schema = PREAMBLE + dedent(body)
+        elif filename:
+            self.schema = schema
+            self.body = schema.replace(PREAMBLE, '')
+        else:
+            raise ValueError("Either 'body' or 'filename' must be specified.")
+        self.sync(self.schema)
+
+
+class DocTestEvolve(EvolvesSchemata):
+    """Doctest-helping test class with inter-version evolution support.
+    Uses the schevo.store backend.
+
+    Specify a location to read schemata from, a version to start from,
+    and optionally whether or not to skip evolution (default is True).
+
+    Note that for these doctests, we use the `schevo.test.test_evolve`
+    schema, since it has a deliberate design flaw that allows us to
+    detect whether or not evolution from version 1 was used.
+
+    ::
+
+      >>> t = DocTestEvolve('schevo.test.testschema_evolve', 2)
+      >>> sorted(foo.name for foo in t.db.Foo)
+      [u'four', u'one', u'three', u'two']
+      >>> t.done()
+
+    Another example, loading version 1::
+
+      >>> t = DocTestEvolve('schevo.test.testschema_evolve', 1)
+      >>> sorted(foo.name for foo in t.db.Foo)
+      [u'one', u'three', u'two']
+      >>> t.done()
+    
+    An example, loading version 2 by evolving from version 1::
+
+      >>> t = DocTestEvolve('schevo.test.testschema_evolve', 2, False)
+      >>> sorted(foo.name for foo in t.db.Foo)
+      [u'five', u'one', u'three', u'two']
+      >>> t.done()
+    """
+
+    def __init__(self, schemata, version, skip_evolution=True):
+        self.schemata = schemata
+        self.schema_version = version
+        self.skip_evolution = skip_evolution
+        super(DocTestEvolve, self).__init__()
+        self.setUp()
+
+    def done(self):
+        """Test case is done; free up resources."""
+        self.tearDown()
 
 
 class ComparesDatabases(object):
