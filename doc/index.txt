@@ -30,4 +30,6 @@ The following documentation is available:
 
 - `Design Documents <design/>`__
 
+  - `Design Principles <design/principles.txt>`__
+
   - `Internal Database Structures <design/structures.txt>`__
