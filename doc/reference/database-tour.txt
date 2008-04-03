@@ -1,0 +1,77 @@
+======================
+ Schevo Database Tour
+======================
+
+
+.. sectnum::
+
+.. contents::
+
+
+Overview
+========
+
+This document tours a Schevo database from the vantage point of
+building an introspecting *database navigator*.
+
+It covers operations to read from, and execute transactions upon, an
+open database. It presents those operations in the order that is
+typical of such an application.
+
+
+Doctest Setup
+=============
+
+This document also functions as a doctest:
+
+  .. sourcecode:: pycon
+
+    >>> from schevo.test import DocTest
+
+
+Database Label
+==============
+
+Every Schevo database has a persistent label.
+
+Access a database's label by using the `schevo.label:label` function.
+
+The default label of a database is ``Schevo Database``.
+
+  .. sourcecode:: pycon
+
+    >>> from schevo.label import label
+    >>> t = DocTest(' ')
+    >>> label(t.db)
+    u'Schevo Database'
+
+Change the label by using the `schevo.label:relabel` function.
+
+  .. sourcecode:: pycon
+
+    >>> from schevo.label import relabel
+    >>> relabel(t.db, 'My Database')
+    >>> label(t.db)
+    u'My Database'
+    >>> t.done()
+
+.. note::
+
+   Persistent labels cannot be changed while executing a transaction.
+
+     .. sourcecode:: pycon
+
+       >>> t = DocTest("""
+       ...     from schevo.label import relabel
+       ...     class ChangeLabel(T.Transaction):
+       ...         def _execute(self, db):
+       ...             db.label = 'New Label'
+       ...     def t_change_label():
+       ...         return ChangeLabel()
+       ...     """)
+       >>> tx = t.db.t.change_label()
+       >>> t.db.execute(tx)    #doctest: +ELLIPSIS
+       Traceback (most recent call last):
+       ...
+       DatabaseExecutingTransaction: Cannot change database label...
+       

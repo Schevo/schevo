@@ -11,16 +11,16 @@
 Overview
 ========
 
-A Schevo database is the combination of a schema definition, stored
-data, and an engine that exposes the two.  This document describes in
-detail the public API exposed by the Schevo engine.
+A Schevo database is the combination of a *schema definition*, *stored
+data*, and an *engine* that exposes the two.  This document describes
+in detail the public API exposed by the Schevo engine.
 
 Schema definitions are pure-Python modules that make use of Schevo's
 syntax extensions.  Schema definitions can be directly imported
-anywhere, but typically the import process is managed by the Schevo
-database engine in order to tie a schema to an open database.
+anywhere, but typically the Schevo database engine manages the import
+process in order to tie a schema to an open database.
 
-Stored data is managed by the `schevo.store` package, based on Durus_.
+Stored data is managed by the SchevoDurus_ package, based on Durus_.
 The data is kept in a general structure used by all Schevo databases,
 described in the `internal database structures`_ reference.
 
@@ -32,11 +32,15 @@ structures defined by the database's schema definition.
 
 .. _internal database structures: ../design/structures.txt
 
+.. _SchevoDurus: /schevodurus/
+
 
 Doctest Setup
 =============
 
 This document also functions as a doctest::
+
+  .. sourcecode:: pycon
 
     >>> from schevo.test import DocTest
 
@@ -74,6 +78,8 @@ Database labels
 
 By default, a database instance is labeled "Schevo Database"::
 
+  .. sourcecode:: pycon
+
     >>> from schevo.label import label, relabel
     >>> t = DocTest("""
     ...     class Foo(E.Entity):
@@ -83,6 +89,8 @@ By default, a database instance is labeled "Schevo Database"::
     Schevo Database
 
 Override the label by using `relabel`::
+
+  .. sourcecode:: pycon
 
     >>> relabel(t.db, 'My Database')
     >>> print label(t.db)
@@ -105,6 +113,8 @@ transaction.
 Given an extent `db.Foo` that has a key specification of `_key(field1,
 field2)`, relax that key restriction by calling `relax_index`::
 
+  .. sourcecode:: pycon
+
     db.Foo.relax_index('field1', 'field2')
 
 Key restrictions that are relaxed within a transaction are relaxed for
@@ -119,6 +129,8 @@ sub-transactions to enforce the key restriction.
 To re-enforce the key restriction before the end of a transaction's
 execution, call `enforce_index`::
 
+  .. sourcecode:: pycon
+
     db.Foo.enforce_index('field1', 'field2')
 
 See the ``tests/test_relax_index.py`` test case for code examples.
@@ -129,6 +141,8 @@ Extent labels
 
 By default, an extent has a singular and plural label based on the
 entity class name associated with the extent::
+
+  .. sourcecode:: pycon
 
     >>> from schevo.label import label, plural
     >>> t = DocTest("""
@@ -144,6 +158,8 @@ entity class name associated with the extent::
 To override the singular and/or plural labels of an extent, assign
 values to the `_label` and/or `_plural` attributes of the associated
 entity class::
+
+  .. sourcecode:: pycon
 
     >>> from schevo.label import label, plural
     >>> t = DocTest("""
@@ -205,6 +221,8 @@ representation of the entity instance.
 By default, the label is determined by the default key defined in the
 entity class::
 
+  .. sourcecode:: pycon
+
     >>> from schevo.label import label
     >>> t = DocTest("""
     ...     class State(E.Entity):
@@ -225,6 +243,8 @@ entity class::
 
 If the key has more than one field, the values are separated by two
 colons::
+
+  .. sourcecode:: pycon
 
     >>> t = DocTest("""
     ...     class City(E.Entity):
@@ -257,6 +277,8 @@ colons::
 
 Override the `__unicode__` method of an entity class to customize the
 label::
+
+  .. sourcecode:: pycon
 
     >>> t = DocTest("""
     ...     class City(E.Entity):
@@ -613,33 +635,39 @@ A field container ``obj`` implements the following:
   - If allowed by the field container, you can remove a field named
     ``field_name`` from ``obj`` using the following::
 
-      del obj.f.field_name
+      .. sourcecode:: pycon
+
+        del obj.f.field_name
 
   - If allowed by the field container, you can add a new field named
     ``field_name`` and of type ``FieldClass`` to ``obj`` using either
     of the following::
 
-      obj.f.field_name = existing_field_instance
-      obj.f.field_name = f.field_class(...)
+      .. sourcecode:: pycon
+
+        obj.f.field_name = existing_field_instance
+        obj.f.field_name = f.field_class(...)
 
     The field is added to the end of the definition order.  To
     re-order fields, you can get them from ``obj.f``, delete them from
     ``obj.f``, then reassign them to ``obj.f``, as in this example::
 
-      # Assume original declaration order was:
-      #    foo = f.string()
-      #    bar = f.string()
-      #    baz = f.string()
+      .. sourcecode:: pycon
 
-      bar, baz = obj.f.bar, obj.f.baz
-      del obj.f.bar, obj.f.baz
-      obj.f.baz = baz
-      obj.f.bar = bar
+        # Assume original declaration order was:
+        #    foo = f.string()
+        #    bar = f.string()
+        #    baz = f.string()
 
-      # Now the order is the following:
-      #    foo = f.string()
-      #    baz = f.string()
-      #    bar = f.string()
+        bar, baz = obj.f.bar, obj.f.baz
+        del obj.f.bar, obj.f.baz
+        obj.f.baz = baz
+        obj.f.bar = bar
+
+        # Now the order is the following:
+        #    foo = f.string()
+        #    baz = f.string()
+        #    bar = f.string()
 
 * They have a method, ``obj.sys.fields()``, that returns a
   `schevo.fieldspec.FieldMap` ordered dictionary for the fields in

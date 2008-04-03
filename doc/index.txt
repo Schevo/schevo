@@ -20,13 +20,13 @@ The following documentation is available:
 
   - `'schevo' Command-Line Tool <reference/command-line.txt>`__
 
-  - `Database Usage <reference/database-usage.txt>`__
-
   - Database Schema
 
     - `Schema Definition <reference/schema-definition.txt>`__
 
     - `Transaction Hook Methods <reference/transaction-hook-methods.txt>`__
+
+  - `Database Usage <reference/database-usage.txt>`__
 
 - `Design Documents <design/>`__
 
