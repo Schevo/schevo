@@ -2,4 +2,4 @@
  Schevo Design Documents
 =========================
 
-* `Internal Database Structures <structures.txt>`__
+- `Internal Database Structures <structures.txt>`__

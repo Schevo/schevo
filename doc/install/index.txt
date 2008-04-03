@@ -9,8 +9,8 @@ for you to begin developing Schevo applications and following the `tutorials
 You can use Schevo in whatever way you choose, but these pages describe the
 tools and techniques that Schevo documentation assumes you are using.
 
-* `Install Schevo on Windows <windows.txt>`__
+- `Install Schevo on Windows <windows.txt>`__
 
-* `Install Schevo on Mac OS X <macosx.txt>`__
+- `Install Schevo on Mac OS X <macosx.txt>`__
 
-* `Install Schevo on Ubuntu <ubuntu.txt>`__
+- `Install Schevo on Ubuntu <ubuntu.txt>`__

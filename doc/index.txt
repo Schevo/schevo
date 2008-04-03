@@ -4,7 +4,30 @@
 
 The following documentation is available:
 
-* `Getting Started <install/>`__
-* `Tutorials <tutorial/>`__
-* `References <reference/>`__
-* `Design Documents <design/>`__
+- `Getting Started <install/>`__
+
+  - `Install Schevo on Windows <install/windows.txt>`__
+
+  - `Install Schevo on Mac OS X <install/macosx.txt>`__
+
+  - `Install Schevo on Ubuntu <install/ubuntu.txt>`__
+
+- `Tutorials <tutorial/>`__
+
+  - `Movie Reviews tutorial <tutorial/moviereviews/>`__
+
+- `References <reference/>`__
+
+  - `'schevo' Command-Line Tool <reference/command-line.txt>`__
+
+  - `Database Usage <reference/database-usage.txt>`__
+
+  - Database Schema
+
+    - `Schema Definition <reference/schema-definition.txt>`__
+
+    - `Transaction Hook Methods <reference/transaction-hook-methods.txt>`__
+
+- `Design Documents <design/>`__
+
+  - `Internal Database Structures <design/structures.txt>`__
