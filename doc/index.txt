@@ -20,6 +20,8 @@ The following documentation is available:
 
   - `'schevo' Command-Line Tool <reference/command-line.txt>`__
 
+  - `Database Tour <reference/database-tour.txt>`__
+
   - Database Schema
 
     - `Schema Definition <reference/schema-definition.txt>`__

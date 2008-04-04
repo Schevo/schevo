@@ -6,7 +6,24 @@
 .. sectnum::
 
 .. contents::
-
+..
+    1   Overview
+    2   Doctest setup
+    3   Database label
+    4   Database extents
+    5   Packing databases
+    6   Populating a database with sample data sets
+      6.1  A word on data sets
+    7   Database schema source
+    8   Database schema version
+    9   Database read/write locking
+      9.1  Dummy locks
+      9.2  Installing locking support
+      9.3  Using read locks
+      9.4  Using write locks
+      9.5  Nesting lock acquisition
+    10  Database transaction method names
+    11  Templates
 
 Overview
 ========
@@ -15,45 +32,62 @@ This document tours a Schevo database from the vantage point of
 building an introspecting *database navigator*.
 
 It covers operations to read from, and execute transactions upon, an
-open database. It presents those operations in the order that is
+open database. It presents those operations in the usage order that is
 typical of such an application.
 
 
-Doctest Setup
+Doctest setup
 =============
 
 This document also functions as a doctest:
 
   .. sourcecode:: pycon
 
-    >>> from schevo.test import DocTest
+     >>> from schevo.test import DocTest, DocTestEvolve
+
+When creating an instance of `DocTest` passing a schema body string,
+we get an object `t` that has a `done` method to call when finished
+with the test object, and a `db` attribute that contains the open,
+in-memory database based on the schema.
+
+`DocTestEvolve` is similar, except we pass the name of a schema
+package and a version number to the constructor instead of a body
+string.
+
+In each example, we work with the open database to demonstrate how its
+API reflects the schema.
 
 
-Database Label
+Database label
 ==============
+
+Nearly every object in a Schevo database has a *label*, which a user
+interface can use to present a human-readable string representing the
+object.
 
 Every Schevo database has a persistent label.
 
-Access a database's label by using the `schevo.label:label` function.
+Get a database's label by using the `schevo.label:label` function.
 
 The default label of a database is ``Schevo Database``.
 
   .. sourcecode:: pycon
 
-    >>> from schevo.label import label
-    >>> t = DocTest(' ')
-    >>> label(t.db)
-    u'Schevo Database'
+     >>> from schevo.label import label
+     >>> t = DocTest("""
+     ...     """); db = t.db
+     >>> label(db)
+     u'Schevo Database'
 
 Change the label by using the `schevo.label:relabel` function.
 
   .. sourcecode:: pycon
 
-    >>> from schevo.label import relabel
-    >>> relabel(t.db, 'My Database')
-    >>> label(t.db)
-    u'My Database'
-    >>> t.done()
+     >>> from schevo.label import relabel
+     >>> relabel(db, 'My Database')
+     >>> label(db)
+     u'My Database'
+     >>> t.done()
 
 .. note::
 
@@ -61,17 +95,320 @@ Change the label by using the `schevo.label:relabel` function.
 
      .. sourcecode:: pycon
 
-       >>> t = DocTest("""
-       ...     from schevo.label import relabel
-       ...     class ChangeLabel(T.Transaction):
-       ...         def _execute(self, db):
-       ...             db.label = 'New Label'
-       ...     def t_change_label():
-       ...         return ChangeLabel()
-       ...     """)
-       >>> tx = t.db.t.change_label()
-       >>> t.db.execute(tx)    #doctest: +ELLIPSIS
-       Traceback (most recent call last):
-       ...
-       DatabaseExecutingTransaction: Cannot change database label...
+        >>> t = DocTest("""
+        ...     from schevo.label import relabel
+        ...     class ChangeLabel(T.Transaction):
+        ...         def _execute(self, db):
+        ...             db.label = 'New Label'
+        ...     def t_change_label():
+        ...         return ChangeLabel()
+        ...     """); db = t.db
+        >>> tx = db.t.change_label()
+        >>> db.execute(tx)    #doctest: +ELLIPSIS
+        Traceback (most recent call last):
+        ...
+        DatabaseExecutingTransaction: Cannot change database label...
+        >>> t.done()
        
+
+Database extents
+================
+
+An *extent* is a collection of homogeneous *entity* objects that share
+the same class.  Each extent has information reflecting its associated
+entity class and its role as a container of entity objects.
+
+Get an alphabetically-ordered list of extent names using the
+database's `extent_names` method:
+
+  .. sourcecode:: pycon
+
+     >>> t = DocTest("""
+     ...     class Clown(E.Entity):
+     ...         pass
+     ...     class Acrobat(E.Entity):
+     ...         pass
+     ...     class Balloon(E.Entity):
+     ...         pass
+     ...     """); db = t.db
+     >>> db.extent_names()
+     ['Acrobat', 'Balloon', 'Clown']
+
+Get an alphabetically-ordered list of extent objects themselves using
+the database's `extents` method:
+
+  .. sourcecode:: pycon
+  
+     >>> db.extents()    #doctest: +NORMALIZE_WHITESPACE
+     [<Extent 'Acrobat' in <Database u'Schevo Database' :: V 1>>,
+      <Extent 'Balloon' in <Database u'Schevo Database' :: V 1>>,
+      <Extent 'Clown' in <Database u'Schevo Database' :: V 1>>]
+
+Get an individual extent object by passing an extent name to the
+database's `extent` method or by getting it as an attribute from the
+database:
+
+  .. sourcecode:: pycon
+  
+     >>> db.extent('Balloon')
+     <Extent 'Balloon' in <Database u'Schevo Database' :: V 1>>
+     >>> db.Balloon is db.extent('Balloon')
+     True
+     >>> t.done()
+
+
+Packing databases
+=================
+
+We recommend packing a database after a period of time during which
+many transactions have been executed.  Doing so may reduce memory
+pressure of open databases and reduce startup time when opening
+databases.
+
+Pack a database by calling the database's `pack` method:
+
+  .. sourcecode:: pycon
+
+     >>> db.pack()    #doctest: +SKIP
+
+.. note::
+
+   The in-memory storage used for unit tests does not support the
+   `pack` method, so it is skipped above.
+
+
+Populating a database with sample data sets
+===========================================
+
+Schevo allows you to store *initial* and *sample* data sets. 
+
+Initial data sets are used to create groups entities in the database
+when the database is first created.  Sample data sets are used to
+create additional groups entities.
+
+Populate a database with a sample data set by calling the database's
+`populate` method.
+
+  .. sourcecode:: pycon
+
+     >>> t = DocTest("""
+     ...     class Book(E.Entity):
+     ...         name = f.string()
+     ...         _initial = [
+     ...             (u'Schevo and You',),
+     ...             ]
+     ...         _sample = [
+     ...             (u'The Art of War',),
+     ...             ]
+     ...         _sample_custom = [
+     ...             (u'Iliad',),
+     ...             ]
+     ...     """); db = t.db
+     >>> sorted(book.name for book in db.Book)
+     [u'Schevo and You']
+
+Calling `populate` with no arguments uses the default sample data set:
+
+  .. sourcecode:: pycon
+
+     >>> db.populate()
+     >>> sorted(book.name for book in db.Book)
+     [u'Schevo and You', u'The Art of War']
+
+Calling `populate` with an argument uses the named sample data set:     
+
+  .. sourcecode:: pycon
+
+     >>> db.populate('custom')
+     >>> sorted(book.name for book in db.Book)
+     [u'Iliad', u'Schevo and You', u'The Art of War']
+     >>> t.done()
+
+
+Database schema source
+======================
+
+Get the database's schema source using the `schema_source` property:
+
+  .. sourcecode:: pycon
+
+     >>> t = DocTest("""
+     ...     # Even an empty database has schema source.
+     ...     """); db = t.db
+     >>> print db.schema_source
+     from schevo.schema import *
+     schevo.schema.prep(locals())
+     <BLANKLINE>
+     # Even an empty database has schema source.
+     <BLANKLINE>
+     >>> t.done()
+
+
+Database schema version
+=======================
+
+Get the database's current schema version using the `version`
+property:
+
+  .. sourcecode:: pycon
+
+     >>> t = DocTestEvolve('schevo.test.testschema_evolve', 1)
+     >>> t.db.version
+     1
+     >>> t.done()
+
+     >>> t = DocTestEvolve('schevo.test.testschema_evolve', 2)
+     >>> t.db.version
+     2
+     >>> t.done()
+
+
+Database read/write locking
+===========================
+
+Dummy locks
+-----------
+
+By default, a database does not have locking facilities.  Instead, it
+contains dummy objects so that code written to be multi-thread-ready
+may still be run when no locking facilities are installed on the
+database:
+
+  .. sourcecode:: pycon
+
+     >>> import schevo.mt
+     >>> t = DocTest("""
+     ...     """); db = t.db
+     >>> db.read_lock
+     <class 'schevo.mt.dummy.dummy_lock'>
+     >>> db.write_lock
+     <class 'schevo.mt.dummy.dummy_lock'>
+
+
+Installing locking support
+--------------------------
+
+If using Schevo in a multi-threaded environment, be sure to install
+locking support onto the database by using the `schevo.mt:install`
+function:
+
+  .. sourcecode:: pycon
+
+     >>> import schevo.mt
+     >>> schevo.mt.install(db)
+     >>> db.read_lock    #doctest: +ELLIPSIS
+     <bound method RWLock._acquire_locked_wrapper ...
+     >>> db.write_lock    #doctest: +ELLIPSIS
+     <bound method RWLock._acquire_locked_wrapper ...
+
+.. note::
+
+   After installing locking support, be sure to consistently use locks
+   to wrap *all* read and write operations.
+
+   If you do not wrap multiple read operation, and a write operation
+   occurs in another thread, you may get inconsistent results during
+   your read.
+
+   If you do not wrap write operations, then they may conflict with
+   writes occurring in another thread or cause inconsistent results
+   during reads in another thread.
+
+.. note::
+
+   The locking API does not yet take advantage of the Python 2.5
+   `with` statement.
+
+Using read locks
+----------------
+
+Acquire a read lock by calling the database's `read_lock` object to
+acquire a lock, performing the desired read operation(s), then calling
+the release method of the acquired lock:
+
+  .. sourcecode:: pycon
+
+     >>> lock = db.read_lock()
+     >>> try:
+     ...     # Do reading stuff here.
+     ...     pass
+     ... finally:
+     ...     lock.release()
+
+.. note::
+
+   When a thread attempts to acquire a read lock, it will block until
+   pending write locks have been released.
+
+Using write locks
+-----------------
+
+Acquire a read lock by calling the database's `read_lock` object to
+acquire a lock, performing the desired read operation(s), then calling
+the release method of the acquired lock:
+
+  .. sourcecode:: pycon
+
+     >>> lock = db.write_lock()
+     >>> try:
+     ...     # Do reading and writing stuff here.
+     ...     pass
+     ... finally:
+     ...     lock.release()
+     >>> t.done()
+
+.. note::
+
+   When a thread attempts to acquire a write lock, it will block until
+   pending read and write locks have been released.
+
+Nesting lock acquisition
+------------------------
+
+If you acquire a read lock, and find you need to acquire a write lock
+within the same thread, acquiring a write lock while the thread still
+has the read lock will "upgrade" the read lock to a write lock for the
+remainder of the life of the thread's outermost lock:
+
+  .. sourcecode:: pycon
+
+     >>> lock_outer = db.read_lock()
+     >>> try:
+     ...     # Do reading stuff here.
+     ...     lock_inner = db.write_lock()
+     ...     try:
+     ...         # Do reading and writing stuff here.
+     ...         pass
+     ...     finally:
+     ...         lock_inner.release()
+     ... finally:
+     ...     lock_outer.release()
+     >>> t.done()
+
+.. note::
+
+   When a thread upgrades a read lock to a write lock, it will block
+   until pending read locks have been released.
+
+   After an outer read lock has been upgraded by an inner write lock,
+   it will continue to act as an exclusive write lock for the
+   remainder of its lifespan, even after the inner lock's `release`
+   method has been called.
+
+
+Database transaction method names
+=================================
+
+
+
+
+Templates
+=========
+
+Common text for new doctests:
+
+  .. sourcecode:: pycon
+
+     >>> t = DocTest("""
+     ...     """); db = t.db
+     >>> t.done()

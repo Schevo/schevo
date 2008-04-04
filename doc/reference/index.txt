@@ -4,10 +4,12 @@
 
 - `'schevo' Command-Line Tool <command-line.txt>`__
 
-- `Database Usage <database-usage.txt>`__
+- `Database Tour <database-tour.txt>`__
 
 - Database Schema
 
   - `Schema Definition <schema-definition.txt>`__
 
   - `Transaction Hook Methods <transaction-hook-methods.txt>`__
+
+- `Database Usage <database-usage.txt>`__
