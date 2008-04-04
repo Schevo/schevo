@@ -10,19 +10,31 @@
     1   Overview
     2   Doctest setup
     3   Database label
+      3.1  Get database label
+      3.2  Change database label
     4   Database extents
-    5   Packing databases
-    6   Populating a database with sample data sets
-      6.1  A word on data sets
+      4.1  Get list of extent names
+      4.2  Get list of extent objects
+      4.3  Get individual extent
+    5   Pack database
+    6   Populate database with sample data set
+      6.1  Populate with default sample data set
+      6.2  Populate with named sample data set
     7   Database schema source
+      7.1  Get database schema source
     8   Database schema version
+      8.1  Get database schema version
     9   Database read/write locking
       9.1  Dummy locks
-      9.2  Installing locking support
-      9.3  Using read locks
-      9.4  Using write locks
-      9.5  Nesting lock acquisition
-    10  Database transaction method names
+      9.2  Install locking support
+      9.3  Use read locks
+      9.4  Use write locks
+      9.5  Nest lock acquisition
+    10  Database transaction methods
+      10.1  Get transaction method namespace
+      10.2  Get available transaction method names
+      10.3  Get transaction method
+      10.4  Get transaction method label
     11  Templates
 
 Overview
@@ -67,6 +79,9 @@ object.
 
 Every Schevo database has a persistent label.
 
+Get database label
+------------------
+
 Get a database's label by using the `schevo.label:label` function.
 
 The default label of a database is ``Schevo Database``.
@@ -78,6 +93,9 @@ The default label of a database is ``Schevo Database``.
      ...     """); db = t.db
      >>> label(db)
      u'Schevo Database'
+
+Change database label
+---------------------
 
 Change the label by using the `schevo.label:relabel` function.
 
@@ -118,6 +136,9 @@ An *extent* is a collection of homogeneous *entity* objects that share
 the same class.  Each extent has information reflecting its associated
 entity class and its role as a container of entity objects.
 
+Get list of extent names
+------------------------
+
 Get an alphabetically-ordered list of extent names using the
 database's `extent_names` method:
 
@@ -134,6 +155,9 @@ database's `extent_names` method:
      >>> db.extent_names()
      ['Acrobat', 'Balloon', 'Clown']
 
+Get list of extent objects
+--------------------------
+
 Get an alphabetically-ordered list of extent objects themselves using
 the database's `extents` method:
 
@@ -143,6 +167,9 @@ the database's `extents` method:
      [<Extent 'Acrobat' in <Database u'Schevo Database' :: V 1>>,
       <Extent 'Balloon' in <Database u'Schevo Database' :: V 1>>,
       <Extent 'Clown' in <Database u'Schevo Database' :: V 1>>]
+
+Get individual extent
+---------------------
 
 Get an individual extent object by passing an extent name to the
 database's `extent` method or by getting it as an attribute from the
@@ -157,8 +184,8 @@ database:
      >>> t.done()
 
 
-Packing databases
-=================
+Pack database
+=============
 
 We recommend packing a database after a period of time during which
 many transactions have been executed.  Doing so may reduce memory
@@ -177,17 +204,14 @@ Pack a database by calling the database's `pack` method:
    `pack` method, so it is skipped above.
 
 
-Populating a database with sample data sets
-===========================================
+Populate database with sample data set
+======================================
 
 Schevo allows you to store *initial* and *sample* data sets. 
 
 Initial data sets are used to create groups entities in the database
 when the database is first created.  Sample data sets are used to
 create additional groups entities.
-
-Populate a database with a sample data set by calling the database's
-`populate` method.
 
   .. sourcecode:: pycon
 
@@ -207,6 +231,12 @@ Populate a database with a sample data set by calling the database's
      >>> sorted(book.name for book in db.Book)
      [u'Schevo and You']
 
+Populate a database with a sample data set by calling the database's
+`populate` method.
+
+Populate with default sample data set
+-------------------------------------
+
 Calling `populate` with no arguments uses the default sample data set:
 
   .. sourcecode:: pycon
@@ -214,6 +244,9 @@ Calling `populate` with no arguments uses the default sample data set:
      >>> db.populate()
      >>> sorted(book.name for book in db.Book)
      [u'Schevo and You', u'The Art of War']
+
+Populate with named sample data set
+-----------------------------------
 
 Calling `populate` with an argument uses the named sample data set:     
 
@@ -227,6 +260,12 @@ Calling `populate` with an argument uses the named sample data set:
 
 Database schema source
 ======================
+
+A Schevo database always contains its schema in Python source code
+form.
+
+Get database schema source
+--------------------------
 
 Get the database's schema source using the `schema_source` property:
 
@@ -247,6 +286,18 @@ Get the database's schema source using the `schema_source` property:
 Database schema version
 =======================
 
+A Schevo database begins at version 0, when it does not yet have a
+schema associated with it.
+
+Upon successfully processing the first version of the schema source, a
+database is at version 1.
+
+Whenever you evolve a database to a succeeding schema version, its
+database version is updated accordingly.
+
+Get database schema version
+---------------------------
+
 Get the database's current schema version using the `version`
 property:
 
@@ -265,6 +316,9 @@ property:
 
 Database read/write locking
 ===========================
+
+Schevo provides optional multiple-reader-one-writer locking to safely
+allow multiple threads access to the database.
 
 Dummy locks
 -----------
@@ -285,8 +339,8 @@ database:
      <class 'schevo.mt.dummy.dummy_lock'>
 
 
-Installing locking support
---------------------------
+Install locking support
+-----------------------
 
 If using Schevo in a multi-threaded environment, be sure to install
 locking support onto the database by using the `schevo.mt:install`
@@ -319,8 +373,8 @@ function:
    The locking API does not yet take advantage of the Python 2.5
    `with` statement.
 
-Using read locks
-----------------
+Use read locks
+--------------
 
 Acquire a read lock by calling the database's `read_lock` object to
 acquire a lock, performing the desired read operation(s), then calling
@@ -340,8 +394,8 @@ the release method of the acquired lock:
    When a thread attempts to acquire a read lock, it will block until
    pending write locks have been released.
 
-Using write locks
------------------
+Use write locks
+---------------
 
 Acquire a read lock by calling the database's `read_lock` object to
 acquire a lock, performing the desired read operation(s), then calling
@@ -362,8 +416,8 @@ the release method of the acquired lock:
    When a thread attempts to acquire a write lock, it will block until
    pending read and write locks have been released.
 
-Nesting lock acquisition
-------------------------
+Nest lock acquisition
+---------------------
 
 If you acquire a read lock, and find you need to acquire a write lock
 within the same thread, acquiring a write lock while the thread still
@@ -396,10 +450,35 @@ remainder of the life of the thread's outermost lock:
    method has been called.
 
 
-Database transaction method names
-=================================
+Database transaction methods
+============================
 
+*Transaction methods* may be attached to databases, extents, entities,
+and views.  When called, they return *transaction objects* that are
+used to make changes to the database.
 
+Get transaction method namespace
+--------------------------------
+
+Get the transaction method namespace by accessing the `t` method of an
+object that may have transaction methods.
+
+Get available transaction method names
+--------------------------------------
+
+Get the names of available, non-hidden transaction methods by
+iterating over the `t` namespace, such as by transforming it to a
+`list`:
+
+  .. sourcecode:: pycon
+
+     >>>
+
+Get transaction method
+----------------------
+
+Get transaction method label
+----------------------------
 
 
 Templates
