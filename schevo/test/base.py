@@ -138,7 +138,8 @@ class CreatesDatabase(BaseTest):
         # Also delete the global set in the class's module.
         modname = self.__class__.__module__
         mod = sys.modules[modname]
-        delattr(mod, db_name)
+        if hasattr(mod, db_name):
+            delattr(mod, db_name)
         self.suffixes.remove(suffix)
 
     def evolve(self, schema_source, version):
