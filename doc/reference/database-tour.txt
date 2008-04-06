@@ -14,56 +14,56 @@
       3.2  Change database label
     4   Database extents
       4.1  Get list of extent names
-      4.2  Get list of extent objects
+      4.2  Get list of extents
       4.3  Get individual extent
     5   Pack database
-    6   Populate database with sample data set
-      6.1  Populate with default sample data set
-      6.2  Populate with named sample data set
-    7   Database schema source
+    6   Data sets
+      6.1  Populate database with initial data set
+      6.2  Populate with default sample data set
+      6.3  Populate with named sample data set
+    7   Database schema
       7.1  Get database schema source
-    8   Database schema version
-      8.1  Get database schema version
-    9   Database read/write locking
-      9.1  Dummy locks
-      9.2  Install locking support
-      9.3  Use read locks
-      9.4  Use write locks
-      9.5  Nest lock acquisition
-    10  Transaction methods
-      10.1  Get transaction method namespace
-      10.2  Get available transaction method names
-      10.3  Get transaction method
-      10.4  Get transaction method label
-    11  Extent information
-      11.1  Get extent database
-      11.2  Get extent default key
-      11.3  Get extent hidden flag
-      11.4  Get extent index and key specs
-      11.5  Get extent labels
-      11.6  Get extent name
-      11.7  Get extent relationships
-      11.8  Get extent size
-    12  Extent values as sample data sets
-    13  Extent entity retrieval
-      13.1  Retrieve single entity using OID
-      13.2  Retrieve single entity matching field values
-      13.3  Retrieve entities matching field values
-      13.4  Retrieve entities using iteration
-      13.5  Retrieve entities ordered by key or index spec
-    14  Extent field spec namespace
-    15  Templates
+      7.2  Get database schema version
+    8   Database read/write locking
+      8.1  About dummy locks
+      8.2  Install locking support
+      8.3  Use read locks
+      8.4  Use write locks
+      8.5  Promote read lock to write lock via nesting
+    9   Transaction methods
+      9.1  Get transaction method namespace
+      9.2  Get available transaction method names
+      9.3  Get transaction method
+      9.4  Get transaction method label
+    10  Extent information
+      10.1  Get extent database
+      10.2  Get extent index and key specs
+      10.3  Get extent default key
+      10.4  Get extent hidden flag
+      10.5  Get extent labels
+      10.6  Get extent name
+      10.7  Get extent relationships
+      10.8  Get extent size
+    11  Extent values as sample data sets
+    12  Extent entity retrieval
+      12.1  Retrieve single entity using OID
+      12.2  Retrieve single entity matching field values
+      12.3  Retrieve entities matching field values
+      12.4  Retrieve entities using iteration
+      12.5  Retrieve entities ordered by key or index spec
+    13  Extent field spec namespace
+    14  Templates
 
 Overview
 ========
 
 This document tours a Schevo database from the vantage point of
-building a comprehensive *database navigator* that takes full
-advantage of the deep introspection Schevo offers.
+building a `database navigator`_ that takes full advantage of the deep
+introspection Schevo offers.
 
-It covers operations to read from, and execute transactions upon, an
-open database. It presents those operations in the usage order that is
-typical of building such a comprehensive database navigator.
+It covers operations to read from, and execute_ transactions_ upon, an
+`open database`_. It presents those operations in the usage order that
+is typical of building such a comprehensive application.
 
 
 Doctest setup
@@ -75,32 +75,27 @@ This document also functions as a doctest:
 
      >>> from schevo.test import DocTest, DocTestEvolve
 
-When creating an instance of `DocTest` passing a schema body string,
-we get an object `t` that has a `done` method to call when finished
-with the test object, and a `db` attribute that contains the open,
-in-memory database based on the schema.
+When creating an instance of `DocTest` passing a `schema body`_
+string, we get an object `t` that has a `done` method to call when
+finished with the test object, and a `db` attribute that contains the
+in-memory open database based on the schema_.
 
-`DocTestEvolve` is similar, except we pass the name of a schema
-package and a version number to the constructor instead of a body
-string.
+`DocTestEvolve` is similar, except we pass the name of a `schema
+package`_ and a `schema version`_ number to the constructor instead of
+a body string.
 
-In each example, we work with the open database to demonstrate how its
-API reflects the schema.
+In each example, we work with the open database to demonstrate how
+its API reflects the schema.
 
 
 Database label
 ==============
 
-Nearly every object in a Schevo database has a *label*, which a user
-interface can use to present a human-readable string representing the
-object.
-
-Every Schevo database has a persistent label.
-
 Get database label
 ------------------
 
-Get a database's label by using the `schevo.label:label` function.
+Get a database's persistent label_ by using the `schevo.label:label`
+function.
 
 The default label of a database is ``Schevo Database``.
 
@@ -145,19 +140,15 @@ Change the label by using the `schevo.label:relabel` function.
         ...
         DatabaseExecutingTransaction: Cannot change database label...
         >>> t.done()
-       
+
 
 Database extents
 ================
 
-An *extent* is a collection of homogeneous *entity* objects that share
-the same class.  Each extent has information reflecting its associated
-entity class and its role as a container of entity objects.
-
 Get list of extent names
 ------------------------
 
-Get an alphabetically-ordered list of extent names using the
+Get an alphabetically-ordered list of extent_ names using the
 database's `extent_names` method:
 
   .. sourcecode:: pycon
@@ -173,11 +164,11 @@ database's `extent_names` method:
      >>> db.extent_names()
      ['Acrobat', 'Balloon', 'Clown']
 
-Get list of extent objects
---------------------------
+Get list of extents
+-------------------
 
-Get an alphabetically-ordered list of extent objects themselves using
-the database's `extents` method:
+Get an alphabetically-ordered list of extents themselves using the
+database's `extents` method:
 
   .. sourcecode:: pycon
   
@@ -189,9 +180,8 @@ the database's `extents` method:
 Get individual extent
 ---------------------
 
-Get an individual extent object by passing an extent name to the
-database's `extent` method or by getting it as an attribute from the
-database:
+Get an individual extent by passing an extent name to the database's
+`extent` method or by accessing it as an attribute of the database:
 
   .. sourcecode:: pycon
   
@@ -205,12 +195,7 @@ database:
 Pack database
 =============
 
-We recommend packing a database after a period of time during which
-many transactions have been executed.  Doing so may reduce memory
-pressure of open databases and reduce startup time when opening
-databases.
-
-Pack a database by calling the database's `pack` method:
+Pack_ a database by calling the database's `pack` method:
 
   .. sourcecode:: pycon
 
@@ -218,18 +203,18 @@ Pack a database by calling the database's `pack` method:
 
 .. note::
 
-   The in-memory storage used for unit tests does not support the
-   `pack` method, so it is skipped above.
+   The in-memory `storage backend`_ used for unit tests does not
+   support the `pack` method, so it is skipped above.
 
 
-Populate database with sample data set
-======================================
+Data sets
+=========
 
-Schevo allows you to store *initial* and *sample* data sets. 
+Populate database with initial data set
+---------------------------------------
 
-Initial data sets are used to create groups entities in the database
-when the database is first created.  Sample data sets are used to
-create additional groups entities.
+The engine_ populates a database with an `initial data set`_ when it
+first creates a database.
 
   .. sourcecode:: pycon
 
@@ -249,13 +234,11 @@ create additional groups entities.
      >>> sorted(book.name for book in db.Book)
      [u'Schevo and You']
 
-Populate a database with a sample data set by calling the database's
-`populate` method.
-
 Populate with default sample data set
 -------------------------------------
 
-Calling `populate` with no arguments uses the default sample data set:
+Call a database's `populate` method with no arguments to populate a
+database with the default `sample data set`_:
 
   .. sourcecode:: pycon
 
@@ -266,7 +249,8 @@ Calling `populate` with no arguments uses the default sample data set:
 Populate with named sample data set
 -----------------------------------
 
-Calling `populate` with an argument uses the named sample data set:     
+Call a database's `populate` method with a string argument to populate
+a database with a named `sample data set`_:
 
   .. sourcecode:: pycon
 
@@ -276,16 +260,14 @@ Calling `populate` with an argument uses the named sample data set:
      >>> t.done()
 
 
-Database schema source
-======================
-
-A Schevo database always contains its schema in Python source code
-form.
+Database schema
+===============
 
 Get database schema source
 --------------------------
 
-Get the database's schema source using the `schema_source` property:
+Get the database's `schema source`_ using the `schema_source`
+property:
 
   .. sourcecode:: pycon
 
@@ -299,19 +281,6 @@ Get the database's schema source using the `schema_source` property:
      # Even an empty database has schema source.
      <BLANKLINE>
      >>> t.done()
-
-
-Database schema version
-=======================
-
-A Schevo database begins at version 0, when it does not yet have a
-schema associated with it.
-
-Upon successfully processing the first version of the schema source, a
-database is at version 1.
-
-Whenever you evolve a database to a succeeding schema version, its
-database version is updated accordingly.
 
 Get database schema version
 ---------------------------
@@ -338,8 +307,8 @@ Database read/write locking
 Schevo provides optional multiple-reader-one-writer locking to safely
 allow multiple threads access to the database.
 
-Dummy locks
------------
+About dummy locks
+-----------------
 
 By default, a database does not have locking facilities.  Instead, it
 contains dummy objects so that code written to be multi-thread-ready
@@ -355,7 +324,6 @@ database:
      <class 'schevo.mt.dummy.dummy_lock'>
      >>> db.write_lock
      <class 'schevo.mt.dummy.dummy_lock'>
-
 
 Install locking support
 -----------------------
@@ -434,8 +402,8 @@ the release method of the acquired lock:
    When a thread attempts to acquire a write lock, it will block until
    pending read and write locks have been released.
 
-Nest lock acquisition
----------------------
+Promote read lock to write lock via nesting
+-------------------------------------------
 
 If you acquire a read lock, and find you need to acquire a write lock
 within the same thread, acquiring a write lock while the thread still
@@ -471,28 +439,11 @@ remainder of the life of the thread's outermost lock:
 Transaction methods
 ===================
 
-*Transaction methods* can be attached to these types of objects:
-
-- `Database`
-
-- `Extent`
-
-- `Entity`
-
-- `View`
-
-When called with no arguments, they return *transaction objects* that
-are used to make changes to the database.
-
-Transaction methods *may* accept arguments (to facilitate programmatic
-usage) but *must not* require any arguments (this facilitates
-automatic UI usage).
-
 Get transaction method namespace
 --------------------------------
 
-Get the transaction method namespace by accessing the `t` method of an
-object that may have transaction methods.
+Get the `transaction method namespace`_ by accessing the `t` attribute
+of an object that may have `transaction methods`_.
 
   .. sourcecode:: pycon
 
@@ -512,7 +463,7 @@ object that may have transaction methods.
      >>> db.Plant[1].v.default().t    #doctest: +ELLIPSIS
      <schevo.view.ViewTransactions object ...
      >>> t.done()
-     
+
 Get available transaction method names
 --------------------------------------
 
@@ -535,7 +486,7 @@ By default, databases do not have any transaction methods.
      []
 
 By default, extents have a transaction method used to create new
-`Create` transactions.
+`Create` transactions_.
 
   .. sourcecode:: pycon
 
@@ -543,14 +494,14 @@ By default, extents have a transaction method used to create new
      ['create']
 
 By default, entities have transaction methods used to create new
-`Delete` and `Update` transactions:
+`Delete` and `Update` transactions_:
 
   .. sourcecode:: pycon
 
      >>> sorted(db.Plant[1].t)
      ['delete', 'update']
 
-By default, entity views have transaction methods that reflect those
+By default, entity views_ have transaction methods that reflect those
 of the parent entity:
 
   .. sourcecode:: pycon
@@ -563,7 +514,7 @@ of the parent entity:
    If a transaction method is hidden, it is still usable, but it does
    not show up when iterating over the `t` namespace.  This is to
    allow programmatic usage of transactions that the schema designer
-   does not feel appropriate to expose in a user interface.
+   does not feel appropriate to expose in a dynamic user interface.
 
      .. sourcecode:: pycon
 
@@ -624,20 +575,42 @@ method, Schevo automatically computes one.
 Extent information
 ==================
 
-Each extent in a Schevo database keeps useful information about
-itself.
+Each extent_ in a database keeps useful information about itself.
+
+  .. sourcecode:: pycon
+
+     >>> t = DocTest("""
+     ...     class Food(E.Entity):
+     ...         common_name = f.string()
+     ...         fancy_name = f.string()
+     ...         high_in_sugar = f.boolean()
+     ...         _key(common_name)
+     ...         _key(fancy_name)
+     ...         _index(high_in_sugar, common_name)
+     ...         _index(high_in_sugar, fancy_name)
+     ...     """); db = t.db
 
 Get extent database
 -------------------
 
-Get extent default key
-----------------------
+Get the `db` attribute of an extent to determine which database it
+belongs to:
 
-Get extent hidden flag
-----------------------
+  .. sourcecode:: pycon
+
+     >>> db.Food.db is db
+     True
 
 Get extent index and key specs
 ------------------------------
+
+Get extent default key
+----------------------
+
+The `default key`
+
+Get extent hidden flag
+----------------------
 
 Get extent labels
 -----------------
@@ -678,6 +651,10 @@ Retrieve entities ordered by key or index spec
 Extent field spec namespace
 ===========================
 
+  .. sourcecode:: pycon
+
+     >>> t.done()
+
 
 Templates
 =========
@@ -689,3 +666,27 @@ Common text for new doctests:
      >>> t = DocTest("""
      ...     """); db = t.db
      >>> t.done()
+
+
+.. Glossary links:
+
+.. _database navigator: glossary.txt#database-navigator
+.. _engine: glossary.txt#engine
+.. _execute: glossary.txt#execute
+.. _extent: glossary.txt#extent
+.. _initial data set: glossary.txt#initial-data-set
+.. _label: glossary.txt#label
+.. _open database: glossary.txt#open-database
+.. _pack: glossary.txt#pack
+.. _sample data set: glossary.txt#sample-data-set
+.. _schema: glossary.txt#schema
+.. _schema body: glossary.txt#schema-body
+.. _schema package: glossary.txt#schema-package
+.. _schema source: glossary.txt#schema-source
+.. _schema version: glossary.txt#schema-version
+.. _storage backend: glossary.txt#storage-backend
+.. _transactions: glossary.txt#transaction
+.. _transaction methods: glossary.txt#transaction-method
+.. _transaction method namespace: glossary.txt#transaction-method-namespace
+.. _views: glossary.txt#view
+

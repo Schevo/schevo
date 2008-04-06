@@ -30,8 +30,11 @@ The following documentation is available:
 
   - `Database Usage <reference/database-usage.txt>`__
 
+  - `Glossary <reference/glossary.txt>`__
+
 - `Design Documents <design/>`__
 
   - `Design Principles <design/principles.txt>`__
 
   - `Internal Database Structures <design/structures.txt>`__
+
