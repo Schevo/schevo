@@ -30,7 +30,7 @@
       9.3  Use read locks
       9.4  Use write locks
       9.5  Nest lock acquisition
-    10  Database transaction methods
+    10  Transaction methods
       10.1  Get transaction method namespace
       10.2  Get available transaction method names
       10.3  Get transaction method
@@ -450,12 +450,25 @@ remainder of the life of the thread's outermost lock:
    method has been called.
 
 
-Database transaction methods
-============================
+Transaction methods
+===================
 
-*Transaction methods* may be attached to databases, extents, entities,
-and views.  When called, they return *transaction objects* that are
-used to make changes to the database.
+*Transaction methods* can be attached to these types of objects:
+
+- `Database`
+
+- `Extent`
+
+- `Entity`
+
+- `View`
+
+When called with no arguments, they return *transaction objects* that
+are used to make changes to the database.
+
+Transaction methods *may* accept arguments (to facilitate programmatic
+usage) but *must not* require any arguments (this facilitates
+automatic UI usage).
 
 Get transaction method namespace
 --------------------------------
@@ -463,22 +476,131 @@ Get transaction method namespace
 Get the transaction method namespace by accessing the `t` method of an
 object that may have transaction methods.
 
+  .. sourcecode:: pycon
+
+     >>> t = DocTest("""
+     ...     class Plant(E.Entity):
+     ...         common_name = f.string()
+     ...         _initial = [
+     ...             (u'Fern'),
+     ...             ]
+     ...     """); db = t.db
+     >>> db.t    #doctest: +ELLIPSIS
+     <schevo.namespace.DatabaseTransactions object ...
+     >>> db.Plant.t    #doctest: +ELLIPSIS
+     <schevo.extent.ExtentTransactions object ...
+     >>> db.Plant[1].t    #doctest: +ELLIPSIS
+     <schevo.entity.EntityTransactions object ...
+     >>> db.Plant[1].v.default().t    #doctest: +ELLIPSIS
+     <schevo.view.ViewTransactions object ...
+     >>> t.done()
+     
 Get available transaction method names
 --------------------------------------
 
 Get the names of available, non-hidden transaction methods by
 iterating over the `t` namespace, such as by transforming it to a
-`list`:
+sorted `list`.
+
+By default, databases do not have any transaction methods.
 
   .. sourcecode:: pycon
 
-     >>>
+     >>> t = DocTest("""
+     ...     class Plant(E.Entity):
+     ...         common_name = f.string()
+     ...         _initial = [
+     ...             (u'Fern'),
+     ...             ]
+     ...     """); db = t.db
+     >>> sorted(db.t)
+     []
+
+By default, extents have a transaction method used to create new
+`Create` transactions.
+
+  .. sourcecode:: pycon
+
+     >>> sorted(db.Plant.t)
+     ['create']
+
+By default, entities have transaction methods used to create new
+`Delete` and `Update` transactions:
+
+  .. sourcecode:: pycon
+
+     >>> sorted(db.Plant[1].t)
+     ['delete', 'update']
+
+By default, entity views have transaction methods that reflect those
+of the parent entity:
+
+  .. sourcecode:: pycon
+
+     >>> sorted(db.Plant[1].v.default().t)
+     ['delete', 'update']
+
+.. note::
+
+   If a transaction method is hidden, it is still usable, but it does
+   not show up when iterating over the `t` namespace.  This is to
+   allow programmatic usage of transactions that the schema designer
+   does not feel appropriate to expose in a user interface.
+
+     .. sourcecode:: pycon
+
+        >>> t2 = DocTest("""
+        ...     class Plant(E.Entity):
+        ...         common_name = f.string()
+        ...         _hide('t_update')
+        ...         _initial = [
+        ...             (u'Fern'),
+        ...             ]
+        ...     """); db2 = t2.db
+        >>> sorted(db2.Plant[1].t)
+        ['delete']
+        >>> t2.done()
 
 Get transaction method
 ----------------------
 
+To get a transaction method from a `t` namespace, treat it as a
+dictionary-like object (the `__getitem__` protocol):
+
+  .. sourcecode:: pycon
+
+     >>> method_name = 'create'
+     >>> method = db.Plant.t[method_name]
+     >>> method    #doctest: +ELLIPSIS
+     <bound method EntityMeta.t_create ...
+
+You may also treat the namespace as an object with attributes (the
+`__getattr__` protocol):
+
+  .. sourcecode:: pycon
+
+     >>> db.Plant.t.create    #doctest: +ELLIPSIS
+     <bound method EntityMeta.t_create ...
+     >>> db.Plant.t.create is db.Plant.t['create']
+     True
+
 Get transaction method label
 ----------------------------
+
+Each transaction method has a label.  
+
+If the schema does not manually assign a label to a transaction
+method, Schevo automatically computes one.
+
+  .. sourcecode:: pycon
+
+     >>> label(db.Plant.t.create)
+     u'Create'
+     >>> label(db.Plant[1].t.update)
+     u'Update'
+     >>> label(db.Plant[1].t.delete)
+     u'Delete'
+     >>> t.done()
 
 
 Templates
