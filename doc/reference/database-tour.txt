@@ -35,17 +35,35 @@
       10.2  Get available transaction method names
       10.3  Get transaction method
       10.4  Get transaction method label
-    11  Templates
+    11  Extent information
+      11.1  Get extent database
+      11.2  Get extent default key
+      11.3  Get extent hidden flag
+      11.4  Get extent index and key specs
+      11.5  Get extent labels
+      11.6  Get extent name
+      11.7  Get extent relationships
+      11.8  Get extent size
+    12  Extent values as sample data sets
+    13  Extent entity retrieval
+      13.1  Retrieve single entity using OID
+      13.2  Retrieve single entity matching field values
+      13.3  Retrieve entities matching field values
+      13.4  Retrieve entities using iteration
+      13.5  Retrieve entities ordered by key or index spec
+    14  Extent field spec namespace
+    15  Templates
 
 Overview
 ========
 
 This document tours a Schevo database from the vantage point of
-building an introspecting *database navigator*.
+building a comprehensive *database navigator* that takes full
+advantage of the deep introspection Schevo offers.
 
 It covers operations to read from, and execute transactions upon, an
 open database. It presents those operations in the usage order that is
-typical of such an application.
+typical of building such a comprehensive database navigator.
 
 
 Doctest setup
@@ -601,6 +619,64 @@ method, Schevo automatically computes one.
      >>> label(db.Plant[1].t.delete)
      u'Delete'
      >>> t.done()
+
+
+Extent information
+==================
+
+Each extent in a Schevo database keeps useful information about
+itself.
+
+Get extent database
+-------------------
+
+Get extent default key
+----------------------
+
+Get extent hidden flag
+----------------------
+
+Get extent index and key specs
+------------------------------
+
+Get extent labels
+-----------------
+
+Get extent name
+---------------
+
+Get extent relationships
+------------------------
+
+Get extent size
+---------------
+
+
+Extent values as sample data sets
+=================================
+
+
+Extent entity retrieval
+=======================
+
+Retrieve single entity using OID
+--------------------------------
+
+Retrieve single entity matching field values
+--------------------------------------------
+
+Retrieve entities matching field values
+---------------------------------------
+
+Retrieve entities using iteration
+---------------------------------
+
+Retrieve entities ordered by key or index spec
+----------------------------------------------
+
+
+Extent field spec namespace
+===========================
 
 
 Templates
