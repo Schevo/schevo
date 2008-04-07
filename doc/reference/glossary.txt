@@ -21,33 +21,36 @@
     14  field
     15  field class
     16  field class namespace
-    17  field name
-    18  field namespace
-    19  key
-    20  index
+    17  field namespace
+    18  field value
+    19  index
+    20  index spec
     21  initial data set
-    22  label
-    23  open database
-    24  pack
-    25  plural label
-    26  q namespace
-    27  query namespace
-    28  sample data set
-    29  schema
-    30  schema body
-    31  schema package
-    32  schema source
-    33  schema version
-    34  storage backend
-    35  t namespace
-    36  transaction
-    37  transaction method
-    38  transaction namespace
-    39  v namespace
-    40  view
-    41  view method
-    42  view namespace
-    43  x namespace
+    22  key
+    23  key spec
+    24  label
+    25  open database
+    26  pack
+    27  plural label
+    28  q namespace
+    29  query namespace
+    30  relationship
+    31  sample data set
+    32  schema
+    33  schema body
+    34  schema package
+    35  schema source
+    36  schema version
+    37  storage backend
+    38  t namespace
+    39  transaction
+    40  transaction method
+    41  transaction namespace
+    42  v namespace
+    43  view
+    44  view method
+    45  view namespace
+    46  x namespace
 
 
 database
@@ -82,9 +85,9 @@ engine
 entity
 ======
 
-An instance of an `entity class`_.
-
 .. _entities: #entity
+
+An instance of an `entity class`_.
 
 
 entity class
@@ -141,20 +144,27 @@ field class namespace
 =====================
 
 
-field name
-==========
-
-
 field namespace
 ===============
 
 
-key
-===
+field value
+===========
+
+.. _field values: #field-value
 
 
 index
 =====
+
+
+index spec
+==========
+
+.. _index specs: #index-spec
+
+An *n*-tuple containing the one or more field_ names that are used in
+an index_ maintained for an extent_.
 
 
 initial data set
@@ -163,6 +173,19 @@ initial data set
 A `data set`_ that is loaded into an `open database`_ when a database_
 is initially created, and that typically contains data required for
 the database to function properly.
+
+
+key
+===
+
+
+key spec
+========
+
+.. _key specs: #key-spec
+
+An *n*-tuple containing the one or more field_ names that are used in
+a key_ maintained for an extent_.
 
 
 label
@@ -195,6 +218,16 @@ Abbreviation of `query namespace`_.
 
 query namespace
 ===============
+
+
+relationship
+============
+
+.. _relationships: #relationships
+
+A 2-tuple containing an `entity class`_ name and a field_ name, where
+a `field value`_ for that field_ on an entity_ of that type *may*
+refer to entities_ in a particular extent_.
 
 
 sample data set

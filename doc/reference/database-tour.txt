@@ -38,7 +38,7 @@
     10  Extent information
       10.1  Get extent database
       10.2  Get extent index and key specs
-      10.3  Get extent default key
+      10.3  Get extent default key spec
       10.4  Get extent hidden flag
       10.5  Get extent labels
       10.6  Get extent name
@@ -102,8 +102,10 @@ The default label of a database is ``Schevo Database``.
   .. sourcecode:: pycon
 
      >>> from schevo.label import label
+
      >>> t = DocTest("""
      ...     """); db = t.db
+
      >>> label(db)
      u'Schevo Database'
 
@@ -115,9 +117,12 @@ Change the label by using the `schevo.label:relabel` function.
   .. sourcecode:: pycon
 
      >>> from schevo.label import relabel
+
      >>> relabel(db, 'My Database')
+
      >>> label(db)
      u'My Database'
+
      >>> t.done()
 
 .. note::
@@ -134,11 +139,13 @@ Change the label by using the `schevo.label:relabel` function.
         ...     def t_change_label():
         ...         return ChangeLabel()
         ...     """); db = t.db
+
         >>> tx = db.t.change_label()
         >>> db.execute(tx)    #doctest: +ELLIPSIS
         Traceback (most recent call last):
         ...
         DatabaseExecutingTransaction: Cannot change database label...
+
         >>> t.done()
 
 
@@ -156,11 +163,14 @@ database's `extent_names` method:
      >>> t = DocTest("""
      ...     class Clown(E.Entity):
      ...         pass
+     ...
      ...     class Acrobat(E.Entity):
      ...         pass
+     ...
      ...     class Balloon(E.Entity):
      ...         pass
      ...     """); db = t.db
+
      >>> db.extent_names()
      ['Acrobat', 'Balloon', 'Clown']
 
@@ -187,8 +197,10 @@ Get an individual extent by passing an extent name to the database's
   
      >>> db.extent('Balloon')
      <Extent 'Balloon' in <Database u'Schevo Database' :: V 1>>
+
      >>> db.Balloon is db.extent('Balloon')
      True
+
      >>> t.done()
 
 
@@ -220,17 +232,22 @@ first creates a database.
 
      >>> t = DocTest("""
      ...     class Book(E.Entity):
+     ...
      ...         name = f.string()
+     ...
      ...         _initial = [
-     ...             (u'Schevo and You',),
+     ...             ('Schevo and You',),
      ...             ]
+     ...
      ...         _sample = [
-     ...             (u'The Art of War',),
+     ...             ('The Art of War',),
      ...             ]
+     ...
      ...         _sample_custom = [
-     ...             (u'Iliad',),
+     ...             ('Iliad',),
      ...             ]
      ...     """); db = t.db
+
      >>> sorted(book.name for book in db.Book)
      [u'Schevo and You']
 
@@ -243,6 +260,7 @@ database with the default `sample data set`_:
   .. sourcecode:: pycon
 
      >>> db.populate()
+
      >>> sorted(book.name for book in db.Book)
      [u'Schevo and You', u'The Art of War']
 
@@ -255,8 +273,10 @@ a database with a named `sample data set`_:
   .. sourcecode:: pycon
 
      >>> db.populate('custom')
+
      >>> sorted(book.name for book in db.Book)
      [u'Iliad', u'Schevo and You', u'The Art of War']
+
      >>> t.done()
 
 
@@ -274,12 +294,14 @@ property:
      >>> t = DocTest("""
      ...     # Even an empty database has schema source.
      ...     """); db = t.db
+
      >>> print db.schema_source
      from schevo.schema import *
      schevo.schema.prep(locals())
      <BLANKLINE>
      # Even an empty database has schema source.
      <BLANKLINE>
+
      >>> t.done()
 
 Get database schema version
@@ -291,13 +313,17 @@ property:
   .. sourcecode:: pycon
 
      >>> t = DocTestEvolve('schevo.test.testschema_evolve', 1)
+
      >>> t.db.version
      1
+
      >>> t.done()
 
      >>> t = DocTestEvolve('schevo.test.testschema_evolve', 2)
+
      >>> t.db.version
      2
+
      >>> t.done()
 
 
@@ -317,11 +343,12 @@ database:
 
   .. sourcecode:: pycon
 
-     >>> import schevo.mt
      >>> t = DocTest("""
      ...     """); db = t.db
+
      >>> db.read_lock
      <class 'schevo.mt.dummy.dummy_lock'>
+
      >>> db.write_lock
      <class 'schevo.mt.dummy.dummy_lock'>
 
@@ -335,9 +362,12 @@ function:
   .. sourcecode:: pycon
 
      >>> import schevo.mt
+
      >>> schevo.mt.install(db)
+
      >>> db.read_lock    #doctest: +ELLIPSIS
      <bound method RWLock._acquire_locked_wrapper ...
+
      >>> db.write_lock    #doctest: +ELLIPSIS
      <bound method RWLock._acquire_locked_wrapper ...
 
@@ -423,6 +453,7 @@ remainder of the life of the thread's outermost lock:
      ...         lock_inner.release()
      ... finally:
      ...     lock_outer.release()
+
      >>> t.done()
 
 .. note::
@@ -449,19 +480,26 @@ of an object that may have `transaction methods`_.
 
      >>> t = DocTest("""
      ...     class Plant(E.Entity):
+     ...
      ...         common_name = f.string()
+     ...
      ...         _initial = [
-     ...             (u'Fern'),
+     ...             ('Fern'),
      ...             ]
      ...     """); db = t.db
+
      >>> db.t    #doctest: +ELLIPSIS
      <schevo.namespace.DatabaseTransactions object ...
+
      >>> db.Plant.t    #doctest: +ELLIPSIS
      <schevo.extent.ExtentTransactions object ...
+
      >>> db.Plant[1].t    #doctest: +ELLIPSIS
      <schevo.entity.EntityTransactions object ...
+
      >>> db.Plant[1].v.default().t    #doctest: +ELLIPSIS
      <schevo.view.ViewTransactions object ...
+
      >>> t.done()
 
 Get available transaction method names
@@ -477,11 +515,14 @@ By default, databases do not have any transaction methods.
 
      >>> t = DocTest("""
      ...     class Plant(E.Entity):
+     ...
      ...         common_name = f.string()
+     ...
      ...         _initial = [
-     ...             (u'Fern'),
+     ...             ('Fern'),
      ...             ]
      ...     """); db = t.db
+
      >>> sorted(db.t)
      []
 
@@ -520,14 +561,19 @@ of the parent entity:
 
         >>> t2 = DocTest("""
         ...     class Plant(E.Entity):
+        ...
         ...         common_name = f.string()
+        ...
         ...         _hide('t_update')
+        ...
         ...         _initial = [
-        ...             (u'Fern'),
+        ...             ('Fern'),
         ...             ]
         ...     """); db2 = t2.db
+
         >>> sorted(db2.Plant[1].t)
         ['delete']
+
         >>> t2.done()
 
 Get transaction method
@@ -550,6 +596,7 @@ You may also treat the namespace as an object with attributes (the
 
      >>> db.Plant.t.create    #doctest: +ELLIPSIS
      <bound method EntityMeta.t_create ...
+
      >>> db.Plant.t.create is db.Plant.t['create']
      True
 
@@ -565,10 +612,13 @@ method, Schevo automatically computes one.
 
      >>> label(db.Plant.t.create)
      u'Create'
+
      >>> label(db.Plant[1].t.update)
      u'Update'
+
      >>> label(db.Plant[1].t.delete)
      u'Delete'
+
      >>> t.done()
 
 
@@ -581,19 +631,60 @@ Each extent_ in a database keeps useful information about itself.
 
      >>> t = DocTest("""
      ...     class Food(E.Entity):
+     ...
      ...         common_name = f.string()
      ...         fancy_name = f.string()
      ...         high_in_sugar = f.boolean()
+     ...
      ...         _key(common_name)
      ...         _key(fancy_name)
+     ...
      ...         _index(high_in_sugar, common_name)
      ...         _index(high_in_sugar, fancy_name)
+     ...
+     ...         _initial = [
+     ...             ('Lettuce', 'Lactuca sativa', False),
+     ...             ('Date', 'Phoenix dactylifera', True),
+     ...             ('Broccoli', 'Brassica oleracea', False),
+     ...             ]
+     ...
+     ...     class Person(E.Entity):
+     ...
+     ...         name = f.string()
+     ...         favorite_food = f.entity('Food')
+     ...
+     ...         _key(name)
+     ...
+     ...         _plural = 'People'
+     ...
+     ...         _initial = [
+     ...             ('Jill', ('Date',)),
+     ...             ('Jack', ('Lettuce',)),
+     ...             ('Jen', ('Broccoli',)),
+     ...             ('Jeff', ('Date',)),
+     ...             ]
+     ...
+     ...     class EatingRecord(E.Entity):
+     ...
+     ...         person = f.entity('Person')
+     ...         food = f.entity('Food')
+     ...         when = f.datetime()
+     ...
+     ...         _key(person, when)
+     ...
+     ...         _initial = [
+     ...             (('Jill',), ('Date',), '2008-01-15 13:05:00'),
+     ...             (('Jack',), ('Date',), '2008-01-15 13:10:00'),
+     ...             (('Jack',), ('Lettuce',), '2008-01-15 13:15:00'),
+     ...             (('Jen',), ('Broccoli',), '2008-02-02 11:13:00'),
+     ...             (('Jeff',), ('Lettuce',), '2008-03-05 14:45:00'),
+     ...             ]
      ...     """); db = t.db
 
 Get extent database
 -------------------
 
-Get the `db` attribute of an extent to determine which database it
+Access the `db` attribute of an extent to determine which database it
 belongs to:
 
   .. sourcecode:: pycon
@@ -604,25 +695,112 @@ belongs to:
 Get extent index and key specs
 ------------------------------
 
-Get extent default key
-----------------------
+Access the `index_spec` attribute of an extent to get a tuple of
+`index specs`_ for indices_ maintained for the extent:
 
-The `default key`
+  .. sourcecode:: pycon
+
+     >>> sorted(db.Food.index_spec)    #doctest: +NORMALIZE_WHITESPACE
+     [('high_in_sugar', 'common_name'), 
+      ('high_in_sugar', 'fancy_name')]
+
+Access the `key_spec` attribute of an extent to get a tuple of `key
+specs`_ for keys_ maintained for the extent:
+
+  .. sourcecode:: pycon
+
+     >>> sorted(db.Food.key_spec)    #doctest: +NORMALIZE_WHITESPACE
+     [('common_name',), ('fancy_name',)]
+
+Get extent default key spec
+---------------------------
+
+Access the `default_key` attribute of an extent to get the key spec
+for the `default key`_ maintained for the extent:
+
+  .. sourcecode:: pycon
+
+     >>> db.Food.default_key
+     ('common_name',)
 
 Get extent hidden flag
 ----------------------
 
+Access the `hidden` attribute of an extent to determine if it should
+be hidden from a dynamic user interface:
+
+  .. sourcecode:: pycon
+
+     >>> db.Food.hidden
+     False
+
 Get extent labels
 -----------------
+
+Pass an extent object to the `schevo.label:label` function to get the
+singular form of the extent's label:
+
+  .. sourcecode:: pycon
+
+     >>> label(db.Food)
+     u'Food'
+
+     >>> label(db.EatingRecord)
+     u'Eating Record'
+
+Use the `schevo.label:plural` function to get the plural form:
+
+  .. sourcecode:: pycon
+
+     >>> from schevo.label import plural
+
+     >>> plural(db.Food)
+     u'Foods'
+
+     >>> plural(db.Person)
+     u'People'
 
 Get extent name
 ---------------
 
+Access the `name` attribute of an extent to get its name:
+
+  .. sourcecode:: pycon
+
+     >>> db.Food.name
+     'Food'
+
 Get extent relationships
 ------------------------
 
+Access the `relationships` attribute of an extent to get a list of its
+relationships_:
+
+  .. sourcecode:: pycon
+
+     >>> sorted(db.Food.relationships)    #doctest: +NORMALIZE_WHITESPACE
+     [('EatingRecord', 'food'),
+      ('Person', 'favorite_food')]
+
+     >>> db.Person.relationships
+     [('EatingRecord', 'person')]
+
 Get extent size
 ---------------
+
+Pass an extent to the built-in `len` function to get the current size
+in entities of the extent:
+
+  .. sourcecode:: pycon
+
+     >>> len(db.Food)
+     3
+
+     >>> len(db.Person)
+     4
+
+     >>> len(db.EatingRecord)
+     5
 
 
 Extent values as sample data sets
@@ -665,15 +843,21 @@ Common text for new doctests:
 
      >>> t = DocTest("""
      ...     """); db = t.db
+
      >>> t.done()
 
 
 .. Glossary links:
 
 .. _database navigator: glossary.txt#database-navigator
+.. _default key: glossary.txt#default-key
 .. _engine: glossary.txt#engine
 .. _execute: glossary.txt#execute
 .. _extent: glossary.txt#extent
+.. _keys: glossary.txt#key
+.. _key specs: glossary.txt#key-spec
+.. _index specs: glossary.txt#index-spec
+.. _indices: glossary.txt#index
 .. _initial data set: glossary.txt#initial-data-set
 .. _label: glossary.txt#label
 .. _open database: glossary.txt#open-database
@@ -689,4 +873,3 @@ Common text for new doctests:
 .. _transaction methods: glossary.txt#transaction-method
 .. _transaction method namespace: glossary.txt#transaction-method-namespace
 .. _views: glossary.txt#view
-
