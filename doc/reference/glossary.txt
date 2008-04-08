@@ -29,28 +29,29 @@
     22  key
     23  key spec
     24  label
-    25  open database
-    26  pack
-    27  plural label
-    28  q namespace
-    29  query namespace
-    30  relationship
-    31  sample data set
-    32  schema
-    33  schema body
-    34  schema package
-    35  schema source
-    36  schema version
-    37  storage backend
-    38  t namespace
-    39  transaction
-    40  transaction method
-    41  transaction namespace
-    42  v namespace
-    43  view
-    44  view method
-    45  view namespace
-    46  x namespace
+    25  OID
+    26  open database
+    27  pack
+    28  plural label
+    29  q namespace
+    30  query namespace
+    31  relationship
+    32  sample data set
+    33  schema
+    34  schema body
+    35  schema package
+    36  schema source
+    37  schema version
+    38  storage backend
+    39  t namespace
+    40  transaction
+    41  transaction method
+    42  transaction namespace
+    43  v namespace
+    44  view
+    45  view method
+    46  view namespace
+    47  x namespace
 
 
 database
@@ -190,6 +191,12 @@ a key_ maintained for an extent_.
 
 label
 =====
+
+
+OID
+===
+
+An integer object identifier used internally.
 
 
 open database

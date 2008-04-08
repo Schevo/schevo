@@ -15,7 +15,7 @@
     4   Database extents
       4.1  Get list of extent names
       4.2  Get list of extents
-      4.3  Get individual extent
+      4.3  Get individual extent by name
     5   Pack database
     6   Data sets
       6.1  Populate database with initial data set
@@ -94,8 +94,8 @@ Database label
 Get database label
 ------------------
 
-Get a database's persistent label_ by using the `schevo.label:label`
-function.
+Pass a database to the `schevo.label:label` function to get its
+persistent label_.
 
 The default label of a database is ``Schevo Database``.
 
@@ -112,7 +112,8 @@ The default label of a database is ``Schevo Database``.
 Change database label
 ---------------------
 
-Change the label by using the `schevo.label:relabel` function.
+Pass the database to the `schevo.label:relabel` function to change its
+label:
 
   .. sourcecode:: pycon
 
@@ -155,8 +156,8 @@ Database extents
 Get list of extent names
 ------------------------
 
-Get an alphabetically-ordered list of extent_ names using the
-database's `extent_names` method:
+Call the database's `extent_names` method to get an
+alphabetically-ordered list of extent_ names:
 
   .. sourcecode:: pycon
 
@@ -177,8 +178,8 @@ database's `extent_names` method:
 Get list of extents
 -------------------
 
-Get an alphabetically-ordered list of extents themselves using the
-database's `extents` method:
+Call the database's `extent_names` method to get an
+alphabetically-ordered list of extent_ objects:
 
   .. sourcecode:: pycon
   
@@ -187,11 +188,11 @@ database's `extents` method:
       <Extent 'Balloon' in <Database u'Schevo Database' :: V 1>>,
       <Extent 'Clown' in <Database u'Schevo Database' :: V 1>>]
 
-Get individual extent
----------------------
+Get individual extent by name
+-----------------------------
 
-Get an individual extent by passing an extent name to the database's
-`extent` method or by accessing it as an attribute of the database:
+Pass an extent name to the database's `extent` method or accessing it
+as an attribute of the database to get an individual extent by name:
 
   .. sourcecode:: pycon
   
@@ -207,7 +208,7 @@ Get an individual extent by passing an extent name to the database's
 Pack database
 =============
 
-Pack_ a database by calling the database's `pack` method:
+Call the database's `pack` method to pack_ the database:
 
   .. sourcecode:: pycon
 
@@ -286,8 +287,8 @@ Database schema
 Get database schema source
 --------------------------
 
-Get the database's `schema source`_ using the `schema_source`
-property:
+Access the `schema_source` property of a database to get its `schema
+source`_:
 
   .. sourcecode:: pycon
 
@@ -307,8 +308,8 @@ property:
 Get database schema version
 ---------------------------
 
-Get the database's current schema version using the `version`
-property:
+Access the `version` property of a database to get its current `schema
+version`_:
 
   .. sourcecode:: pycon
 
@@ -473,8 +474,8 @@ Transaction methods
 Get transaction method namespace
 --------------------------------
 
-Get the `transaction method namespace`_ by accessing the `t` attribute
-of an object that may have `transaction methods`_.
+Access the `t` attribute of an object that may have `tranasction
+methods`_ to get the `transaction method namespace`_ of that object:
 
   .. sourcecode:: pycon
 
@@ -505,9 +506,9 @@ of an object that may have `transaction methods`_.
 Get available transaction method names
 --------------------------------------
 
-Get the names of available, non-hidden transaction methods by
-iterating over the `t` namespace, such as by transforming it to a
-sorted `list`.
+Iterate over the `t namespace`_, such as by transforming it to a
+sorted list, to get the names of available, non-hidden transaction
+methods.
 
 By default, databases do not have any transaction methods.
 
@@ -579,8 +580,8 @@ of the parent entity:
 Get transaction method
 ----------------------
 
-To get a transaction method from a `t` namespace, treat it as a
-dictionary-like object (the `__getitem__` protocol):
+Use the `__getitem__` protocol to get a transaction method from a `t`
+namespace:
 
   .. sourcecode:: pycon
 
@@ -589,8 +590,7 @@ dictionary-like object (the `__getitem__` protocol):
      >>> method    #doctest: +ELLIPSIS
      <bound method EntityMeta.t_create ...
 
-You may also treat the namespace as an object with attributes (the
-`__getattr__` protocol):
+You may also use the `__getattr__` protocol:
 
   .. sourcecode:: pycon
 
@@ -806,6 +806,28 @@ in entities of the extent:
 Extent values as sample data sets
 =================================
 
+Call the `as_unittest_code` method of an extent to get a string
+containing the values of all entities in that extent, formatted in a
+manner that you can paste into schema source code to use those
+entities as sample data for unit tests:
+
+  .. sourcecode:: pycon
+
+     >>> print db.Food.as_unittest_code()
+     E.Food._sample_unittest = [
+         (u'Broccoli', u'Brassica oleracea', False),
+         (u'Date', u'Phoenix dactylifera', True),
+         (u'Lettuce', u'Lactuca sativa', False),
+         ]
+
+     >>> print db.Person.as_unittest_code()
+     E.Person._sample_unittest = [
+         (u'Jack', (u'Lettuce',)),
+         (u'Jeff', (u'Date',)),
+         (u'Jen', (u'Broccoli',)),
+         (u'Jill', (u'Date',)),
+         ]
+
 
 Extent entity retrieval
 =======================
@@ -813,8 +835,63 @@ Extent entity retrieval
 Retrieve single entity using OID
 --------------------------------
 
+Use the `__getitem__` protocol on an extent with an OID_ to retrieve
+the entity from that extent that has that OID:
+
+  .. sourcecode:: pycon
+
+     >>> jack = db.Person.findone(name='Jack')
+     >>> oid = jack.sys.oid
+     >>> type(oid)
+     <type 'int'>
+     >>> person = db.Person[oid]
+     >>> person == jack
+     True
+
+If no entity with that OID exists in the extent, the operation raises
+`schevo.error:EntityDoesNotExist`:
+
+  .. sourcecode:: pycon
+
+     >>> person = db.Person[12345]    #doctest: +ELLIPSIS
+     Traceback (most recent call last):
+     ...
+     EntityDoesNotExist: "OID 12345 does not exist in 'Person'"
+
 Retrieve single entity matching field values
 --------------------------------------------
+
+Pass keyword arguments to the `findone` method of an extent to
+retrieve the entity from that extent where the fields named as keys in
+the keyword arguments have values equal to the corresponding values in
+the keyword arguments:
+
+  .. sourcecode:: pycon
+
+     >>> person = db.Person.findone(name='Jack')
+     >>> jack.name
+     u'Jack'
+
+If no matching entity is found, the method returns `None`:
+
+  .. sourcecode:: pycon
+
+     >>> person = db.Person.findone(name='John')
+     >>> person is None
+     True
+
+If multiple entities match, the method raises
+`schevo.error:FindoneFoundMoreThanOne`:
+
+  .. sourcecode:: pycon
+
+     >>> date = db.Food.findone(common_name='Date')
+     >>> person = db.Person.findone(
+     ...     favorite_food=date
+     ...     )    #doctest: +ELLIPSIS
+     Traceback (most recent call last):
+     ...
+     FindoneFoundMoreThanOne: 'Person' {'favorite_food': <Food entity ...
 
 Retrieve entities matching field values
 ---------------------------------------
@@ -861,6 +938,7 @@ Common text for new doctests:
 .. _initial data set: glossary.txt#initial-data-set
 .. _label: glossary.txt#label
 .. _open database: glossary.txt#open-database
+.. _OID: glossary.txt#oid
 .. _pack: glossary.txt#pack
 .. _sample data set: glossary.txt#sample-data-set
 .. _schema: glossary.txt#schema
