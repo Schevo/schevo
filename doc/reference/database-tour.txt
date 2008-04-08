@@ -474,7 +474,7 @@ Transaction methods
 Get transaction method namespace
 --------------------------------
 
-Access the `t` attribute of an object that may have `tranasction
+Access the `t` attribute of an object that may have `transaction
 methods`_ to get the `transaction method namespace`_ of that object:
 
   .. sourcecode:: pycon
@@ -940,6 +940,7 @@ Common text for new doctests:
 .. _open database: glossary.txt#open-database
 .. _OID: glossary.txt#oid
 .. _pack: glossary.txt#pack
+.. _relationships: glossary.txt#relationship
 .. _sample data set: glossary.txt#sample-data-set
 .. _schema: glossary.txt#schema
 .. _schema body: glossary.txt#schema-body
@@ -947,6 +948,7 @@ Common text for new doctests:
 .. _schema source: glossary.txt#schema-source
 .. _schema version: glossary.txt#schema-version
 .. _storage backend: glossary.txt#storage-backend
+.. _t namespace: glossary.txt#transaction-method-namespace
 .. _transactions: glossary.txt#transaction
 .. _transaction methods: glossary.txt#transaction-method
 .. _transaction method namespace: glossary.txt#transaction-method-namespace
