@@ -118,7 +118,7 @@ class Extent(base.Extent):
         return ResultsIterator(generator())
 
     def by_oids(self, *index_spec):
-        """Return an iterator of OIDs sorted by index_spec."""
+        """Return a list of OIDs sorted by index_spec."""
         return self._by(self.name, *index_spec)
 
     def count(self, **criteria):
