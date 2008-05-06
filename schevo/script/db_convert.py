@@ -42,7 +42,7 @@ class Format(Command):
         format = options.format
         if format is not None:
             format = int(format)
-        print 'Converting %r to format %i...' % (db_filename, format)
+        print 'Converting %r to format %r...' % (db_filename, format)
         schevo.database.convert_format(
             filename = db_filename,
             backend_name = options.backend_name,

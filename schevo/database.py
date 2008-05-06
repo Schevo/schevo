@@ -62,6 +62,7 @@ def convert_format(filename, backend_name=None, backend_args={}, format=None):
         raise
     else:
         backend.commit()
+    backend.close()
 
 
 def copy(src_filename, dest_filename, dest_backend_name, dest_backend_args={}):
