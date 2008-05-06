@@ -14,6 +14,7 @@ class TestConstant(BaseTest):
 
     def test_UNASSIGNED(self):
         assert label(UNASSIGNED) == '<UNASSIGNED>'
+        assert len(UNASSIGNED) == 0
         assert str(UNASSIGNED) == ''
         assert raises(TypeError, UNASSIGNED)
 

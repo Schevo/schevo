@@ -35,6 +35,9 @@ class _UNASSIGNED(_FALSE):
         else:
             return -1
 
+    def __len__(cls):
+        return 0
+
     def __str__(cls):
         return ''  # Particularly useful when exporting to CSV.
 
