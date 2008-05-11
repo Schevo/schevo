@@ -85,6 +85,13 @@ class TestMethods_CreatesDatabase(object):
             test_object, suffix)
         # Turn it into a fresh StringIO.
         fp = StringIO(contents)
+        # Hack StringIO so that it keeps its buffer around even after
+        # closing.
+        def close():
+            if not fp.closed:
+                fp.closed = True
+                del fp.pos #, but not fp.buf
+        fp.close = close
         # Convert it to the requested format.
         database.convert_format(
             filename = None,
