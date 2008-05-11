@@ -541,7 +541,7 @@ By default, entities have transaction methods used to create new
   .. sourcecode:: pycon
 
      >>> sorted(db.Plant[1].t)
-     ['delete', 'update']
+     ['clone', 'delete', 'update']
 
 By default, entity views_ have transaction methods that reflect those
 of the parent entity:
@@ -549,7 +549,7 @@ of the parent entity:
   .. sourcecode:: pycon
 
      >>> sorted(db.Plant[1].v.default().t)
-     ['delete', 'update']
+     ['clone', 'delete', 'update']
 
 .. note::
 
@@ -573,7 +573,7 @@ of the parent entity:
         ...     """); db2 = t2.db
 
         >>> sorted(db2.Plant[1].t)
-        ['delete']
+        ['clone', 'delete']
 
         >>> t2.done()
 

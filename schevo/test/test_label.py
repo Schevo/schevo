@@ -414,7 +414,7 @@ class BaseDecoration(CreatesSchema):
         realm = db.execute(t.create(name='foo'))
         t = realm.t
         L = sorted(t)
-        assert L == ['delete', 'update']
+        assert L == ['clone', 'delete', 'update']
         assert label.label(t.delete) == 'Delete'
         assert label.label(t.update) == 'Update'
         # Transaction methods that aren't labeled are automatically
@@ -449,7 +449,7 @@ class BaseDecoration(CreatesSchema):
         tx = db.LoopSegment.t.create_loop()
         tx.count = 1
         segment = db.execute(tx)
-        assert sorted(list(segment.t)) == ['delete']
+        assert sorted(list(segment.t)) == ['clone', 'delete']
         assert isinstance(segment.t.update(), base.Transaction)
 
     def test_builtin_decoration(self):

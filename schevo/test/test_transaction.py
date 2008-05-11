@@ -781,6 +781,32 @@ class BaseTransaction(CreatesSchema):
         db.execute(tx1)
         assert raises(error.TransactionExpired, db.execute, tx2)
 
+    def test_clone_simple(self):
+        # Create a user that we will then clone.
+        tx = db.User.t.create(name='User 1', age=123)
+        user1 = db.execute(tx)
+        # Make sure the label for the 'clone' transaction method is
+        # correct.
+        assert label(user1.t.clone) == 'Clone'
+        # Create a 'clone' transaction based on the user.
+        tx = user1.t.clone()
+        # Make sure the label for the actual transaction is correct.
+        assert label(tx) == 'Clone'
+        # The values of the cloned transaction should match the entity
+        # being cloned.
+        assert tx.name == user1.name
+        assert tx.age == user1.age
+        # Executing the transaction without modification will result
+        # in a key collision, since a user with the name 'User 1'
+        # already exists.
+        assert raises(error.KeyCollision, db.execute, tx)
+        # Modify the transaction to change the name, then execute.
+        tx.name = 'User 2'
+        user2 = db.execute(tx)
+        assert user2 != user1
+        assert user2.name != user1.name
+        assert user2.age == user1.age
+        
     def test_nested_commit(self):
         assert len(db.User) == 0
         # Execute a transaction that fails.

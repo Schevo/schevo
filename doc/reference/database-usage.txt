@@ -698,10 +698,10 @@ sequence of the names in that namespace, in no defined order.
 
 Example::
 
-  >>> tuple(sorted(db.Person.q))
-  ('by_example', 'exact')
-  >>> tuple(sorted(db.Person[1].t))
-  ('delete', 'update')
+  >>> sorted(db.Person.q)
+  ['by_example', 'exact']
+  >>> sorted(db.Person[1].t)
+  ['clone', 'delete', 'update']
 
 
 Entity sys namespaces

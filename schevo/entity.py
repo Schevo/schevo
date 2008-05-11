@@ -16,7 +16,7 @@ from schevo.error import (
 from schevo.fieldspec import field_spec_from_class
 from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import (
-    LabelMixin, label_from_name, plural_from_name, with_label)
+    LabelMixin, label_from_name, plural_from_name, relabel, with_label)
 import schevo.namespace
 from schevo.namespace import NamespaceExtension
 from schevo import query
@@ -438,6 +438,16 @@ class Entity(base.Entity, LabelMixin):
         tx._style = transaction._Create_If_Necessary
         return tx
 
+    @with_label(u'Clone')
+    def t_clone(self):
+        """Return a Clone transaction."""
+        # First create a Create transaction based on this entity's
+        # fields.
+        tx = self._Create(self)
+        # Relabel the transaction.
+        relabel(tx, 'Clone')
+        return tx
+    
     @with_label(u'Delete')
     def t_delete(self):
         """Return a Delete transaction."""
