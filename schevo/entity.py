@@ -252,14 +252,17 @@ class EntityMeta(type):
             and (schevo.namespace.EVOLVING or not cls._evolve_only)):
             # Add this class to the entity classes namespace.
             schevo.namespace.SCHEMADEF.E._set(class_name, cls)
-            # Keep track of relationship metadata.
-            relationships = schevo.namespace.SCHEMADEF.relationships
-            for field_name, FieldClass in cls._field_spec.iteritems():
-                if (hasattr(FieldClass, 'allow') and
-                    field_name not in cls._fget_fields):
-                    for entity_name in FieldClass.allow:
-                        spec = relationships.setdefault(entity_name, [])
-                        spec.append((class_name, field_name))
+            # Keep track of relationship metadata, except when it is a
+            # private entity class.  (Private base classes are not
+            # turned into extents.)
+            if not class_name.startswith('_'):
+                relationships = schevo.namespace.SCHEMADEF.relationships
+                for field_name, FieldClass in cls._field_spec.iteritems():
+                    if (hasattr(FieldClass, 'allow') and
+                        field_name not in cls._fget_fields):
+                        for entity_name in FieldClass.allow:
+                            spec = relationships.setdefault(entity_name, [])
+                            spec.append((class_name, field_name))
 
     def validate_key_and_index_specs(cls):
         """Raise a `SchemaError` if there are any shared key/index specs."""

@@ -15,8 +15,10 @@ class BaseLinks(CreatesSchema):
 
     body = r'''
 
-    class FoxtrotAlpha(E.Entity):
-        """Used for testing ``links`` and ``count``."""
+    class _FoxtrotAlphaBase(E.Entity):
+        """Silly base class to make sure hidden base classes do not show
+        up in extent `relationships` attributes, since they do not get
+        turned into extents."""
 
         beta = f.integer()
         foxtrot_bravo = f.entity('FoxtrotBravo', required=False)
@@ -24,6 +26,10 @@ class BaseLinks(CreatesSchema):
                                required=False)
 
         _key(beta)
+
+
+    class FoxtrotAlpha(_FoxtrotAlphaBase):
+        """Used for testing ``links`` and ``count``."""
 
         _sample_unittest = [
             (1, DEFAULT, DEFAULT),
