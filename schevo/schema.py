@@ -76,6 +76,10 @@ def _hide(*args):
             hidden_queries.add(name[2:])
         elif name.startswith('t_'):
             hidden_actions.add(name[2:])
+            # Special case: If 't_create' is hidden, that should also
+            # imply that 't_clone' should also be hidden.
+            if name == 't_create':
+                hidden_actions.add('clone')
         elif name.startswith('v_'):
             hidden_views.add(name[2:])
 

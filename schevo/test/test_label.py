@@ -449,7 +449,8 @@ class BaseDecoration(CreatesSchema):
         tx = db.LoopSegment.t.create_loop()
         tx.count = 1
         segment = db.execute(tx)
-        assert sorted(list(segment.t)) == ['clone', 'delete']
+        # Clone is also hidden since it is a special case of create.
+        assert sorted(list(segment.t)) == ['delete']
         assert isinstance(segment.t.update(), base.Transaction)
 
     def test_builtin_decoration(self):
