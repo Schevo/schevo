@@ -1,4 +1,4 @@
-"""Convert database structure to new format.
+"""Copy database structures to a new database file.
 
 For copyright, license, and warranty, see bottom of file.
 """
@@ -29,7 +29,7 @@ def _parser():
 class Copy(Command):
 
     name = 'Copy'
-    description = 'Convert a database file to a new storage format.'
+    description = 'Copy database structures to a new database file.'
 
     def main(self, arg0, args):
         print
