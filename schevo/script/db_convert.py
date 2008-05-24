@@ -44,7 +44,7 @@ class Format(Command):
             format = int(format)
             print 'Converting %r to format %r...' % (db_filename, format)
         else:
-            print 'Converting %r to latest format...'
+            print 'Converting %r to latest format...' % db_filename
         schevo.database.convert_format(
             filename = db_filename,
             backend_name = options.backend_name,
