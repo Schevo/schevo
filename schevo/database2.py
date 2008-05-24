@@ -1860,8 +1860,7 @@ def convert_from_format1(backend):
 def _convert_index_from_format1(entity_field_ids, index_spec, index_tree):
     current_field_id, next_index_spec = index_spec[0], index_spec[1:]
     is_entity_field = current_field_id in entity_field_ids
-    for key in index_tree:
-        child_tree = index_tree[key]
+    for key, child_tree in index_tree.items():
         if is_entity_field and isinstance(key, tuple):
             # Convert entity tuple to Placeholder.
             p = Placeholder.new(*key)

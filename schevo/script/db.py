@@ -9,8 +9,8 @@ from schevo.script import (
     db_convert,
     db_copy,
     db_create,
-    db_inject,
     db_evolve,
+    db_inject,
     db_update,
     )
 
@@ -26,8 +26,8 @@ class Database(CommandSet):
             'convert': db_convert.start,
             'copy': db_copy.start,
             'create': db_create.start,
-            'inject': db_inject.start,
             'evolve': db_evolve.start,
+            'inject': db_inject.start,
             'update': db_update.start,
             }
 
