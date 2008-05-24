@@ -58,7 +58,7 @@ def convert_format(filename, backend_name=None, backend_args={}, format=None):
             converter = format_converter[new_format]
             converter(backend)
     except:
-        backend.abort()
+        backend.rollback()
         raise
     else:
         backend.commit()
