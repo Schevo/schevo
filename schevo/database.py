@@ -8,7 +8,8 @@ from schevo.lib import optimize
 
 from schevo import database1
 from schevo import database2
-from schevo.error import DatabaseAlreadyExists, DatabaseDoesNotExist
+from schevo.error import (
+    DatabaseAlreadyExists, DatabaseDoesNotExist, DatabaseFormatMismatch)
 from schevo.field import not_fget
 from schevo import icon
 from schevo.label import relabel
@@ -93,7 +94,7 @@ def copy(src_filename, dest_filename, dest_backend_name, dest_backend_args={}):
             'No schevo database in file %r.' % src_filename)
     if src_root['SCHEVO']['format'] != 2:
         src_backend.close()
-        raise DatabaseFormatMismatch('Database must be in format 2.')
+        raise DatabaseFormatMismatch('Source database must be in format 2.')
     # Make sure the destination backend does not have a database.
     assert log(1, 'Checking destination', src_filename)
     dest_backend = new_backend(
