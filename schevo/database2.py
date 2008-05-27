@@ -518,7 +518,7 @@ class Database(base.Database):
         extent_map = self._extent_map(extent_name)
         index_spec = _field_ids(extent_map, index_spec)
         return self._enforce_index_field_ids(extent_name, *index_spec)
-  
+
     def _enforce_index_field_ids(self, extent_name, *index_spec):
         """Validate and begin enforcing constraints on the specified
         index if it was relaxed within the currently-executing
@@ -922,6 +922,13 @@ class Database(base.Database):
                     # still be a related entity set for it in related_entities.
                     # Only process the fields that still exist.
                     if referrer_field_id in all_field_ids:
+#                         # Remove only the links that no longer exist.
+#                         other_values = related_set
+#                         new_related_entities = new_related_entities_by_id.get(
+#                             referrer_field_id, None)
+#                         if new_related_entities is not None:
+#                             other_values -= new_related_entities
+#                         for other_value in other_values:
 ##                         for other_value in related_set:
                         # Remove only the links that no longer exist.
                         for other_value in (
@@ -1373,7 +1380,8 @@ class Database(base.Database):
             field_names = field_spec.keys()
             entity_field_names = []
             for name in field_names:
-                if field_spec[name].may_store_entities:
+                FieldClass = field_spec[name]
+                if FieldClass.may_store_entities and not FieldClass.fget:
                     entity_field_names.append(name)
             key_spec = EntityClass._key_spec
             index_spec = EntityClass._index_spec
@@ -1422,8 +1430,8 @@ class Database(base.Database):
             new_field_names = set(field_spec.keys())
             if evolving:
                 for field_name in new_field_names:
-                    field_class = field_spec[field_name]
-                    was_named = field_class.was
+                    FieldClass = field_spec[field_name]
+                    was_named = FieldClass.was
                     if was_named is not None:
                         if was_named not in existing_field_names:
                             raise error.FieldDoesNotExist(
@@ -1465,9 +1473,24 @@ class Database(base.Database):
                 field_name_id[field_name] = field_id
                 field_id_name[field_id] = field_name
                 # Check for entity field.
-                if issubclass(field_spec[field_name], EntityField):
+                FieldClass = field_spec[field_name]
+                if (FieldClass.may_store_entities and not FieldClass.fget):
                     entity_field_ids.add(field_id)
-            extent_map['entity_field_ids'] = tuple(entity_field_ids)
+            # Check all entity_field_ids to make sure they may store
+            # entities and that they are not fget fields. Workaround for
+            # databases that suffer from erroneously including fget fields
+            # in the set of entity_field_ids.
+            corrected_entity_field_ids = set()
+            for field_id in entity_field_ids:
+                field_name = field_id_name[field_id]
+                FieldClass = field_spec[field_name]
+                if (FieldClass.may_store_entities and not FieldClass.fget):
+                    corrected_entity_field_ids.add(field_id)
+                else:
+                    # Remove stale link structures since this field was not
+                    # supposed to be marked as an entity field.
+                    self._remove_stale_links(extent_id, field_id, FieldClass)
+            extent_map['entity_field_ids'] = tuple(corrected_entity_field_ids)
         # Update index specs for all extents.
         for extent_name in self.extent_names():
             # Skip system extents.
