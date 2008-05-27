@@ -922,14 +922,6 @@ class Database(base.Database):
                     # still be a related entity set for it in related_entities.
                     # Only process the fields that still exist.
                     if referrer_field_id in all_field_ids:
-#                         # Remove only the links that no longer exist.
-#                         other_values = related_set
-#                         new_related_entities = new_related_entities_by_id.get(
-#                             referrer_field_id, None)
-#                         if new_related_entities is not None:
-#                             other_values -= new_related_entities
-#                         for other_value in other_values:
-##                         for other_value in related_set:
                         # Remove only the links that no longer exist.
                         for other_value in (
                             related_set
