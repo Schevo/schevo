@@ -21,8 +21,8 @@ class Plugin(object):
 
       from schevo.database import open
       db = open(...)
-      from schevomt import lockable
-      lockable.install(db)
+      import schevo.mt
+      schevo.mt.install(db)
       lock = db.read_lock()         # Or .write_lock()
       try:
           # Do stuff here.
