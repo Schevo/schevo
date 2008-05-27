@@ -51,7 +51,8 @@ class EntityFieldIdsRepair(object):
                         for entity_map in extent_map['entities'].itervalues():
                             related_entities = entity_map['related_entities']
                             for field_id in extraneous_field_ids:
-                                del related_entities[field_id]
+                                if field_id in related_entities:
+                                    del related_entities[field_id]
                 db._commit()
             except:
                 db._rollback()
