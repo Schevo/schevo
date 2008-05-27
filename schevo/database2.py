@@ -1476,21 +1476,7 @@ class Database(base.Database):
                 FieldClass = field_spec[field_name]
                 if (FieldClass.may_store_entities and not FieldClass.fget):
                     entity_field_ids.add(field_id)
-            # Check all entity_field_ids to make sure they may store
-            # entities and that they are not fget fields. Workaround for
-            # databases that suffer from erroneously including fget fields
-            # in the set of entity_field_ids.
-            corrected_entity_field_ids = set()
-            for field_id in entity_field_ids:
-                field_name = field_id_name[field_id]
-                FieldClass = field_spec[field_name]
-                if (FieldClass.may_store_entities and not FieldClass.fget):
-                    corrected_entity_field_ids.add(field_id)
-                else:
-                    # Remove stale link structures since this field was not
-                    # supposed to be marked as an entity field.
-                    self._remove_stale_links(extent_id, field_id, FieldClass)
-            extent_map['entity_field_ids'] = tuple(corrected_entity_field_ids)
+            extent_map['entity_field_ids'] = tuple(entity_field_ids)
         # Update index specs for all extents.
         for extent_name in self.extent_names():
             # Skip system extents.
