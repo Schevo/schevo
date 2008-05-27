@@ -43,6 +43,10 @@ class BaseEntity(CreatesSchema):
         foo = f.entity('Foo', default=('a', ))
         bar = f.entity('Bar', default=default_bar)
         foobar = f.entity('Foo', 'Bar', required=False)
+
+        @f.entity('Foo')
+        def foo2(self):
+            return self.foo
     '''
 
     def test_allow(self):
@@ -83,6 +87,23 @@ class BaseEntity(CreatesSchema):
             ('Foo-2', db.Foo[2]),
             ('Foo-3', db.Foo[3]),
             ]
+
+    def test_fget_not_treated_as_entity_storing_field_in_engine(self):
+        """Database engine should not treat calculated fields as
+        entity-storing fields."""
+        extent_map = db._extent_map('Baz')
+        field_name_id = extent_map['field_name_id']
+        foo_id = field_name_id['foo']
+        bar_id = field_name_id['bar']
+        foobar_id = field_name_id['foobar']
+        foo2_id = field_name_id['foo2']
+        entity_field_ids = extent_map['entity_field_ids']
+        # Entity fields -should- be in entity_field_ids.
+        assert foo_id in entity_field_ids
+        assert bar_id in entity_field_ids
+        assert foobar_id in entity_field_ids
+        # Calculated entity fields -should not- be in entity_field_ids.
+        assert foo2_id not in entity_field_ids
 
 
 class TestEntity1(BaseEntity):
