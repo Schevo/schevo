@@ -19,8 +19,8 @@ class Plugin(object):
 
     Usage::
 
-      from schevo.database import open
-      db = open(...)
+      import schevo.database
+      db = schevo.database.open(...)
       import schevo.mt
       schevo.mt.install(db)
       lock = db.read_lock()         # Or .write_lock()
