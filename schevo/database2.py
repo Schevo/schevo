@@ -791,7 +791,7 @@ class Database(base.Database):
                 fields = entity_map['fields']
                 match = True
                 for field_id, value in field_id_value.iteritems():
-                    if fields[field_id] != value:
+                    if fields.get(field_id, UNASSIGNED) != value:
                         match = False
                         break
                 if match:
