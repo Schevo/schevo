@@ -44,14 +44,14 @@ class Compare(Command):
             parser.error('DBFILE2 must be an existing database.')
         print 'Opening databases...'
         db1 = schevo.database.open(
-            filename = db_filename1,
-            backend_name = options.backend_name,
-            backend_args = options.backend_args,
+            filename=db_filename1,
+            backend_name=options.backend_name,
+            backend_args=options.backend_args,
             )
         db2 = schevo.database.open(
             db_filename2,
-            backend_name = options.backend_name,
-            backend_args = options.backend_args,
+            backend_name=options.backend_name,
+            backend_args=options.backend_args,
             )
         # Compare them.
         is_equivalent = schevo.database.equivalent(db1, db2)

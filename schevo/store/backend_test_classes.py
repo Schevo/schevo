@@ -39,18 +39,18 @@ class TestMethods_CreatesDatabase(object):
         fp = StringIO(contents)
         if len(contents) == 0:
             db = database.create(
-                filename = None,
-                backend_name = 'schevo.store',
-                backend_args = dict(fp=fp, cache_size=100000),
+                filename=None,
+                backend_name='schevo.store',
+                backend_args=dict(fp=fp, cache_size=100000),
                 schema_source=schema_source,
                 schema_version=schema_version,
                 format=test_object.format,
                 )
         else:
             db = database.open(
-                filename = None,
-                backend_name = 'schevo.store',
-                backend_args = dict(fp=fp, cache_size=100000),
+                filename=None,
+                backend_name='schevo.store',
+                backend_args=dict(fp=fp, cache_size=100000),
                 )
         setattr(test_object, db_name, db)
         setattr(test_object, 'fp' + suffix, fp)
@@ -94,10 +94,10 @@ class TestMethods_CreatesDatabase(object):
         fp.close = close
         # Convert it to the requested format.
         database.convert_format(
-            filename = None,
-            backend_name = 'schevo.store',
-            backend_args = dict(fp=fp),
-            format = format,
+            filename=None,
+            backend_name='schevo.store',
+            backend_args=dict(fp=fp),
+            format=format,
             )
         # Turn it back into a fpv attribute.
         setattr(test_object, 'fpv' + suffix, fp.getvalue())

@@ -211,9 +211,9 @@ def create(filename, backend_name, backend_args={},
     Database = format_dbclass[format]
     db = Database(backend)
     db._sync(
-        schema_source = schema_source,
-        schema_version = schema_version,
-        initialize = initialize,
+        schema_source=schema_source,
+        schema_version=schema_version,
+        initialize=initialize,
         )
     # Apply label.
     relabel(db, label)

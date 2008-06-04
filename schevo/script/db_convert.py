@@ -46,10 +46,10 @@ class Format(Command):
         else:
             print 'Converting %r to latest format...' % db_filename
         schevo.database.convert_format(
-            filename = db_filename,
-            backend_name = options.backend_name,
-            backend_args = options.backend_args,
-            format = format,
+            filename=db_filename,
+            backend_name=options.backend_name,
+            backend_args=options.backend_args,
+            format=format,
             )
         print 'Conversion complete.'
 

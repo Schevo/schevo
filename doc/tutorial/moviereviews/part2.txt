@@ -40,8 +40,8 @@ Schevo. Let us use that as a starting point::
 
     >>> import schevo.schema
     >>> schema = schevo.schema.read(
-    ...     location = 'schevo.example.moviereviews.schema',
-    ...     version = 1,
+    ...     location='schevo.example.moviereviews.schema',
+    ...     version=1,
     ...     )
     >>> t = DocTest(schema)
 

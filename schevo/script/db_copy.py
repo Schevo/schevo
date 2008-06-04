@@ -41,10 +41,10 @@ class Copy(Command):
         src_filename, dest_filename = args
         print 'Copying %r to %r...' % (src_filename, dest_filename)
         schevo.database.copy(
-            src_filename = src_filename,
-            dest_filename = dest_filename,
-            dest_backend_name = options.backend_name,
-            dest_backend_args = options.backend_args,
+            src_filename=src_filename,
+            dest_filename=dest_filename,
+            dest_backend_name=options.backend_name,
+            dest_backend_args=options.backend_args,
             )
         print 'Copy complete.'
 

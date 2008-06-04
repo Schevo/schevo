@@ -91,11 +91,11 @@ class Inject(Command):
         # Inject the schema.
         schema_source = schevo.schema.read(schema_path, version=schema_version)
         schevo.database.inject(
-            filename = db_filename,
-            backend_name = options.backend_name,
-            backend_args = options.backend_args,
-            schema_source = schema_source,
-            schema_version = schema_version,
+            filename=db_filename,
+            backend_name=options.backend_name,
+            backend_args=options.backend_args,
+            schema_source=schema_source,
+            schema_version=schema_version,
             )
         print 'Schema injected as version %i.' % schema_version
 

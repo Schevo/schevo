@@ -10,7 +10,7 @@ import pkg_resources
 
 
 backends = dict(
-    # backend-name = backend-class,
+    # backend-name=backend-class,
     (p.name, p.load())
     for p in pkg_resources.iter_entry_points('schevo.backend')
     )

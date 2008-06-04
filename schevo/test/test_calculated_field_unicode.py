@@ -25,8 +25,8 @@ class BaseCalculatedUnicode(CreatesSchema):
 
     def test_representations(self):
         thing = db.execute(db.Thing.t.create(
-            image = 'some-image-data',
-            password = 'some-password',
+            image='some-image-data',
+            password='some-password',
             ))
         # Unicode reprs of fields on thing itself.
         assert unicode(thing.f.image) == u'(Binary data)'

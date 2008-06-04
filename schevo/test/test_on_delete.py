@@ -707,7 +707,7 @@ class BaseOnDeleteKeyRelax(CreatesSchema):
             ((2,), ((2,), 1)),
             ((2,), ((2,), 2)),
             ]
-        
+
 
     class Bar(E.Entity):
 
@@ -840,7 +840,7 @@ class BaseOnDeleteEntityListRemove(CreatesSchema):
 
 
 # Not supported with format 1 databases.
-        
+
 
 class TestOnDeleteEntityListRemove2(BaseOnDeleteEntityListRemove):
 
@@ -961,8 +961,8 @@ class BaseOnDeleteUnassignEntityList(CreatesSchema):
     def test_unassign_when_unassigned_allowed(self):
         bar1, bar2, bar3, bar4, bar5 = db.Bar.by('name')
         foo = ex(db.Foo.t.create(
-            name = 'foo',
-            bar_list = [bar1, bar2, bar3, bar4, bar5, bar4, bar3],
+            name='foo',
+            bar_list=[bar1, bar2, bar3, bar4, bar5, bar4, bar3],
             ))
         assert list(foo.bar_list) == [bar1, bar2, bar3, bar4, bar5, bar4, bar3]
         ex(bar4.t.delete())
@@ -972,8 +972,8 @@ class BaseOnDeleteUnassignEntityList(CreatesSchema):
     def test_unassign_when_unassigned_allowed_no_duplicates(self):
         bar1, bar2, bar3, bar4, bar5 = db.Bar.by('name')
         fum = ex(db.Fum.t.create(
-            name = 'fum',
-            bar_list = [bar1, bar2, bar3, bar4, bar5],
+            name='fum',
+            bar_list=[bar1, bar2, bar3, bar4, bar5],
             ))
         assert list(fum.bar_list) == [bar1, bar2, bar3, bar4, bar5]
         ex(bar4.t.delete())
@@ -986,8 +986,8 @@ class BaseOnDeleteUnassignEntityList(CreatesSchema):
     def test_unassign_when_unassigned_disallowed(self):
         bar1, bar2, bar3, bar4, bar5 = db.Bar.by('name')
         fee = ex(db.Fee.t.create(
-            name = 'fee',
-            bar_list = [bar1, bar2, bar3, bar4, bar5, bar4, bar3],
+            name='fee',
+            bar_list=[bar1, bar2, bar3, bar4, bar5, bar4, bar3],
             ))
         assert list(fee.bar_list) == [bar1, bar2, bar3, bar4, bar5, bar4, bar3]
         call = ex, bar4.t.delete()

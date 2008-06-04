@@ -458,7 +458,7 @@ class DocTestEvolve(EvolvesSchemata):
       >>> sorted(foo.name for foo in t.db.Foo)
       [u'one', u'three', u'two']
       >>> t.done()
-    
+
     An example, loading version 2 by evolving from version 1::
 
       >>> t = DocTestEvolve('schevo.test.testschema_evolve', 2, False)
@@ -521,22 +521,22 @@ class ComparesDatabases(object):
             # Create a database directly at version N.
             fp_direct = StringIO()
             db_direct = database.create(
-                filename = None,
-                backend_name = 'schevo.store',
-                backend_args = dict(fp=fp_direct, cache_size=100000),
-                schema_source = schema_N,
-                schema_version = N,
+                filename=None,
+                backend_name='schevo.store',
+                backend_args=dict(fp=fp_direct, cache_size=100000),
+                schema_source=schema_N,
+                schema_version=N,
                 )
             # Read schema version N - 1.
             schema_N1 = schevo.schema.read(location, N - 1)
             # Create a database at version N - 1.
             fp_evolved = StringIO()
             db_evolved = database.create(
-                filename = None,
-                backend_name = 'schevo.store',
-                backend_args = dict(fp=fp_evolved, cache_size=100000),
-                schema_source = schema_N1,
-                schema_version = N - 1,
+                filename=None,
+                backend_name='schevo.store',
+                backend_args=dict(fp=fp_evolved, cache_size=100000),
+                schema_source=schema_N1,
+                schema_version=N - 1,
                 )
             # Evolve database to version N.
             database.evolve(db_evolved, schema_N, N)

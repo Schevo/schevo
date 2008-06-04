@@ -23,10 +23,10 @@ DBFILE: The database file to check (and repair if requested).
 def _parser():
     p = opt.parser(usage)
     p.add_option('-r', '--repair',
-                 dest = 'repair',
-                 help = 'Perform all applicable repairs to database.',
-                 action = 'store_true',
-                 default = False,
+                 dest='repair',
+                 help='Perform all applicable repairs to database.',
+                 action='store_true',
+                 default=False,
                  )
     return p
 
@@ -49,9 +49,9 @@ class Repair(Command):
             parser.error('DBFILE must be an existing database.')
         print 'Opening database...'
         db = schevo.database.open(
-            filename = db_filename,
-            backend_name = options.backend_name,
-            backend_args = options.backend_args,
+            filename=db_filename,
+            backend_name=options.backend_name,
+            backend_args=options.backend_args,
             )
         print
         print 'Label:', label(db)

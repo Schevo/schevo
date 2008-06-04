@@ -37,10 +37,10 @@ def _parser():
                  default=None,
                  )
     p.add_option('-k', '--pack',
-                 dest = 'pack',
-                 help = 'Pack the database.',
-                 action = 'store_true',
-                 default = False,
+                 dest='pack',
+                 help='Pack the database.',
+                 action='store_true',
+                 default=False,
                  )
     p.add_option('-s', '--schema', dest='schema_path',
                  help='Use schema in PATH.',
@@ -83,9 +83,9 @@ class Update(Command):
             parser.error('DBFILE must be an existing database.')
         print 'Opening database...'
         db = schevo.database.open(
-            filename = db_filename,
-            backend_name = options.backend_name,
-            backend_args = options.backend_args,
+            filename=db_filename,
+            backend_name=options.backend_name,
+            backend_args=options.backend_args,
             )
         print 'Current database version is %i.' % db.version
         try:
