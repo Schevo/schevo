@@ -19,6 +19,7 @@ from schevo.constant import ANY, RESTRICT, UNASSIGNED
 import schevo.error
 import schevo.fieldspec
 import schevo.namespace
+from schevo.namespace import NamespaceExtension
 from schevo.placeholder import Placeholder
 
 
@@ -59,7 +60,8 @@ class FieldMeta(type):
     def __new__(cls, class_name, bases, class_dict):
         # Only do something if creating a Field subclass.
         if class_name != 'NoSlotsField':
-            slots = ['assigned', '_initial', '_instance', '_rev', '_value']
+            slots = [
+                'assigned', '_initial', '_instance', '_rev', '_value', '_x']
             class_dict['__slots__'] = slots
         return type.__new__(cls, class_name, bases, class_dict)
 
@@ -209,6 +211,12 @@ class Field(base.Field):
     @property
     def value(self):
         return self.get()
+
+    @property
+    def x(self):
+        if getattr(self, '_x', None) is None:
+            self._x = FieldExtenders()
+        return self._x
 
     def __init__(self, instance, value=None, rev=None):
         """Create a Field instance for an instance with a given value.
@@ -479,6 +487,17 @@ class Field(base.Field):
         if max_size is not None and value_len > int(max_size):
             msg = '%s value length must be <= %r' % (self._name, max_size)
             self._raise(ValueError, msg)
+
+
+# --------------------------------------------------------------------
+
+
+class FieldExtenders(NamespaceExtension):
+    """A namespace of extra attributes."""
+
+    __slots__ = NamespaceExtension.__slots__
+
+    _readonly = False
 
 
 # --------------------------------------------------------------------
