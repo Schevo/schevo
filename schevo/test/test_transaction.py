@@ -589,8 +589,9 @@ class BaseTransaction(CreatesSchema):
 
     def test_create_with_fget(self):
         tx = db.Gender.t.create()
-        # Transaction doesn't have a field for the fget field.
-        assert tx.sys.field_map().keys() == ['code', 'name']
+        # Transaction has a field for the fget field, but it's hidden.
+        assert tx.sys.field_map().keys() == ['code', 'name', 'count']
+        assert tx.f.count.hidden == True
         # Transaction still executes properly.
         tx.code = 'M'
         tx.name = 'Male'
@@ -643,8 +644,9 @@ class BaseTransaction(CreatesSchema):
         tx.name = 'Male'
         result = db.execute(tx)
         tx = result.t.update()
-        # Transaction doesn't have a field for the fget field.
-        assert tx.sys.field_map().keys() == ['code', 'name']
+        # Transaction has fget fields, but they are hidden.
+        assert tx.sys.field_map().keys() == ['code', 'name', 'count']
+        assert tx.f.count.hidden == True
         # Transaction still executes properly.
         tx.code = 'F'
         tx.name = 'Female'
@@ -767,8 +769,9 @@ class BaseTransaction(CreatesSchema):
         tx.name = 'Male'
         result = db.execute(tx)
         tx = result.t.delete()
-        # Transaction doesn't have a field for the fget field.
-        assert tx.sys.field_map().keys() == ['code', 'name']
+        # Transaction has fget fields, but they are hidden.
+        assert tx.sys.field_map().keys() == ['code', 'name', 'count']
+        assert tx.f.count.hidden == True
         # Transaction still executes properly.
         db.execute(tx)
         assert result not in db.Gender
@@ -806,7 +809,7 @@ class BaseTransaction(CreatesSchema):
         assert user2 != user1
         assert user2.name != user1.name
         assert user2.age == user1.age
-        
+
     def test_nested_commit(self):
         assert len(db.User) == 0
         # Execute a transaction that fails.

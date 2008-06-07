@@ -65,10 +65,11 @@ class EntityMeta(type):
         q_spec = spec.copy()
         t_spec = spec.copy()
         v_spec = spec.copy()
-        # Transactions and the default query don't need fget fields.
+        # Transactions and the default query don't normally need fget
+        # fields, so hide them by default in those contexts.
         for field_name in cls._fget_fields:
-            del q_spec[field_name]
-            del t_spec[field_name]
+            q_spec[field_name].hidden = True
+            t_spec[field_name].hidden = True
         # Generic Update (for use by cascading delete).  Assigned in
         # this metaclss to prevent subclasses from overriding.
         class _GenericUpdate(transaction.Update):
@@ -450,7 +451,7 @@ class Entity(base.Entity, LabelMixin):
         # Relabel the transaction.
         relabel(tx, 'Clone')
         return tx
-    
+
     @with_label(u'Delete')
     def t_delete(self):
         """Return a Delete transaction."""
