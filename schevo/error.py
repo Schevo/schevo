@@ -241,6 +241,14 @@ class TransactionExpired(RuntimeError):
 class TransactionFieldsNotChanged(RuntimeError):
     """No transaction field values were changed."""
 
+    def __init__(self, transaction):
+        message = (
+            'Transaction %r requires at least one field changed.'
+            % transaction
+            )
+        super(TransactionFieldsNotChanged, self).__init__(message)
+        self.transaction = transaction
+
 
 class TransactionNotExecuted(RuntimeError):
     """A transaction was not yet executed."""

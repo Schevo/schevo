@@ -32,7 +32,10 @@ class BaseTransactionRequireChanges(CreatesSchema):
         b = db.execute(db.Bravo.t.create(bar=1))
         tx = b.t.update()
         # Error is raised when no fields are changed.
-        assert raises(error.TransactionFieldsNotChanged, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.TransactionFieldsNotChanged, e:
+            assert e.transaction == tx
         # No error is raised when changes are made.
         b = db.execute(b.t.update(bar=2))
         assert b.bar == 2

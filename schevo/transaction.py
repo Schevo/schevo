@@ -579,8 +579,7 @@ class Update(Transaction):
                     nothing_changed = False
                     break
             if nothing_changed:
-                msg = 'A transaction must have at least one field changed.'
-                raise TransactionFieldsNotChanged(msg)
+                raise TransactionFieldsNotChanged(self)
         # Validate individual fields.
         for field in field_map.itervalues():
             if field.fget is None:

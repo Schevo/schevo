@@ -238,7 +238,7 @@ import schevo.error
 #     schevo.transaction:Update._execute
 # - Tested by
 #     test_transaction_require_changes
-# - Possible metadata
+# - Metadata
 #     transaction
 
 
