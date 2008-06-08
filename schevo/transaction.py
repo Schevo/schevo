@@ -450,16 +450,13 @@ class Delete(Transaction):
         if len(restricter_keys) != 0:
             # Raise DeleteRestricted if there are any restricters left
             # over.
-            messages = []
+            error = DeleteRestricted()
             for referrer in restricter_keys:
                 restricter_set = restricters[referrer]
                 for f_name, referred in restricter_set:
-                    messages.append(
-                        '%r cannot be deleted; it is referred to by %r.%s.'
-                        % (referred, referrer, f_name)
-                        )
-            message = ' '.join(messages)
-            raise DeleteRestricted(message)
+                    error.append(referred, referrer, f_name)
+            if error.restrictions:
+                raise error
         else:
             # Convert all restricters to cascaders so that fields are
             # unassigned properly before deletion.

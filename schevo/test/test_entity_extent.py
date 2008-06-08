@@ -271,7 +271,7 @@ class BaseEntityExtent(CreatesSchema):
 
     def t_user_realm_avatar():
         return UserRealmAvatar()
-        
+
 
     class LotsOfUsers(T.Transaction):
 
@@ -532,9 +532,19 @@ class BaseEntityExtent(CreatesSchema):
         realm = db.Realm[1]
         avatar = db.Avatar[1]
         user_del_tx = user.t.delete()
-        assert raises(error.DeleteRestricted, db.execute, user_del_tx)
+        try:
+            db.execute(user_del_tx)
+        except error.DeleteRestricted, e:
+            assert e.restrictions == [
+                (user, avatar, 'user'),
+                ]
         realm_del_tx = realm.t.delete()
-        assert raises(error.DeleteRestricted, db.execute, realm_del_tx)
+        try:
+            db.execute(realm_del_tx)
+        except error.DeleteRestricted, e:
+            assert e.restrictions == [
+                (realm, avatar, 'realm'),
+                ]
         # After deleting the avatar, deleting user and realm becomes
         # possible.
         db.execute(avatar.t.delete())

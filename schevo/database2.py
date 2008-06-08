@@ -461,8 +461,15 @@ class Database(base.Database):
                     continue
                 # Give up as soon as we find one outside reference.
                 if (other_extent_id, other_oid) != (extent_id, oid):
-                    msg = 'Cannot delete; other entities depend on this one.'
-                    raise error.DeleteRestricted(msg)
+                    entity = self._entity(extent_name, oid)
+                    referring_entity = self._entity(other_extent_id, other_oid)
+                    other_field_name = extent_maps_by_id[other_extent_id][
+                        'field_id_name'][other_field_id]
+                    raise error.DeleteRestricted(
+                        entity=entity,
+                        referring_entity=referring_entity,
+                        referring_field_name=other_field_name
+                        )
         # Get old values for use in a potential inversion.
         old_fields = self._entity_fields(extent_name, oid)
         old_related_entities = self._entity_related_entities(extent_name, oid)

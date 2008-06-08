@@ -80,6 +80,24 @@ class DatabaseVersionMismatch(RuntimeError):
 class DeleteRestricted(Restricted):
     """Delete attempted on an instance with foreign references."""
 
+    def __init__(self, entity=None, referring_entity=None,
+                 referring_field_name=None):
+        message = 'Cannot delete; referenced by one or more other entities.'
+        super(DeleteRestricted, self).__init__(message)
+        self.restrictions = []
+        if (entity is not None
+            and referring_entity is not None
+            and referring_field_name is not None
+            ):
+            self.append(entity, referring_entity, referring_field_name)
+
+    def append(self, entity, referring_entity, referring_field_name):
+        self.restrictions.append((
+            entity,
+            referring_entity,
+            referring_field_name,
+            ))
+
 
 class ExtentExists(KeyError):
     """An extent already exists."""

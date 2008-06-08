@@ -84,11 +84,9 @@ import schevo.error
 # - Tested by
 #     test_entity_extent
 #     test_on_delete
-#     test_tranasction
-# - Possible metadata
-#     entity
-#     referring_entity
-#     referring_field_name
+#     test_transaction
+# - Metadata
+#     restrictions (list of (entity, referring_entity, referring_field_name))
 
 
 # ======================================================================
