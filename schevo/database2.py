@@ -117,6 +117,7 @@ class Database(base.Database):
         else:
             tx = transactions[0]
         if tx._executed:
+            raise error.TransactionAlreadyExecuted(tx)
             raise error.TransactionAlreadyExecuted('%r already executed.' % tx)
         if not executing:
             # Bulk mode can only be set on an outermost transaction

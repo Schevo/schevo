@@ -893,7 +893,10 @@ class BaseTransaction(CreatesSchema):
         tx = db.User.t.create(name='foo')
         result = db.execute(tx)
         # Executing the transaction again is not allowed.
-        assert raises(error.TransactionAlreadyExecuted, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.TransactionAlreadyExecuted, e:
+            assert e.transaction == tx
         assert len(db.User) == 1
 
     def test_sys_executed(self):

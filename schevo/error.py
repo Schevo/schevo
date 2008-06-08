@@ -217,6 +217,11 @@ class SchemaFileIOError(IOError):
 class TransactionAlreadyExecuted(RuntimeError):
     """A transaction was already executed and cannot be re-executed."""
 
+    def __init__(self, transaction):
+        message = 'Transaction %r already executed.' % transaction
+        super(TransactionAlreadyExecuted, self).__init__(message)
+        self.transaction = transaction
+
 
 class TransactionExpired(RuntimeError):
     """Something changed in the database that caused this transaction to

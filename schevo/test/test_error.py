@@ -215,7 +215,7 @@ import schevo.error
 #     schevo.database2:Database.execute
 # - Tested by
 #     test_transaction
-# - Possible metadata
+# - Metadata
 #     transaction
 
 
