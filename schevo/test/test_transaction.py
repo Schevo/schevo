@@ -545,15 +545,24 @@ class BaseTransaction(CreatesSchema):
         assert db.User[1] == result
 
     def test_create_copy(self):
+        # Create a user to copy from.
         user = db.execute(db.User.t.create(name='Joe', age=42))
+        # Copy the user by passing in the user's entity as a
+        # positional argument, and setting keyword arguments for field
+        # value overrides.
         user2 = db.execute(db.User.t.create(user, name='Bob'))
         assert user2.age == 42
+        assert user2.name == 'Bob'
+        # Any object with attributes that match the transaction's
+        # fields may be used.
         class Foo(object):
             name = 'Tim'
             age = 50
+        # Demonstration of populating fields based on a class.
         user3 = db.execute(db.User.t.create(Foo))
         assert user3.name == 'Tim'
         assert user3.age == 50
+        # Demonstration of populating fields based on an instance.
         foo = Foo()
         foo.name = 'John'
         user4 = db.execute(db.User.t.create_if_necessary(foo))
@@ -562,15 +571,17 @@ class BaseTransaction(CreatesSchema):
         # Pass in multiple positional arguments.
         class Bar(object):
             name = 'Tim'
+            # This field is ignored; the transaction doesn't have an
+            # 'other' field.
             other = 'Does not matter'
         bar2 = Bar()
         bar2.name = 'Jim'
         bar3 = Bar()
         bar3.name = 'James'
         user5 = db.execute(db.User.t.create(Foo, user2, bar2, bar3))
-        assert user5.name == 'James'
-        assert user5.age == 42
-        # Entity field.
+        assert user5.name == 'James'    # Obtained from bar3
+        assert user5.age == 42          # Obtained from Foo
+        # Demonstration of populating an entity field.
         male = db.execute(db.Gender.t.create(code='M', name='Male'))
         john = db.execute(db.Person.t.create(name='John Doe', gender=male))
         other = db.execute(db.Person.t.create(john, name='Other Doe'))
@@ -589,8 +600,11 @@ class BaseTransaction(CreatesSchema):
                 db.execute(person.t.delete())
         gender = db.Gender.findone(code='M')
         db.execute(gender.t.delete())
-        assert raises(error.DatabaseMismatch,
-                      db.Person.t.create, john, name='Other Guy')
+        try:
+            db.Person.t.create(john, name='Other Guy')
+        except error.DatabaseMismatch, e:
+            assert e.field_name == 'gender'
+            assert e.field_value == None
 
     def test_create_with_fget(self):
         tx = db.Gender.t.create()

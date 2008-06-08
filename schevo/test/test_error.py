@@ -58,7 +58,7 @@ import schevo.error
 #     schevo.field:_EntityBase._db_resolve
 # - Tested by
 #     test_transaction
-# - Possible metadata
+# - Metadata
 #     field_name
 #     field_value
 

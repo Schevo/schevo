@@ -52,6 +52,15 @@ class DatabaseFormatMismatch(RuntimeError):
 class DatabaseMismatch(RuntimeError):
     """A value from one database was used incorrectly in another."""
 
+    def __init__(self, field_name, field_value):
+        message = (
+            '%r field of %r cannot be resolved to the current database'
+            % (field_name, field_value)
+            )
+        super(DatabaseMismatch, self).__init__(message)
+        self.field_name = field_name
+        self.field_value = field_value
+
 
 class DatabaseVersionMismatch(RuntimeError):
     """The schema version being evolved to is not the version

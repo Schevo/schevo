@@ -1112,10 +1112,10 @@ class _EntityBase(Field):
             msg = ('"%s" field of "%s" cannot be resolved to '
                    'the current database')
             error_msg = msg % (self._name, value)
-            return self._db_resolve(self._instance._db, value, error_msg)
+            return self._db_resolve(self._instance._db, value, self._name)
         return value
 
-    def _db_resolve(self, db, value, error_msg):
+    def _db_resolve(self, db, value, field_name):
         """Resolve entity references originating in a different
         database."""
         if isinstance(value, base.Entity) and value._db is not db:
@@ -1126,12 +1126,12 @@ class _EntityBase(Field):
                     extent = getattr(db, extent_name)
                     criteria = dict(
                         [(name, self._db_resolve(db, getattr(entity, name),
-                                                 error_msg))
+                                                 field_name))
                          for name in entity._default_key])
                     value = extent.findone(**criteria)
                     if value is not None:
                         return value
-            raise schevo.error.DatabaseMismatch(error_msg)
+            raise schevo.error.DatabaseMismatch(field_name, value)
         else:
             return value
 
