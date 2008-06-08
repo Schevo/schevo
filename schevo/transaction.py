@@ -427,9 +427,7 @@ class Delete(Transaction):
     def _execute(self, db):
         entity = self._entity
         if entity._rev != self._rev:
-            raise TransactionExpired(
-                'Original entity revision was %i, is now %i'
-                % (self._rev, entity._rev))
+            raise TransactionExpired(self, self._rev, entity._rev)
         deletes = self._deletes
         # Before execute callback.
         self._before_execute(db, entity)
@@ -572,9 +570,7 @@ class Update(Transaction):
         entity = self._entity
         field_map = self._field_map
         if entity._rev != self._rev:
-            raise TransactionExpired(
-                'Original entity revision was %i, is now %i'
-                % (self._rev, entity._rev))
+            raise TransactionExpired(self, self._rev, entity._rev)
         self._before_execute(db, entity)
         if self._require_changes:
             nothing_changed = True

@@ -673,7 +673,12 @@ class BaseTransaction(CreatesSchema):
         tx1 = user.t.update(name='bar')
         tx2 = user.t.update(name='baz')
         db.execute(tx1)
-        assert raises(error.TransactionExpired, db.execute, tx2)
+        try:
+            db.execute(tx2)
+        except error.TransactionExpired, e:
+            assert e.transaction == tx2
+            assert e.original_rev == 0
+            assert e.current_rev == 1
 
     def test_update_with_fget(self):
         tx = db.Gender.t.create()

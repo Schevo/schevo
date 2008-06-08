@@ -227,6 +227,16 @@ class TransactionExpired(RuntimeError):
     """Something changed in the database that caused this transaction to
     expire."""
 
+    def __init__(self, transaction, original_rev, current_rev):
+        message = (
+            'Transaction %r expired; original entity revision was %i, now %i.'
+            % (transaction, original_rev, current_rev)
+            )
+        super(TransactionExpired, self).__init__(message)
+        self.transaction = transaction
+        self.original_rev = original_rev
+        self.current_rev = current_rev
+
 
 class TransactionFieldsNotChanged(RuntimeError):
     """No transaction field values were changed."""
