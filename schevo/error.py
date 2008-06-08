@@ -39,6 +39,15 @@ class DatabaseFormatMismatch(RuntimeError):
     """The internal structure of the database is not in the correct
     format."""
 
+    def __init__(self, current_format, required_format):
+        message = (
+            'Source database must be in format %i; currently in format %i.'
+            % (required_format, current_format)
+            )
+        super(DatabaseFormatMismatch, self).__init__(message)
+        self.current_format = current_format
+        self.required_format = required_format
+
 
 class DatabaseMismatch(RuntimeError):
     """A value from one database was used incorrectly in another."""

@@ -91,9 +91,11 @@ def copy(src_filename, dest_filename, dest_backend_name, dest_backend_args={}):
     if 'SCHEVO' not in src_root:
         src_backend.close()
         raise DatabaseDoesNotExist(src_filename)
-    if src_root['SCHEVO']['format'] != 2:
+    current_format = src_root['SCHEVO']['format']
+    required_format = 2
+    if current_format != required_format:
         src_backend.close()
-        raise DatabaseFormatMismatch('Source database must be in format 2.')
+        raise DatabaseFormatMismatch(current_format, required_format)
     # Make sure the destination backend does not have a database.
     assert log(1, 'Checking destination', src_filename)
     dest_backend = new_backend(
