@@ -19,7 +19,7 @@ import schevo.error
 #     schevo.database:copy
 #     schevo.database:create
 # - Untested
-# - Possible metadata
+# - Metadata
 #     filename
 
 

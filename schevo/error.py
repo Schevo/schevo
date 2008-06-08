@@ -15,6 +15,11 @@ class Restricted(RuntimeError):
 class DatabaseAlreadyExists(RuntimeError):
     """The database already exists."""
 
+    def __init__(self, filename):
+        message = 'Schevo database already in file %r.' % filename
+        super(DatabaseAlreadyExists, self).__init__(message)
+        self.filename = filename
+
 
 class DatabaseDoesNotExist(RuntimeError):
     """The database does not exist."""

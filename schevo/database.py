@@ -103,8 +103,7 @@ def copy(src_filename, dest_filename, dest_backend_name, dest_backend_args={}):
     if 'SCHEVO' in dest_root:
         src_backend.close()
         dest_backend.close()
-        raise DatabaseAlreadyExists(
-            'Schevo database already in file %r.' % dest_filename)
+        raise DatabaseAlreadyExists(dest_filename)
     assert log(1, 'Start copying structures.')
     d_btree = dest_backend.BTree
     d_pdict = dest_backend.PDict
@@ -205,8 +204,7 @@ def create(filename, backend_name, backend_args={},
     root = backend.get_root()
     if 'SCHEVO' in root:
         backend.close()
-        raise DatabaseAlreadyExists(
-            'Use evolve, update, or open on this database.')
+        raise DatabaseAlreadyExists(filename)
     # Continue creating the new database.
     Database = format_dbclass[format]
     db = Database(backend)
