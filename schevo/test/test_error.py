@@ -47,7 +47,7 @@ import schevo.error
 # - Raised by
 #     schevo.database:copy
 # - Untested
-# - Possible metadata
+# - Metadata
 #     current_format
 #     required_format
 
