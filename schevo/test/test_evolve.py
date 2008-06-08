@@ -345,7 +345,12 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(bar='baz'))
         foo_oid = foo.sys.oid
-        raises(error.DatabaseVersionMismatch, self.evolve, schema2, version=3)
+        try:
+            self.evolve(schema2, version=3)
+        except error.DatabaseVersionMismatch, e:
+            assert e.current_version == 1
+            assert e.expected_version == 2
+            assert e.requested_version == 3
         assert db.version == 1
 
     def test_same_schema(self):

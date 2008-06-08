@@ -66,6 +66,16 @@ class DatabaseVersionMismatch(RuntimeError):
     """The schema version being evolved to is not the version
     subsequent to the current database schema."""
 
+    def __init__(self, current_version, expected_version, requested_version):
+        message = (
+            'Current version is %i; expected: %i; requested: %i'
+            % (current_version, expected_version, requested_version)
+            )
+        super(DatabaseVersionMismatch, self).__init__(message)
+        self.current_version = current_version
+        self.expected_version = expected_version
+        self.requested_version = requested_version
+
 
 class DeleteRestricted(Restricted):
     """Delete attempted on an instance with foreign references."""

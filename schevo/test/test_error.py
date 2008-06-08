@@ -69,7 +69,7 @@ import schevo.error
 #     schevo.database2:Database._evolve
 # - Tested by
 #     test_evolve
-# - Possible metadata
+# - Metadata
 #     current_version
 #     expected_version
 #     requested_version

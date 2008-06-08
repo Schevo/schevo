@@ -1113,10 +1113,11 @@ class Database(base.Database):
         - `version`: Integer with the version number of the new schema
           source.  Must be the current database version, plus 1.
         """
+        current_version = self.version
+        expected_version = current_version + 1
         if version != self.version + 1:
             raise error.DatabaseVersionMismatch(
-                'Current version is %i, expected %i, got %i'
-                % (self.version, self.version + 1, version))
+                current_version, expected_version, version)
         def call(module, name):
             fn = getattr(module, name, None)
             if callable(fn):
