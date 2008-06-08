@@ -271,7 +271,12 @@ class BaseEvolveIntraVersion(CreatesDatabase):
         foo = db.execute(db.Foo.t.create(bar='baz'))
         self.sync(schema2)
         tx = db.Foo.t.create(bar='baz')
-        raises(error.KeyCollision, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.KeyCollision, e:
+            assert e.extent_name == 'Foo'
+            assert e.key_spec == ('bar',)
+            assert e.field_values == (u'baz',)
 
     def test_add_key_duplicates_exist(self):
         schema1 = fix("""
@@ -286,7 +291,12 @@ class BaseEvolveIntraVersion(CreatesDatabase):
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(bar='baz'))
         foo = db.execute(db.Foo.t.create(bar='baz'))
-        raises(error.KeyCollision, self.sync, schema2)
+        try:
+            self.sync(schema2)
+        except error.KeyCollision, e:
+            assert e.extent_name == 'Foo'
+            assert e.key_spec == ('bar',)
+            assert e.field_values == (u'baz',)
         assert db.schema_source == schema1
 
     def test_remove_key(self):
@@ -312,7 +322,12 @@ class BaseEvolveIntraVersion(CreatesDatabase):
         assert len(db.Foo) == 2
         # The (baz) key still exists.
         tx = db.Foo.t.create(bar='foo', baz=3)
-        raises(error.KeyCollision, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.KeyCollision, e:
+            assert e.extent_name == 'Foo'
+            assert e.key_spec == ('baz',)
+            assert e.field_values == (3,)
 
     def test_key_to_index(self):
         schema1 = fix("""
@@ -327,7 +342,12 @@ class BaseEvolveIntraVersion(CreatesDatabase):
         """)
         self.sync(schema1)
         db.execute(db.Foo.t.create(bar='baz'))
-        raises(error.KeyCollision, db.execute, db.Foo.t.create(bar='baz'))
+        try:
+            db.execute(db.Foo.t.create(bar='baz'))
+        except error.KeyCollision, e:
+            assert e.extent_name == 'Foo'
+            assert e.key_spec == ('bar',)
+            assert e.field_values == (u'baz',)
         self.sync(schema2)
         db.execute(db.Foo.t.create(bar='baz'))
 
@@ -604,7 +624,12 @@ class BaseEvolveInterVersion(CreatesDatabase):
         foo = db.execute(db.Foo.t.create(bar='baz'))
         self.evolve(schema2, version=2)
         tx = db.Foo.t.create(bar='baz')
-        raises(error.KeyCollision, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.KeyCollision, e:
+            assert e.extent_name == 'Foo'
+            assert e.key_spec == ('bar',)
+            assert e.field_values == (u'baz',)
 
     def test_add_key_duplicates_exist(self):
         schema1 = fix("""
@@ -619,7 +644,12 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(bar='baz'))
         foo = db.execute(db.Foo.t.create(bar='baz'))
-        raises(error.KeyCollision, self.evolve, schema2, version=2)
+        try:
+            self.evolve(schema2, version=2)
+        except error.KeyCollision, e:
+            assert e.extent_name == 'Foo'
+            assert e.key_spec == ('bar',)
+            assert e.field_values == (u'baz',)
         assert db.schema_source == schema1
 
     def test_remove_key(self):
@@ -645,7 +675,12 @@ class BaseEvolveInterVersion(CreatesDatabase):
         assert len(db.Foo) == 2
         # The (baz) key still exists.
         tx = db.Foo.t.create(bar='foo', baz=3)
-        raises(error.KeyCollision, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.KeyCollision, e:
+            assert e.extent_name == 'Foo'
+            assert e.key_spec == ('baz',)
+            assert e.field_values == (3,)
 
     def test_rename_field(self):
         schema1 = fix("""

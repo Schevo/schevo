@@ -7,6 +7,7 @@ from schevo.test import BaseTest, CreatesSchema, raises
 
 from schevo.constant import UNASSIGNED
 from schevo.error import KeyCollision
+from schevo.placeholder import Placeholder
 
 
 class BaseFieldEntityList(CreatesSchema):
@@ -49,7 +50,7 @@ class BaseFieldEntityList(CreatesSchema):
                                      default=default_foo_list)
 
             _key(foo_list)
-            
+
 
         class Boo(E.Entity):
 
@@ -183,8 +184,14 @@ class BaseFieldEntityList(CreatesSchema):
         foo = ex(db.Foo.t.create(name='foo'))
         bar1 = ex(db.Bar.t.create(foo_list=[foo]))
         assert foo.m.bars() == [bar1]
-        call = ex, db.Bar.t.create(foo_list=[foo])
-        assert raises(KeyCollision, *call)
+        try:
+            ex(db.Bar.t.create(foo_list=[foo]))
+        except KeyCollision, e:
+            assert e.extent_name == 'Bar'
+            assert e.key_spec == ('foo_list',)
+            assert e.field_values == (
+                [Placeholder(foo)],
+                )
 
     def test_only_one_link_is_maintained_when_duplicates_are_in_list(self):
         foo = ex(db.Foo.t.create(name='foo'))

@@ -267,17 +267,31 @@ class BaseTransaction(CreatesSchema):
             txu2 = user2.t.update(name='2b')
             txd3 = user3.t.delete()
             txcfail = User.t.create(name='1') # Key collision.
-            raises(schevo.error.KeyCollision,
-                   db.execute, txc4, txu2, txd3, txcfail)
+            try:
+                db.execute(txc4, txu2, txd3, txcfail)
+            except schevo.error.KeyCollision, e:
+                assert e.extent_name == 'User'
+                assert e.key_spec == ('name',)
+                assert e.field_values == (u'1',)
             assert len(User) == 3
             txs1 = T.Subtransaction1()
             db.execute(txs1)
             txs2 = T.Subtransaction2()
-            raises(schevo.error.KeyCollision, db.execute, txs2)
+            try:
+                db.execute(txs2)
+            except schevo.error.KeyCollision, e:
+                assert e.extent_name == 'User'
+                assert e.key_spec == ('name',)
+                assert e.field_values == (u'1',)
             txs3 = T.Subtransaction3()
             db.execute(txs3)
             txs4 = T.Subtransaction4()
-            raises(schevo.error.KeyCollision, db.execute, txs4)
+            try:
+                db.execute(txs4)
+            except schevo.error.KeyCollision, e:
+                assert e.extent_name == 'User'
+                assert e.key_spec == ('name',)
+                assert e.field_values == (u'1',)
             txc13 = User.t.create(name='13')
             db.execute(txc13)
 
@@ -321,8 +335,12 @@ class BaseTransaction(CreatesSchema):
             txu8 = user8.t.update(name='8b')
             txd9 = user9.t.delete()
             txcfail = User.t.create(name='1') # Key collision.
-            raises(schevo.error.KeyCollision,
-                   db.execute, txc10, txu8, txd9, txcfail)
+            try:
+                db.execute(txc10, txu8, txd9, txcfail)
+            except schevo.error.KeyCollision, e:
+                assert e.extent_name == 'User'
+                assert e.key_spec == ('name',)
+                assert e.field_values == (u'1',)
 
 
     class Subtransaction4(T.Transaction):
@@ -830,7 +848,12 @@ class BaseTransaction(CreatesSchema):
         # Executing the transaction without modification will result
         # in a key collision, since a user with the name 'User 1'
         # already exists.
-        assert raises(error.KeyCollision, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.KeyCollision, e:
+            assert e.extent_name == 'User'
+            assert e.key_spec == ('name',)
+            assert e.field_values == (u'User 1',)
         # Modify the transaction to change the name, then execute.
         tx.name = 'User 2'
         user2 = db.execute(tx)
@@ -852,7 +875,12 @@ class BaseTransaction(CreatesSchema):
         assert len(db.User) == 0
         # Execute a transaction that fails.
         tx = db.User.t.trigger_key_collision()
-        assert raises(error.KeyCollision, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.KeyCollision, e:
+            assert e.extent_name == 'User'
+            assert e.key_spec == ('name',)
+            assert e.field_values == (u'foo',)
         # The successful subtransaction should be rolled back.
         assert len(db.User) == 0
 
@@ -1068,7 +1096,12 @@ class BaseTransaction(CreatesSchema):
         # Now do something that causes a key collision.
         tx = db.LoopSegment.t.dirty_create_loop()
         tx.count = 3
-        assert raises(error.KeyCollision, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.KeyCollision, e:
+            assert e.extent_name == 'LoopSegment'
+            assert e.key_spec == ('next',)
+            assert e.field_values == (UNASSIGNED,)
         # Make sure stuff was cleaned up.
         assert len(db.LoopSegment) == 3
         # Make sure we can still do things successfully.

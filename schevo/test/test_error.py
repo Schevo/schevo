@@ -193,6 +193,8 @@ import schevo.error
 # - Raised by
 #     schevo.database2:_index_add
 #     schevo.database2:_index_validate
+# - Caught by
+#     schevo.transaction:Delete._execute
 # - Tested by
 #     test_entity_extent
 #     test_evolve
@@ -201,7 +203,7 @@ import schevo.error
 #     test_field_entitysetset
 #     test_label
 #     test_transaction
-# - Possible metadata
+# - Metadata
 #     extent_name
 #     key_spec
 #     field_values

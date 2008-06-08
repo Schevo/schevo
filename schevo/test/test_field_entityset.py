@@ -7,6 +7,7 @@ from schevo.test import BaseTest, CreatesSchema, raises
 
 from schevo.constant import UNASSIGNED
 from schevo.error import KeyCollision
+from schevo.placeholder import Placeholder
 
 
 class BaseFieldEntitySet(CreatesSchema):
@@ -175,8 +176,14 @@ class BaseFieldEntitySet(CreatesSchema):
         foo = ex(db.Foo.t.create(name='foo'))
         bar1 = ex(db.Bar.t.create(foo_set=set([foo])))
         assert foo.m.bars() == [bar1]
-        call = ex, db.Bar.t.create(foo_set=set([foo]))
-        assert raises(KeyCollision, *call)
+        try:
+            ex(db.Bar.t.create(foo_set=set([foo])))
+        except KeyCollision, e:
+            assert e.extent_name == 'Bar'
+            assert e.key_spec == ('foo_set',)
+            assert e.field_values == (
+                (Placeholder(foo), ),
+                )
 
     def test_min_size_max_size(self):
         # Make sure that empty lists are allowed by default.

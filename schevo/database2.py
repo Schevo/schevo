@@ -1695,10 +1695,10 @@ def _index_add(extent_map, index_spec, relaxed, oid, field_values, BTree):
     if unique and len(branch) and relaxed is None:
         _index_clean(extent_map, index_spec, field_values)
         raise error.KeyCollision(
-            'Duplicate value %r for key %r on %r'
-            % (field_values, _field_names(extent_map, index_spec),
-               extent_map['name']),
-            branch.keys()[0])
+            extent_map['name'],
+            _field_names(extent_map, index_spec),
+            field_values,
+            )
     # Inject the OID into the leaf.
     branch[oid] = True
     # Keep track of the addition if relaxed.
@@ -1758,9 +1758,10 @@ def _index_validate(extent_map, index_spec, oid, field_values, BTree):
     if unique and len(branch) > 1:
         _index_clean(extent_map, index_spec, field_values)
         raise error.KeyCollision(
-            'Duplicate value %r for key %r'
-            % (field_values, _field_names(extent_map, index_spec)),
-            None)
+            extent_map['name'],
+            _field_names(extent_map, index_spec),
+            field_values,
+            )
 
 
 def _normalized_index_specs(index_specs):

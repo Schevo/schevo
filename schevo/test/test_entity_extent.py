@@ -218,9 +218,19 @@ class BaseEntityExtent(CreatesSchema):
             result = db.execute(tx)
             # Creating these should fail because of collisions.
             tx = Batch_Job.t.create(name='bar', priority=1)
-            raises(schevo.error.KeyCollision, db.execute, tx)
+            try:
+                db.execute(tx)
+            except schevo.error.KeyCollision, e:
+                assert e.extent_name == 'Batch_Job'
+                assert e.key_spec == ('priority',)
+                assert e.field_values == (1,)
             tx = Batch_Job.t.create(name='foo', priority=2)
-            raises(schevo.error.KeyCollision, db.execute, tx)
+            try:
+                db.execute(tx)
+            except schevo.error.KeyCollision, e:
+                assert e.extent_name == 'Batch_Job'
+                assert e.key_spec == ('name',)
+                assert e.field_values == (u'foo',)
             # Creating this should succeed as no side-effects should be
             # left behind from the previous failure.
             tx = Batch_Job.t.create(name='bar', priority=2)
@@ -239,9 +249,19 @@ class BaseEntityExtent(CreatesSchema):
             result_bar = db.execute(tx)
             # Updating the second one should fail because of collisions.
             tx = result_bar.t.update(name='foo', priority=3)
-            raises(schevo.error.KeyCollision, db.execute, tx)
+            try:
+                db.execute(tx)
+            except schevo.error.KeyCollision, e:
+                assert e.extent_name == 'Batch_Job'
+                assert e.key_spec == ('name',)
+                assert e.field_values == (u'foo',)
             tx = result_bar.t.update(name='baz', priority=1)
-            raises(schevo.error.KeyCollision, db.execute, tx)
+            try:
+                db.execute(tx)
+            except schevo.error.KeyCollision, e:
+                assert e.extent_name == 'Batch_Job'
+                assert e.key_spec == ('priority',)
+                assert e.field_values == (1,)
             # Creating this should succeed as no side-effects should be
             # left behind from the previous failure.
             tx = Batch_Job.t.create(name='baz', priority=3)
@@ -306,7 +326,12 @@ class BaseEntityExtent(CreatesSchema):
         self.reopen()
         extent = db.User
         tx = extent.t.create(name='foo')
-        assert raises(error.KeyCollision, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.KeyCollision, e:
+            assert e.extent_name == 'User'
+            assert e.key_spec == ('name',)
+            assert e.field_values == (u'foo',)
 
     def test_no_key_conflicts_on_create_if_necessary(self):
         # Create an entity.
@@ -331,7 +356,12 @@ class BaseEntityExtent(CreatesSchema):
         tx = extent.t.create(name='bar')
         user_bar = db.execute(tx)
         tx = user_bar.t.update(name='foo')
-        assert raises(error.KeyCollision, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.KeyCollision, e:
+            assert e.extent_name == 'User'
+            assert e.key_spec == ('name',)
+            assert e.field_values == (u'foo',)
 
     def test_no_key_conflicts_on_delete(self):
         extent = db.User

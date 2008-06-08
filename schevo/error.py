@@ -199,6 +199,16 @@ class IndexDoesNotExist(Exception):
 class KeyCollision(KeyError):
     """An entity with the given keys already exists."""
 
+    def __init__(self, extent_name, key_spec, field_values):
+        message = (
+            'Duplicate values %r for key %r in extent %r.'
+            % (field_values, key_spec, extent_name)
+            )
+        super(KeyCollision, self).__init__(message)
+        self.extent_name = extent_name
+        self.key_spec = key_spec
+        self.field_values = field_values
+
 
 class SchemaFileIOError(IOError):
     """The schema file could not be read."""
