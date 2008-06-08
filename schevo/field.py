@@ -1030,6 +1030,9 @@ class _EntityBase(Field):
     allow_update: set to True if UI should give users the option of
     updating instances displayed in this field.
 
+    allow_view: set to True if UI should give users the option of
+    viewing instances displayed in this field.
+
     allow: if this attribute has a list of names of Entity
     classes in it, you can only assign an instance of one of those
     classes to the field.
@@ -1045,6 +1048,7 @@ class _EntityBase(Field):
     data_type = object
     allow_create = True
     allow_update = True
+    allow_view = True
     allow = set()
     may_store_entities = True
     on_delete = {}
