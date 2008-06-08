@@ -44,6 +44,17 @@ class TransactionMeta(schema_metaclass('T')):
                     'of base class.'
                     % (class_name, bases)
                     )
+        cls._x_names = cls.get_method_names('x_')
+
+    def get_method_names(cls, prefix):
+        """Return list of method names that start with prefix."""
+        names = []
+        for name in dir(cls):
+            if name.startswith(prefix):
+                func = getattr(cls, name)
+                if func.im_self is None:
+                    names.append(name)
+        return names
 
 
 class Transaction(base.Transaction):
@@ -69,10 +80,13 @@ class Transaction(base.Transaction):
         self._relaxed = set()
         self.f = schevo.namespace.Fields(self)
         self.sys = TransactionSys(self)
-        self.x = TransactionExtenders()
 
     def __getattr__(self, name):
-        return self._field_map[name].get()
+        if name == 'x':
+            self.x = attr = TransactionExtenders(self)
+        else:
+            attr = self._field_map[name].get()
+        return attr
 
     def __setattr__(self, name, value):
         if name == 'sys' or name.startswith('_') or len(name) == 1:
@@ -131,6 +145,14 @@ class TransactionExtenders(NamespaceExtension):
     __slots__ = NamespaceExtension.__slots__
 
     _readonly = False
+
+    def __init__(self, tx):
+        super(TransactionExtenders, self).__init__()
+        d = self._d
+        for x_name in tx._x_names:
+            func = getattr(tx, x_name)
+            name = x_name[2:]
+            d[name] = func
 
 
 class TransactionSys(NamespaceExtension):

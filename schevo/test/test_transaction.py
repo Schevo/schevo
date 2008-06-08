@@ -80,6 +80,11 @@ class BaseTransaction(CreatesSchema):
             ('Betty Rubble', UNASSIGNED),
             ]
 
+        class _Create(T.Create):
+
+            def x_current_name_len(self):
+                return len(self.name)
+
 
     class Suspend(T.Transaction):
         """Suspend an account."""
@@ -1138,6 +1143,15 @@ class BaseTransaction(CreatesSchema):
             exe(db.User.t.create(name='bar'))
         exe(fn2)
         assert len(db.User) == 2
+
+    def test_x_namespace(self):
+        tx = db.Person.t.create()
+        tx.name = 'Sam'
+        assert list(tx.x) == ['current_name_len']
+        assert tx.x.current_name_len() == 3
+        tx.x.arbitrary = 6
+        assert sorted(tx.x) == ['arbitrary', 'current_name_len']
+        assert tx.x.arbitrary == 6
 
 
 class TestTransaction1(BaseTransaction):
