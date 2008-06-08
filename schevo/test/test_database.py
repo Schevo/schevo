@@ -56,7 +56,10 @@ class BaseDatabase(CreatesDatabase):
     def test_delete_nonexistent_extent(self):
         """A non-existent extent cannot be removed."""
         db = self.db
-        assert raises(error.ExtentDoesNotExist, db._delete_extent, 'Foo')
+        try:
+            db._delete_extent('Foo')
+        except error.ExtentDoesNotExist, e:
+            assert e.extent_name == 'Foo'
 
     def test_extent_begins_empty(self):
         db = self.db

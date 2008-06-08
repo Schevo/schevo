@@ -553,8 +553,10 @@ class BaseEvolveInterVersion(CreatesDatabase):
             baz = f.integer()
         """)
         self.sync(schema1)
-        raises(error.ExtentDoesNotExist,
-                          self.evolve, schema2, version=2)
+        try:
+            self.evolve(schema2, version=2)
+        except error.ExtentDoesNotExist, e:
+            assert e.extent_name == 'Bar'
         assert db.schema_source == schema1
         assert db.extent_names() == ['Bar', 'Foo']
 
@@ -763,7 +765,10 @@ class BaseEvolveInterVersion(CreatesDatabase):
         e2 = db.execute(db.Foo.t.create(bar='def'))
         e1_oid = e1.sys.oid
         e2_oid = e2.sys.oid
-        raises(error.ExtentDoesNotExist, self.evolve, schema2, version=2)
+        try:
+            self.evolve(schema2, version=2)
+        except error.ExtentDoesNotExist, e:
+            assert e.extent_name == 'Bof'
 
     def test_convert_field(self):
         schema1 = fix("""

@@ -1165,7 +1165,7 @@ class Database(base.Database):
         try:
             return self._extent_maps_by_name[extent_name]
         except KeyError:
-            raise error.ExtentDoesNotExist('%r does not exist.' % extent_name)
+            raise error.ExtentDoesNotExist(extent_name)
 
     def _import_from_source(self, source, module_name):
         """Import a schema module from a string containing source code."""

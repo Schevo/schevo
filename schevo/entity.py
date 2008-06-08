@@ -706,7 +706,7 @@ class EntitySys(NamespaceExtension):
         try:
             extent = db.extent(other_extent_name)
         except KeyError:
-            raise ExtentDoesNotExist('%r does not exist.' % other_extent_name)
+            raise ExtentDoesNotExist(other_extent_name)
         if other_field_name not in extent.field_spec:
             raise FieldDoesNotExist('%r does not exist in %r' % (
                 other_field_name, other_extent_name))

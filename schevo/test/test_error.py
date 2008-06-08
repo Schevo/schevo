@@ -109,7 +109,7 @@ import schevo.error
 #     test_database
 #     test_entity_extent
 #     test_evolve
-# - Possible metadata
+# - Metadata
 #     extent_name
 
 

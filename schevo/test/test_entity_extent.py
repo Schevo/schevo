@@ -447,8 +447,10 @@ class BaseEntityExtent(CreatesSchema):
         assert len(realm_links) == 1
         assert realm_links[0] == avatar
         # Extent name typo.
-        assert raises(error.ExtentDoesNotExist,
-                      realm.sys.links, 'Ratava', 'realm')
+        try:
+            realm.sys.links('Ratava', 'realm')
+        except error.ExtentDoesNotExist, e:
+            assert e.extent_name == 'Ratava'
 
     def test_entity_links_update(self):
         user1, realm, avatar = self.db.execute(db.t.user_realm_avatar())
@@ -522,8 +524,14 @@ class BaseEntityExtent(CreatesSchema):
         assert raises(error.FieldDoesNotExist, user.sys.links, *args)
         assert raises(error.FieldDoesNotExist, user.sys.links_filter, *args)
         args = ('Avatarr', 'user')
-        assert raises(error.ExtentDoesNotExist, user.sys.links, *args)
-        assert raises(error.ExtentDoesNotExist, user.sys.links_filter, *args)
+        try:
+            user.sys.links(*args)
+        except error.ExtentDoesNotExist, e:
+            assert e.extent_name == 'Avatarr'
+        try:
+            user.sys.links_filter(*args)
+        except error.ExtentDoesNotExist, e:
+            assert e.extent_name == 'Avatarr'
 
     def test_entity_delete_restrict(self):
         self.db.execute(db.t.user_realm_avatar())
