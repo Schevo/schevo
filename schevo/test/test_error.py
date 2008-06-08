@@ -39,6 +39,7 @@ import schevo.error
 #     schevo.database2:Database._set_label
 # - Tested by
 #     test_label
+# - No metadata.
 
 
 # ======================================================================
