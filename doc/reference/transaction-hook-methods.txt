@@ -32,7 +32,7 @@ This document also functions as a doctest::
 Subclassing in general
 ======================
 
-Define each subclass as an inner class of the entity class that you are 
+Define each subclass as an inner class of the entity class that you are
 overriding.  Begin the class name with an underscore, then the name of
 the transaction you are overriding.  Inherit from the name of the transaction
 in the ``T`` namespace.  For example::
@@ -41,13 +41,13 @@ in the ``T`` namespace.  For example::
 
         bar = f.string()
         count = f.integer()
-		
+
         class _Create(T.Create):
             ...
-		    
+
         class _Delete(T.Delete):
             ...
-		    
+
         class _Update(T.Update):
             ...
 
@@ -72,7 +72,7 @@ Overriding __init__ and _execute not allowed
 
 Overriding `__init__` or `_execute` in most `Transaction` subclasses
 is not allowed.  If you attempt to do so, Schevo will raise a
-`schevo.error.SchemaError` exception::
+`schevo.error.TransactionExecuteRedefinitionRestricted` exception::
 
     >>> t = DocTest("""
     ...     class Foo(E.Entity):
@@ -86,7 +86,7 @@ is not allowed.  If you attempt to do so, Schevo will raise a
     ... """) #doctest: +ELLIPSIS
     Traceback (most recent call last):
         ...
-    SchemaError: ...
+    TransactionExecuteRedefinitionRestricted: ...
 
 Classes that have a `_restrict_subclasses` attribute set to `True`
 enforce the above restriction.  They include the following:
@@ -125,9 +125,9 @@ Update class here has three fields, ``bar``, ``count``, and ``baz``::
 
         bar = f.string()
         count = f.integer()
-	
+
         class _Update(T.Update):
-	    
+
             baz = f.entity('Baz')
 
 When a field with an existing name is defined, it replaces the old field
@@ -140,7 +140,7 @@ two fields, ``count`` and ``bar``::
         count = f.integer()
 
         class _Update(T.Update):
-    
+
             bar = f.entity('Bar')
 
 To change the properties of a field without changing the order of it,
@@ -155,8 +155,8 @@ make those changes in the ``_setup`` method by using the ``f`` namespace::
 
             def _setup(self):
                 self.f.count.hidden = True
-		    
-		    
+
+
 Available hook methods
 ======================
 
@@ -168,11 +168,11 @@ Create subclasses
     Called during ``__init__`` after setting fields based on keyword
     arguments, before setting default values for fields that weren't assigned
     a value.
-    
+
 ``_before_execute(self, db)``
     Called during transaction execution, before the create operation takes
     place.
-    
+
 ``_after_execute(self, db, entity)``
     Called during transaction execution, after the create operation takes
     place.  The newly-created entity is passed in.
@@ -187,7 +187,7 @@ Delete subclasses
 ``_before_execute(self, db, entity)``
     Called during transaction execution, before the delete operation takes
     place.  The entity about to be deleted is passed in.
-    
+
 ``_after_execute(self, db)``
     Called during transaction execution, after the delete operation has
     taken place.

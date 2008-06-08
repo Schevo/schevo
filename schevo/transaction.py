@@ -14,6 +14,7 @@ from schevo.error import (
     DeleteRestricted,
     KeyCollision,
     SchemaError,
+    TransactionExecuteRedefinitionRestricted,
     TransactionExpired,
     TransactionFieldsNotChanged,
     TransactionNotExecuted,
@@ -37,7 +38,7 @@ class TransactionMeta(schema_metaclass('T')):
             ):
             # Base class is restricting its subclasses.
             if '__init__' in class_dict or '_execute' in class_dict:
-                raise SchemaError(
+                raise TransactionExecuteRedefinitionRestricted(
                     'Transaction subclass %r, with bases %r, '
                     'tried to override __init__ or _execute, '
                     'but that is not allowed with that type '

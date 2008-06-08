@@ -12,7 +12,7 @@ import inspect
 from schevo import base
 from schevo.constant import UNASSIGNED
 from schevo.error import (
-    EntityDoesNotExist, ExtentDoesNotExist, FieldDoesNotExist, SchemaError)
+    EntityDoesNotExist, ExtentDoesNotExist, FieldDoesNotExist, KeyIndexOverlap)
 from schevo.fieldspec import field_spec_from_class
 from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import (
@@ -266,12 +266,13 @@ class EntityMeta(type):
                             spec.append((class_name, field_name))
 
     def validate_key_and_index_specs(cls):
-        """Raise a `SchemaError` if there are any shared key/index specs."""
+        """Raise a `KeyIndexOverlap` if there are any shared key/index specs."""
         key_set = set(cls._key_spec)
         index_set = set(cls._index_spec)
         duplicates = key_set.intersection(index_set)
         if len(duplicates):
-            raise SchemaError('Cannot use same spec for both key and index.')
+            raise KeyIndexOverlap(
+                'Cannot use same spec for both key and index.')
 
 
 class Entity(base.Entity, LabelMixin):

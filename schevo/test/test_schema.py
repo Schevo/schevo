@@ -7,7 +7,7 @@ import unittest
 
 from schevo.lib import module
 import schevo.database
-from schevo.error import SchemaError
+from schevo.error import KeyIndexOverlap
 import schevo.schema
 from schevo.test import CreatesSchema, DocTest, raises
 
@@ -174,7 +174,7 @@ class BaseSchema(CreatesSchema):
                 _key(bar)
                 _index(bar)
             '''
-        assert raises(SchemaError, DocTest, body)
+        assert raises(KeyIndexOverlap, DocTest, body)
         # Also make sure it works when subclassing.
         body = '''
             class Foo(E.Entity):
@@ -184,7 +184,7 @@ class BaseSchema(CreatesSchema):
             class Foo(E.Foo):
                 _index('bar')
             '''
-        assert raises(SchemaError, DocTest, body)
+        assert raises(KeyIndexOverlap, DocTest, body)
         body = '''
             class Foo(E.Entity):
                 bar = f.integer()
@@ -193,7 +193,7 @@ class BaseSchema(CreatesSchema):
             class Foo(E.Foo):
                 _key('bar')
             '''
-        assert raises(SchemaError, DocTest, body)
+        assert raises(KeyIndexOverlap, DocTest, body)
 
 
 class TestSchema1(BaseSchema):

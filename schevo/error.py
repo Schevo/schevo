@@ -4,16 +4,16 @@ For copyright, license, and warranty, see bottom of file.
 """
 
 
+# ======================================================================
+# Runtime errors
+
+
 class Restricted(RuntimeError):
     """The attempted operation was restricted."""
 
 
 class DatabaseAlreadyExists(RuntimeError):
     """The database already exists."""
-
-
-class DatabaseClosed(RuntimeError):
-    """The database or database connection was closed."""
 
 
 class DatabaseDoesNotExist(RuntimeError):
@@ -59,10 +59,6 @@ class EntityDoesNotExist(KeyError):
     """An entity does not exist."""
 
 
-class EntityFieldAllowAttributeIsRequired(Exception):
-    """The allow attribute is required on an entity field."""
-
-
 class FieldDoesNotExist(KeyError):
     """A field does not exist."""
 
@@ -77,6 +73,10 @@ class IndexDoesNotExist(Exception):
 
 class KeyCollision(KeyError):
     """An entity with the given keys already exists."""
+
+
+class SchemaFileIOError(IOError):
+    """The schema file could not be read."""
 
 
 class TransactionAlreadyExecuted(RuntimeError):
@@ -100,16 +100,24 @@ class TransactionRuleViolation(RuntimeError):
     """A transaction rule was violated."""
 
 
+# ======================================================================
+# Schema errors
+
+
 class SchemaError(SyntaxError):
     """An error was found in the schema."""
 
 
-class SchemaFileIOError(IOError):
-    """The schema file could not be read."""
-
-
 class AmbiguousFieldDefinition(SchemaError):
     """A field defition's attributes were ambiguous."""
+
+
+class KeyIndexOverlap(SchemaError):
+    """Key specs and index specs must not overlap."""
+
+
+class TransactionExecuteRedefinitionRestricted(SchemaError):
+    """Overriding `__init__` or `_execute` is not allowed in this class."""
 
 
 class UnsupportedFieldType(SchemaError):
