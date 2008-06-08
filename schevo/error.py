@@ -120,6 +120,15 @@ class ExtentDoesNotExist(KeyError):
 class EntityExists(KeyError):
     """An entity already exists."""
 
+    def __init__(self, extent_name, oid):
+        message = (
+            'Entity OID %i already exists in extent %r.'
+            % (oid, extent_name)
+            )
+        super(EntityExists, self).__init__(message)
+        self.extent_name = extent_name
+        self.oid = oid
+
 
 class EntityDoesNotExist(KeyError):
     """An entity does not exist."""

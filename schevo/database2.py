@@ -350,8 +350,7 @@ class Database(base.Database):
             if rev is None:
                 rev = 0
             if oid in entities:
-                raise error.EntityExists(
-                    'OID %r already exists in %r' % (oid, extent_name))
+                raise error.EntityExists(extent_name, oid)
             # Create fields_by_id dict with field-id:field-value items.
             fields_by_id = PDict()
             for name, value in fields.iteritems():

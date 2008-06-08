@@ -71,8 +71,7 @@ class Database(database2.Database):
             if rev is None:
                 rev = 0
             if oid in entities:
-                raise error.EntityExists(
-                    'OID %r already exists in %r' % (oid, extent_name))
+                raise error.EntityExists(extent_name, oid)
             # Create dict with field-id:field-value items.
             fields_by_id = PDict()
             new_links = []

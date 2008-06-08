@@ -119,7 +119,7 @@ import schevo.error
 #     schevo.database1:Database._create_entity
 #     schevo.database2:Database._create_entity
 # - Untested
-# - Possible metadata
+# - Metadata
 #     oid
 #     extent_name
 
