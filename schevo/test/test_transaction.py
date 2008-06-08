@@ -954,7 +954,10 @@ class BaseTransaction(CreatesSchema):
         before_len = len(db.User)
         tx = db.t.subtransactions()
         # Prior to execution, a transaction cannot be undone.
-        assert raises(error.TransactionNotExecuted, tx._undo)
+        try:
+            tx._undo()
+        except error.TransactionNotExecuted, e:
+            assert e.transaction == tx
         # Continue with execution, storing the undo.
         db.execute(tx)
         after_len = len(db.User)

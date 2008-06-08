@@ -253,6 +253,15 @@ class TransactionFieldsNotChanged(RuntimeError):
 class TransactionNotExecuted(RuntimeError):
     """A transaction was not yet executed."""
 
+    def __init__(self, transaction):
+        message = (
+            'Transaction %r must be executed to get its changes '
+            'or undo transaction.'
+            % transaction
+            )
+        super(TransactionNotExecuted, self).__init__(message)
+        self.transaction = transaction
+
 
 class TransactionRuleViolation(RuntimeError):
     """A transaction rule was violated."""

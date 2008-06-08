@@ -105,7 +105,7 @@ class Transaction(base.Transaction):
     @property
     def _changes(self):
         if not self._executed:
-            raise TransactionNotExecuted()
+            raise TransactionNotExecuted(self)
         return self._changes_requiring_notification
 
     def _execute(self, db):
@@ -127,9 +127,7 @@ class Transaction(base.Transaction):
     def _undo(self):
         """Return a transaction that can undo this one."""
         if not self._executed:
-            raise TransactionNotExecuted(
-                'A transaction must be executed before its undo transaction '
-                'is requested.')
+            raise TransactionNotExecuted(self)
         # The default implementation is to return the inverse of this
         # transaction.
         return Inverse(self)
@@ -615,9 +613,7 @@ class Inverse(Transaction):
     def __init__(self, original_tx):
         Transaction.__init__(self)
         if not original_tx._executed:
-            raise TransactionNotExecuted(
-                'Transaction must be executed before inverse can be '
-                'determined.')
+            raise TransactionNotExecuted(self)
         self._original_tx = original_tx
         self._label = u'Inverse of %s' % label(original_tx)
 

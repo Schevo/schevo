@@ -251,7 +251,7 @@ import schevo.error
 # - Tested by
 #     test_change
 #     test_transaction
-# - Possible metadata
+# - Metadata
 #     transaction
 
 

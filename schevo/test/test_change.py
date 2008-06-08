@@ -141,7 +141,7 @@ class Transfer(T.Transaction):
 
 
 class CreateCreate(T.Transaction):
-    
+
     def _execute(self, db):
         User = db.User
         user1 = db.execute(User.t.create(name='1'))
@@ -153,7 +153,7 @@ def t_create_create():
 
 
 class CreateDelete(T.Transaction):
-    
+
     def _execute(self, db):
         user = db.execute(db.User.t.create(name='1'))
         oid = user.sys.oid
@@ -165,7 +165,7 @@ def t_create_delete():
 
 
 class CreateUpdate(T.Transaction):
-    
+
     def _execute(self, db):
         user = db.execute(db.User.t.create(name='1'))
         db.execute(user.t.update(name='2'))
@@ -178,7 +178,7 @@ def t_create_update():
 class UpdateUpdate(T.Transaction):
 
     user = f.entity('User')
-    
+
     def _execute(self, db):
         user = self.user
         db.execute(user.t.update(name='2'))
@@ -204,7 +204,10 @@ class BaseChangeset(CreatesSchema):
         tx = db.User.t.create()
         # Transaction must be executed before its changes is
         # available.
-        assert raises(error.TransactionNotExecuted, getattr, tx, '_changes')
+        try:
+            changes = tx._changes
+        except error.TransactionNotExecuted, e:
+            assert e.transaction == tx
 
     def test_create(self):
         tx = db.User.t.create(name='foo')
