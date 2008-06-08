@@ -266,6 +266,10 @@ class TransactionNotExecuted(RuntimeError):
 class TransactionRuleViolation(RuntimeError):
     """A transaction rule was violated."""
 
+    def __init__(self, message, **kwargs):
+        super(TransactionRuleViolation, self).__init__(message)
+        self.__dict__.update(kwargs)
+
 
 # ======================================================================
 # Schema errors
