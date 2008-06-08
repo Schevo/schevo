@@ -54,7 +54,7 @@ class DatabaseMismatch(RuntimeError):
 
     def __init__(self, field_name, field_value):
         message = (
-            '%r field of %r cannot be resolved to the current database'
+            '%r field of %r cannot be resolved to the current database.'
             % (field_name, field_value)
             )
         super(DatabaseMismatch, self).__init__(message)
@@ -68,7 +68,7 @@ class DatabaseVersionMismatch(RuntimeError):
 
     def __init__(self, current_version, expected_version, requested_version):
         message = (
-            'Current version is %i; expected: %i; requested: %i'
+            'Current version is %i; expected: %i; requested: %i.'
             % (current_version, expected_version, requested_version)
             )
         super(DatabaseVersionMismatch, self).__init__(message)
@@ -101,6 +101,11 @@ class DeleteRestricted(Restricted):
 
 class ExtentExists(KeyError):
     """An extent already exists."""
+
+    def __init__(self, extent_name):
+        message = 'Extent %r already exists.' % extent_name
+        super(ExtentExists, self).__init__(message)
+        self.extent_name = extent_name
 
 
 class ExtentDoesNotExist(KeyError):

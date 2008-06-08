@@ -39,8 +39,10 @@ class BaseDatabase(CreatesDatabase):
         """You cannot create an extent twice."""
         db = self.db
         db._create_extent('Some_Extent', ['name', 'age'], [])
-        assert raises(error.ExtentExists, db._create_extent,
-                      'Some_Extent', ['name', 'age'], [])
+        try:
+            db._create_extent('Some_Extent', ['name', 'age'], [])
+        except error.ExtentExists, e:
+            assert e.extent_name == 'Some_Extent'
 
     def test_delete_extent(self):
         """An extent can be removed."""
@@ -132,7 +134,7 @@ class TestDatabase1(BaseDatabase):
 class TestDatabase2(BaseDatabase):
 
     include = True
-    
+
     format = 2
 
     def test_format_2(self):

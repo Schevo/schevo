@@ -1025,7 +1025,7 @@ class Database(base.Database):
         PList = self._PList
         PDict = self._PDict
         if extent_name in self._extent_maps_by_name:
-            raise error.ExtentExists('%r already exists.' % extent_name)
+            raise error.ExtentExists(extent_name)
         if key_spec is None:
             key_spec = []
         if index_spec is None:

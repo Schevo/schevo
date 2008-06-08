@@ -95,7 +95,7 @@ import schevo.error
 #     schevo.database2:Database._create_extent
 # - Tested by
 #     test_database
-# - Possible metadata
+# - Metadata
 #     extent_name
 
 
