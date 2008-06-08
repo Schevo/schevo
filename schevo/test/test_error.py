@@ -29,7 +29,7 @@ import schevo.error
 #     schevo.database:copy
 #     schevo.database:open
 # - Untested
-# - Possible metadata
+# - Metadata
 #     filename
 
 

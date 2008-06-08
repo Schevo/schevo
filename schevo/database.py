@@ -90,8 +90,7 @@ def copy(src_filename, dest_filename, dest_backend_name, dest_backend_args={}):
     src_root = src_backend.get_root()
     if 'SCHEVO' not in src_root:
         src_backend.close()
-        raise DatabaseDoesNotExist(
-            'No schevo database in file %r.' % src_filename)
+        raise DatabaseDoesNotExist(src_filename)
     if src_root['SCHEVO']['format'] != 2:
         src_backend.close()
         raise DatabaseFormatMismatch('Source database must be in format 2.')
@@ -358,7 +357,7 @@ def open(filename, backend_name=None, backend_args=None):
     root = backend.get_root()
     if 'SCHEVO' not in root:
         backend.close()
-        raise DatabaseDoesNotExist('Use create to create a new database.')
+        raise DatabaseDoesNotExist(filename)
     # Determine the version of the database.
     schevo = root['SCHEVO']
     format = schevo['format']

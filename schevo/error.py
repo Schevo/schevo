@@ -24,6 +24,11 @@ class DatabaseAlreadyExists(RuntimeError):
 class DatabaseDoesNotExist(RuntimeError):
     """The database does not exist."""
 
+    def __init__(self, filename):
+        message = 'Schevo database not found in file %r.' % filename
+        super(DatabaseDoesNotExist, self).__init__(message)
+        self.filename = filename
+
 
 class DatabaseExecutingTransaction(RuntimeError):
     """The operation cannot be completed while the database is
