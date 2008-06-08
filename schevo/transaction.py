@@ -261,6 +261,10 @@ class Create(Transaction):
         """Override this in subclasses to customize a transaction."""
         pass
 
+    def _during_execute(self, db):
+        """Override this in subclasses to customize a transaction."""
+        pass
+
     def _execute(self, db):
         field_map = self._field_map
         # Before execute callback.
@@ -279,6 +283,8 @@ class Create(Transaction):
                 del field_dump_map[name]
                 if name in field_related_entity_map:
                     del field_related_entity_map[name]
+        # During execute callback.
+        self._during_execute(db)
         # Proceed with execution based on the create style requested.
         extent_name = self._extent_name
         style = self._style
@@ -560,6 +566,10 @@ class Update(Transaction):
         """Override this in subclasses to customize a transaction."""
         pass
 
+    def _during_execute(self, db, entity):
+        """Override this in subclasses to customize a transaction."""
+        pass
+
     def _execute(self, db):
         entity = self._entity
         field_map = self._field_map
@@ -567,6 +577,7 @@ class Update(Transaction):
             raise TransactionExpired(
                 'Original entity revision was %i, is now %i'
                 % (self._rev, entity._rev))
+        self._before_execute(db, entity)
         if self._require_changes:
             nothing_changed = True
             for field in field_map.itervalues():
@@ -576,7 +587,6 @@ class Update(Transaction):
             if nothing_changed:
                 msg = 'A transaction must have at least one field changed.'
                 raise TransactionFieldsNotChanged(msg)
-        self._before_execute(db, entity)
         # Validate individual fields.
         for field in field_map.itervalues():
             if field.fget is None:
@@ -593,6 +603,7 @@ class Update(Transaction):
                 del field_dump_map[name]
                 if name in field_related_entity_map:
                     del field_related_entity_map[name]
+        self._during_execute(db, entity)
         db._update_entity(
             extent_name, oid, field_dump_map, field_related_entity_map)
         entity = db._entity(extent_name, oid)
