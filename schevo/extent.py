@@ -150,8 +150,7 @@ class Extent(base.Extent):
         elif count == 0:
             return None
         else:
-            msg = '%r %r' % (self.name, criteria)
-            raise FindoneFoundMoreThanOne(msg)
+            raise FindoneFoundMoreThanOne(self.name, criteria)
 
     @property
     def next_oid(self):

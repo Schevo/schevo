@@ -170,7 +170,7 @@ import schevo.error
 #     schevo.extent:Extent.findone
 # - Tested by
 #     test_entity_extent
-# - Possible metadata
+# - Metadata
 #     extent_name
 #     criteria
 

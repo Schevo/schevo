@@ -667,7 +667,11 @@ class BaseEntityExtent(CreatesSchema):
         user1 = db.execute(extent.t.create(name='foo', age=20))
         user2 = db.execute(extent.t.create(name='bar', age=20))
         user3 = db.execute(extent.t.create(name='baz', age=30))
-        assert raises(error.FindoneFoundMoreThanOne, extent.findone, age=20)
+        try:
+            extent.findone(age=20)
+        except error.FindoneFoundMoreThanOne, e:
+            assert e.extent_name == 'User'
+            assert e.criteria == dict(age=20)
 
     def test_findone_unassigned(self):
         extent = db.User

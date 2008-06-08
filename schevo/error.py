@@ -173,6 +173,15 @@ class FieldDoesNotExist(KeyError):
 class FindoneFoundMoreThanOne(Exception):
     """Findone found more than one match."""
 
+    def __init__(self, extent_name, criteria):
+        message = (
+            'Found more than one match in extent %r for criteria %r.'
+            % (extent_name, criteria)
+            )
+        super(FindoneFoundMoreThanOne, self).__init__(message)
+        self.extent_name = extent_name
+        self.criteria = criteria.copy()
+
 
 class IndexDoesNotExist(Exception):
     """An index does not exist."""
