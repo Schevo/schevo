@@ -311,9 +311,7 @@ class Database(database2.Database):
             try:
                 field_id = field_name_id[field_name]
             except KeyError:
-                raise error.FieldDoesNotExist(
-                    'Field %r does not exist for %r' % (
-                    field_name, extent_name))
+                raise error.FieldDoesNotExist(extent_name, field_name)
             # Dereference if it's an entity field and not UNASSIGNED.
             if field_id in entity_field_ids and isinstance(value, Entity):
                 # Dereference entity.

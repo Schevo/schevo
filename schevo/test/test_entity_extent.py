@@ -521,8 +521,16 @@ class BaseEntityExtent(CreatesSchema):
         self.reopen()
         user = db.User[1]
         args = ('Avatar', 'userr')
-        assert raises(error.FieldDoesNotExist, user.sys.links, *args)
-        assert raises(error.FieldDoesNotExist, user.sys.links_filter, *args)
+        try:
+            user.sys.links(*args)
+        except error.FieldDoesNotExist, e:
+            assert e.object_or_name == 'Avatar'
+            assert e.field_name == 'userr'
+        try:
+            user.sys.links_filter(*args)
+        except error.FieldDoesNotExist, e:
+            assert e.object_or_name == 'Avatar'
+            assert e.field_name == 'userr'
         args = ('Avatarr', 'user')
         try:
             user.sys.links(*args)
@@ -629,8 +637,11 @@ class BaseEntityExtent(CreatesSchema):
 
     def test_find_bad_field_name(self):
         extent = db.User
-        assert raises(error.FieldDoesNotExist,
-                      extent.find, some_field='some_value')
+        try:
+            extent.find(some_field='some_value')
+        except error.FieldDoesNotExist, e:
+            assert e.object_or_name == 'User'
+            assert e.field_name == 'some_field'
 
     def test_findone(self):
         extent = db.User

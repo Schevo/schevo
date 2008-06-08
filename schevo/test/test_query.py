@@ -214,7 +214,11 @@ class BaseQuery(CreatesSchema):
         q.remove_match('integer')
         assert q.match_names == ['string', 'float', 'entity']
         assert len(q.queries) == 3
-        assert raises(error.FieldDoesNotExist, q.remove_match, 'integer')
+        try:
+            q.remove_match('integer')
+        except error.FieldDoesNotExist, e:
+            assert e.object_or_name == q
+            assert e.field_name == 'integer'
 
 
 class TestQuery1(BaseQuery):

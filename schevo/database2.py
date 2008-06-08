@@ -619,8 +619,7 @@ class Database(base.Database):
                     other_field_name]
             except KeyError:
                 raise error.FieldDoesNotExist(
-                    'Field %r does not exist in extent %r' % (
-                    other_field_name, other_extent_name))
+                    other_extent_name, other_field_name)
             key = (other_extent_id, other_field_id)
             # Default to a dict since it has the same API as a BTree
             # for our use but is faster and will stay empty anyway.
@@ -735,9 +734,7 @@ class Database(base.Database):
             try:
                 field_id = field_name_id[field_name]
             except KeyError:
-                raise error.FieldDoesNotExist(
-                    'Field %r does not exist for %r' % (
-                    field_name, extent_name))
+                raise error.FieldDoesNotExist(extent_name, field_name)
             # Create a writable field to convert the value and get its
             # _dump'd representation.
             FieldClass = field_spec[field_name]
@@ -1434,10 +1431,7 @@ class Database(base.Database):
                     if was_named is not None:
                         if was_named not in existing_field_names:
                             raise error.FieldDoesNotExist(
-                                'Field %s.%s was being renamed from '
-                                '%s, but that field does not exist '
-                                'in the previous schema.'
-                                % (extent_name, field_name, was_named))
+                                extent_name, was_named, field_name)
                         # Rename the field.
                         field_id = field_name_id[was_named]
                         del field_name_id[was_named]

@@ -152,14 +152,14 @@ import schevo.error
 #     schevo.database2:Database._entity_links
 #     schevo.database2:Database._find_entity_oids
 #     schevo.database2:Database._sync_extents
-#     schevo.entity:
-#     schevo.query:
+#     schevo.entity:EntitySys.links_filter
+#     schevo.query:Intersection.remove_match
 # - Tested by
 #     test_entity_extent
 #     test_evolve
 #     test_query
-# - Possible metadata
-#     extent_name
+# - Metadata
+#     object_or_name
 #     field_name
 #     new_field_name (optional)
 

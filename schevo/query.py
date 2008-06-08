@@ -464,8 +464,7 @@ class Intersection(Query):
             if isinstance(query, Match) and query.field_name == field_name:
                 self.queries.remove(query)
                 return
-        raise schevo.error.FieldDoesNotExist(
-            '%r not found in %r' % (field_name, self))
+        raise schevo.error.FieldDoesNotExist(self, field_name)
 
 
 class ByExample(Intersection):

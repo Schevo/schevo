@@ -153,6 +153,22 @@ class EntityDoesNotExist(KeyError):
 class FieldDoesNotExist(KeyError):
     """A field does not exist."""
 
+    def __init__(self, object_or_name, field_name, new_field_name=None):
+        message = (
+            'Field %r does not exist in %r'
+            % (field_name, object_or_name)
+            )
+        if new_field_name is not None:
+            message += (
+                ' while attempting to rename field to %r'
+                % new_field_name
+                )
+        message += '.'
+        super(FieldDoesNotExist, self).__init__(message)
+        self.object_or_name = object_or_name
+        self.field_name = field_name
+        self.new_field_name = new_field_name
+
 
 class FindoneFoundMoreThanOne(Exception):
     """Findone found more than one match."""

@@ -708,8 +708,7 @@ class EntitySys(NamespaceExtension):
         except KeyError:
             raise ExtentDoesNotExist(other_extent_name)
         if other_field_name not in extent.field_spec:
-            raise FieldDoesNotExist('%r does not exist in %r' % (
-                other_field_name, other_extent_name))
+            raise FieldDoesNotExist(other_extent_name, other_field_name)
         def _filter():
             return self.links(other_extent_name, other_field_name)
         return _filter

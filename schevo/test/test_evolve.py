@@ -681,7 +681,12 @@ class BaseEvolveInterVersion(CreatesDatabase):
         e2 = db.execute(db.Foo.t.create(bar='def'))
         e1_oid = e1.sys.oid
         e2_oid = e2.sys.oid
-        raises(error.FieldDoesNotExist, self.evolve, schema2, version=2)
+        try:
+            self.evolve(schema2, version=2)
+        except error.FieldDoesNotExist, e:
+            assert e.object_or_name == 'Foo'
+            assert e.field_name == 'bof'
+            assert e.new_field_name == 'baz'
 
     def test_rename_field_evolve_only(self):
         schema1 = fix("""
