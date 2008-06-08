@@ -301,8 +301,9 @@ class Database(base.Database):
             if index_spec not in index_map:
                 # None found.
                 raise error.IndexDoesNotExist(
-                    'Index %r not found in extent %r.'
-                    % (_field_names(extent_map, index_spec), extent_name))
+                    extent_name,
+                    _field_names(extent_map, index_spec),
+                    )
             # Use the first index found.
             index_spec = index_map[index_spec][0]
         oids = []
@@ -539,8 +540,9 @@ class Database(base.Database):
         indices = extent_map['indices']
         if index_spec not in indices:
             raise error.IndexDoesNotExist(
-                'Index %r not found in extent %r.'
-                % (_field_names(extent_map, index_spec), extent_name))
+                extent_name,
+                _field_names(extent_map, index_spec),
+                )
         # Find out if it has been relaxed.
         current_txn = executing[-1]
         relaxed = self._relaxed[extent_name]
@@ -818,8 +820,9 @@ class Database(base.Database):
         indices = extent_map['indices']
         if index_spec not in indices:
             raise error.IndexDoesNotExist(
-                'Index %r not found in extent %r.'
-                % (_field_names(extent_map, index_spec), extent_name))
+                extent_name,
+                _field_names(extent_map, index_spec),
+                )
         # Keep track of the relaxation.
         current_txn = executing[-1]
         relaxed = self._relaxed[extent_name]

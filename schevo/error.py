@@ -186,6 +186,15 @@ class FindoneFoundMoreThanOne(Exception):
 class IndexDoesNotExist(Exception):
     """An index does not exist."""
 
+    def __init__(self, extent_name, index_spec):
+        message = (
+            'Index %r not found in extent %r.'
+            % (index_spec, extent_name)
+            )
+        super(IndexDoesNotExist, self).__init__(message)
+        self.extent_name = extent_name
+        self.index_spec = index_spec
+
 
 class KeyCollision(KeyError):
     """An entity with the given keys already exists."""

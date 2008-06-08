@@ -169,6 +169,7 @@ import schevo.error
 # - Raised by
 #     schevo.extent:Extent.findone
 # - Tested by
+#     database-tour.txt
 #     test_entity_extent
 # - Metadata
 #     extent_name
@@ -182,7 +183,7 @@ import schevo.error
 #     schevo.database2:Database._enforce_index_field_ids
 #     schevo.database2:Database._relax_index
 # - Untested
-# - Possible metadata
+# - Metadata
 #     extent_name
 #     index_spec
 
