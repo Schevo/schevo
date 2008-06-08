@@ -706,7 +706,11 @@ class BaseTransaction(CreatesSchema):
         # The extent should be updated accordingly.
         assert len(db.User) == 0
         # The first result should no longer be valid.
-        assert raises(error.EntityDoesNotExist, getattr, result1, 'name')
+        try:
+            name = result1.name
+        except error.EntityDoesNotExist, e:
+            assert e.extent_name == 'User'
+            assert e.oid == result1.sys.oid
         # Creating a new entity should result in a new OID.
         tx = db.User.t.create(name='baz')
         result = db.execute(tx)
@@ -1084,7 +1088,11 @@ class BaseTransaction(CreatesSchema):
         db.execute(user.t.delete())
         # Check that the proper exception is raised due to the missing
         # entity.
-        assert raises(error.EntityDoesNotExist, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.EntityDoesNotExist, e:
+            assert e.extent_name == 'User'
+            assert e.field_name == 'user'
         # Perform the same check with regard to update transactions.
         user = db.execute(db.User.t.create(name='foo'))
         user2 = db.execute(db.User.t.create(name='baz'))
@@ -1092,7 +1100,11 @@ class BaseTransaction(CreatesSchema):
             name='xyz', user=user, realm=realm))
         tx = avatar.t.update(user=user2)
         db.execute(user2.t.delete())
-        assert raises(error.EntityDoesNotExist, db.execute, tx)
+        try:
+            db.execute(tx)
+        except error.EntityDoesNotExist, e:
+            assert e.extent_name == 'User'
+            assert e.field_name == 'user'
 
     def test_calc_fields_in_create_or_update(self):
         # Calculated fields within a custom transaction should be ignored.

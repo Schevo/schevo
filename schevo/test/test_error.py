@@ -135,12 +135,14 @@ import schevo.error
 #     schevo.database2:Database._entity_extent_map
 #     schevo.extent:Extent.__getitem__
 # - Tested by
+#     database-tour.txt
 #     test_database
 #     test_entity_extent
 #     test_transaction
-# - Possible metadata
+# - Metadata
 #     extent_name
-#     field_name
+#     field_name (exclusive of oid)
+#     oid        (exclusive of field_name)
 
 
 # ======================================================================

@@ -63,8 +63,7 @@ class Extent(base.Extent):
 
     def __getitem__(self, oid):
         if not self.db._extent_contains_oid(self.name, oid):
-            raise EntityDoesNotExist(
-                'OID %r does not exist in %r' % (oid, self.name))
+            raise EntityDoesNotExist(self.name, oid=oid)
         return self._EntityClass(oid)
 
     def __iter__(self):

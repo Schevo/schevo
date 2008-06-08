@@ -704,7 +704,11 @@ class BaseEntityExtent(CreatesSchema):
         assert male.f.count.readonly
 
     def test_nonexistent_entity(self):
-        assert raises(error.EntityDoesNotExist, lambda: db.User[99])
+        try:
+            user = db.User[99]
+        except error.EntityDoesNotExist, e:
+            assert e.extent_name == 'User'
+            assert e.oid == 99
 
     def test_fget_fields(self):
         male = db.execute(db.Gender.t.create(code='M', name='Male'))

@@ -133,6 +133,22 @@ class EntityExists(KeyError):
 class EntityDoesNotExist(KeyError):
     """An entity does not exist."""
 
+    def __init__(self, extent_name, field_name=None, oid=None):
+        if field_name is not None:
+            message = (
+                'Entity referenced in field %r does not exist in extent %r.'
+                % (field_name, extent_name)
+                )
+        elif oid is not None:
+            message = (
+                'OID %i does not exist in extent %r.'
+                % (oid, extent_name)
+                )
+        super(EntityDoesNotExist, self).__init__(message)
+        self.extent_name = extent_name
+        self.field_name = field_name
+        self.oid = oid
+
 
 class FieldDoesNotExist(KeyError):
     """A field does not exist."""

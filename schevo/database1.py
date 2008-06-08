@@ -121,9 +121,10 @@ class Database(database2.Database):
                 except KeyError:
                     field_id_name = extent_map['field_id_name']
                     field_name = field_id_name[referrer_field_id]
+                    other_extent_map = extent_maps_by_id[other_extent_id]
+                    other_extent_name = other_extent_map['name']
                     raise error.EntityDoesNotExist(
-                        'Entity referenced in %r does not exist.'
-                        % field_name)
+                        other_extent_name, field_name=field_name)
                 # Add a link to the other entity.
                 links = other_entity_map['links']
                 link_key = (referrer_extent_id, referrer_field_id)
@@ -494,9 +495,10 @@ class Database(database2.Database):
                 except KeyError:
                     field_id_name = extent_map['field_id_name']
                     field_name = field_id_name[referrer_field_id]
+                    other_extent_map = extent_maps_by_id[other_extent_id]
+                    other_extent_name = other_extent_map['name']
                     raise error.EntityDoesNotExist(
-                        'Entity referenced in %r does not exist.'
-                        % field_name)
+                        other_extent_name, field_name=field_name)
                 # Add a link to the other entity.
                 links = other_entity_map['links']
                 link_key = (referrer_extent_id, referrer_field_id)

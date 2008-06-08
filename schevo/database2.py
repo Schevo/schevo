@@ -396,9 +396,10 @@ class Database(base.Database):
                 except KeyError:
                     field_id_name = extent_map['field_id_name']
                     field_name = field_id_name[referrer_field_id]
+                    other_extent_map = extent_maps_by_id[other_extent_id]
+                    other_extent_name = other_extent_map['name']
                     raise error.EntityDoesNotExist(
-                        'Entity referenced in %r does not exist.'
-                        % field_name)
+                        other_extent_name, field_name=field_name)
                 # Add a link to the other entity.
                 links = other_entity_map['links']
                 link_key = (referrer_extent_id, referrer_field_id)
@@ -970,9 +971,10 @@ class Database(base.Database):
                     except KeyError:
                         field_id_name = extent_map['field_id_name']
                         field_name = field_id_name[referrer_field_id]
+                        other_extent_map = extent_maps_by_id[other_extent_id]
+                        other_extent_name = other_extent_map['name']
                         raise error.EntityDoesNotExist(
-                            'Entity referenced in %r does not exist.'
-                            % field_name)
+                            other_extent_name, field_name=field_name)
                     # Add a link to the other entity.
                     links = other_entity_map['links']
                     link_key = (referrer_extent_id, referrer_field_id)
@@ -1095,8 +1097,7 @@ class Database(base.Database):
         try:
             entity_map = extent_map['entities'][oid]
         except KeyError:
-            raise error.EntityDoesNotExist(
-                'OID %r does not exist in %r' % (oid, extent_name))
+            raise error.EntityDoesNotExist(extent_name, oid=oid)
         return entity_map
 
     def _entity_extent_map(self, extent_name, oid):
@@ -1106,8 +1107,7 @@ class Database(base.Database):
         try:
             entity_map = extent_map['entities'][oid]
         except KeyError:
-            raise error.EntityDoesNotExist(
-                'OID %r does not exist in %r' % (oid, extent_name))
+            raise error.EntityDoesNotExist(extent_name, oid=oid)
         return entity_map, extent_map
 
     def _evolve(self, schema_source, version):

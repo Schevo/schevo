@@ -182,7 +182,7 @@ Call the database's `extent_names` method to get an
 alphabetically-ordered list of extent_ objects:
 
   .. sourcecode:: pycon
-  
+
      >>> db.extents()    #doctest: +NORMALIZE_WHITESPACE
      [<Extent 'Acrobat' in <Database u'Schevo Database' :: V 1>>,
       <Extent 'Balloon' in <Database u'Schevo Database' :: V 1>>,
@@ -195,7 +195,7 @@ Pass an extent name to the database's `extent` method or accessing it
 as an attribute of the database to get an individual extent by name:
 
   .. sourcecode:: pycon
-  
+
      >>> db.extent('Balloon')
      <Extent 'Balloon' in <Database u'Schevo Database' :: V 1>>
 
@@ -603,7 +603,7 @@ You may also use the `__getattr__` protocol:
 Get transaction method label
 ----------------------------
 
-Each transaction method has a label.  
+Each transaction method has a label.
 
 If the schema does not manually assign a label to a transaction
 method, Schevo automatically computes one.
@@ -701,7 +701,7 @@ Access the `index_spec` attribute of an extent to get a tuple of
   .. sourcecode:: pycon
 
      >>> sorted(db.Food.index_spec)    #doctest: +NORMALIZE_WHITESPACE
-     [('high_in_sugar', 'common_name'), 
+     [('high_in_sugar', 'common_name'),
       ('high_in_sugar', 'fancy_name')]
 
 Access the `key_spec` attribute of an extent to get a tuple of `key
@@ -856,7 +856,7 @@ If no entity with that OID exists in the extent, the operation raises
      >>> person = db.Person[12345]    #doctest: +ELLIPSIS
      Traceback (most recent call last):
      ...
-     EntityDoesNotExist: "OID 12345 does not exist in 'Person'"
+     EntityDoesNotExist: "OID 12345 does not exist in extent 'Person'."
 
 Retrieve single entity matching field values
 --------------------------------------------

@@ -112,8 +112,11 @@ class BaseDatabase(CreatesDatabase):
         db._delete_entity('Some_Extent', oid)
         db._commit()
         # Entity no longer exists.
-        assert raises(error.EntityDoesNotExist,
-                      db._entity_fields, 'Some_Extent', oid)
+        try:
+            db._entity_fields('Some_Extent', oid)
+        except error.EntityDoesNotExist, e:
+            assert e.extent_name == 'Some_Extent'
+            assert e.oid == oid
         # Extent's length decrements
         assert db._extent_len('Some_Extent') == 0
         # Creating a new entity never uses a deleted oid.
