@@ -1044,7 +1044,7 @@ class _EntityBase(Field):
 
     data_type = object
     allow_create = True
-    allow_update = False
+    allow_update = True
     allow = set()
     may_store_entities = True
     on_delete = {}
