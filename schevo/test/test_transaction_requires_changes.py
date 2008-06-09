@@ -17,7 +17,7 @@ class BaseTransactionRequireChanges(CreatesSchema):
 
         class _Update(T.Update):
 
-            _require_changes = False
+            _requires_changes = False
 
     class Bravo(E.Entity):
 

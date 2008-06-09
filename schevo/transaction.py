@@ -81,7 +81,11 @@ class Transaction(base.Transaction):
         if name == 'x':
             self.x = attr = TransactionExtenders(self)
         else:
-            attr = self._field_map[name].get()
+            try:
+                field = self._field_map[name]
+            except KeyError, e:
+                raise AttributeError(*e.args)
+            attr = field.get()
         return attr
 
     def __setattr__(self, name, value):
@@ -107,6 +111,15 @@ class Transaction(base.Transaction):
         """Override this in subclasses to provide actual transaction
         execution."""
         raise NotImplementedError
+
+    @property
+    def _field_was_changed(self):
+        """Return True if at least one field was changed."""
+        field_map = self._field_map
+        for field in field_map.itervalues():
+            if field.was_changed():
+                return True
+        return False
 
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
@@ -176,6 +189,19 @@ class TransactionSys(NamespaceExtension):
         for filt in filters:
             new_fields = [field for field in new_fields if filt(field)]
         return FieldMap((field.name, field) for field in new_fields)
+
+    @property
+    def field_was_changed(self):
+        """True if at least one field was changed."""
+        return self._transaction._field_was_changed
+
+    def _get_requires_changes(self):
+        return getattr(self._transaction, '_requires_changes', False)
+
+    def _set_requires_changes(self, value):
+        self._transaction._requires_changes = value
+
+    requires_changes = property(_get_requires_changes, _set_requires_changes)
 
     def summarize(self):
         return summarize(self._transaction)
@@ -525,7 +551,7 @@ class Update(Transaction):
 
     _label = u'Update'
 
-    _require_changes = True
+    _requires_changes = True
 
     _restrict_subclasses = True
 
@@ -565,13 +591,8 @@ class Update(Transaction):
         if entity._rev != self._rev:
             raise TransactionExpired(self, self._rev, entity._rev)
         self._before_execute(db, entity)
-        if self._require_changes:
-            nothing_changed = True
-            for field in field_map.itervalues():
-                if field.was_changed():
-                    nothing_changed = False
-                    break
-            if nothing_changed:
+        if self._requires_changes:
+            if not self._field_was_changed:
                 raise TransactionFieldsNotChanged(self)
         # Validate individual fields.
         for field in field_map.itervalues():
