@@ -328,6 +328,11 @@ class TransactionExecuteRedefinitionRestricted(SchemaError):
 class UnsupportedFieldType(SchemaError):
     """The field type is not supported by the database engine in use."""
 
+    def __init__(self, reason):
+        message = 'Unsupported field type: %s' % reason
+        super(UnsupportedFieldType, self).__init__(message)
+        self.reason = reason
+
 
 # Copyright (C) 2001-2007 Orbtech, L.L.C.
 #

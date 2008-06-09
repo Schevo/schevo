@@ -91,7 +91,7 @@ class Database(database2.Database):
                             'Field values with multiple entities are not '
                             'supported by format 1 Schevo databases.'
                             )
-                        raise error.UnsupportedFieldType(msg)
+                        raise error.UnsupportedFieldType(reason)
                 fields_by_id[field_id] = value
             # Make sure fields that weren't specified are set to
             # UNASSIGNED.
@@ -430,7 +430,7 @@ class Database(database2.Database):
                             'Field values with multiple entities are not '
                             'supported by format 1 Schevo databases.'
                             )
-                        raise UnsupportedFieldType(msg)
+                        raise UnsupportedFieldType(reason)
                 fields[name] = value
             # Get fields, and set UNASSIGNED for any fields that are
             # new since the last time the entity was stored.
@@ -560,12 +560,12 @@ class Database(database2.Database):
                 if (f_class.may_store_entities
                     and not issubclass(f_class, EntityField)
                     ):
-                    msg = (
+                    reason = (
                         'Field %r in Entity class %r may store entities '
                         'but is a %r field and not an Entity field; this '
                         'is unsupported in format 1 databases.'
                         ) % (f_name, e_name, f_class.__name__)
-                    raise error.UnsupportedFieldType(msg)
+                    raise error.UnsupportedFieldType(reason)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

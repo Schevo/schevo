@@ -325,10 +325,12 @@ import schevo.error
 #     test_field_entitylist
 #     test_field_entityset
 #     test_field_entitysetset
-# - Possible metadata
+# - Preferred metadata
 #     entity_class_name
 #     field_class_name
 #     field_name
+# - Metadata
+#     reason
 
 
 # Copyright (C) 2001-2007 Orbtech, L.L.C.
