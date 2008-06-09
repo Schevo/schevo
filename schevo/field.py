@@ -158,6 +158,9 @@ class Field(base.Field):
     values.  They are typically used to show values in a GUI using
     less contrast than normal.
 
+    units: A string label of the unit measurement used for this field,
+    or None if not applicable.
+
     valid_values: A list of valid values, or None if not applicable.
 
     was: The name of the field in the previous schema, or None if the
@@ -189,6 +192,7 @@ class Field(base.Field):
     readonly = False
     required = True
     subdued_values = None
+    units = None
     valid_values = None
     was = None
 
