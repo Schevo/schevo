@@ -285,9 +285,12 @@ import schevo.error
 # - Raised by
 #     schevo.field:_EntityBase._init_final
 # - Untested.
-# - Possible metadata
+# - Preferred metadata
+#     reason
 #     class_name
 #     field_name
+# - Metadata
+#     reason
 
 
 # ======================================================================

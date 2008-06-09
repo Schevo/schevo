@@ -282,6 +282,20 @@ class SchemaError(SyntaxError):
 class AmbiguousFieldDefinition(SchemaError):
     """A field defition's attributes were ambiguous."""
 
+    def __init__(self, reason):
+        message = 'Ambiguous field definition: %r' % reason
+        super(AmbiguousFieldDefinition, self).__init__(message)
+        self.reason = reason
+##     def __init__(self, reason, class_name, field_name):
+##         message = (
+##             'Ambiguous field definition for %r in class %r: %r'
+##             % (field_name, class_name, reason)
+##             )
+##         super(AmbiguousFieldDefinition, self).__init__(message)
+##         self.reason = reason
+##         self.class_name = class_name
+##         self.field_name = field_name
+
 
 class KeyIndexOverlap(SchemaError):
     """Key specs and index specs must not overlap."""
