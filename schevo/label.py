@@ -8,6 +8,8 @@ import sys
 
 from schevo.lib import optimize
 
+from schevo.base import Field
+
 
 # Modify this dictionary to map default labels to preferred labels.
 PREFERRED_LABELS = {
@@ -98,7 +100,12 @@ def with_label(label, plural=None):
 
 def relabel(obj, new_label):
     """Relabel an object with a new label."""
-    obj._label = new_label
+    if isinstance(obj, Field):
+        obj.label = new_label
+    elif isinstance(obj, type) and issubclass(obj, Field):
+        obj.label = new_label
+    else:
+        obj._label = new_label
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
