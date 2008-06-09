@@ -174,7 +174,11 @@ class BaseSchema(CreatesSchema):
                 _key(bar)
                 _index(bar)
             '''
-        assert raises(KeyIndexOverlap, DocTest, body)
+        try:
+            DocTest(body)
+        except KeyIndexOverlap, e:
+            assert e.class_name == 'Foo'
+            assert sorted(e.overlapping_specs) == [('bar',)]
         # Also make sure it works when subclassing.
         body = '''
             class Foo(E.Entity):
@@ -184,7 +188,11 @@ class BaseSchema(CreatesSchema):
             class Foo(E.Foo):
                 _index('bar')
             '''
-        assert raises(KeyIndexOverlap, DocTest, body)
+        try:
+            DocTest(body)
+        except KeyIndexOverlap, e:
+            assert e.class_name == 'Foo'
+            assert sorted(e.overlapping_specs) == [('bar',)]
         body = '''
             class Foo(E.Entity):
                 bar = f.integer()
@@ -193,7 +201,11 @@ class BaseSchema(CreatesSchema):
             class Foo(E.Foo):
                 _key('bar')
             '''
-        assert raises(KeyIndexOverlap, DocTest, body)
+        try:
+            DocTest(body)
+        except KeyIndexOverlap, e:
+            assert e.class_name == 'Foo'
+            assert sorted(e.overlapping_specs) == [('bar',)]
 
 
 class TestSchema1(BaseSchema):

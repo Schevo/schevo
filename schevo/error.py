@@ -300,6 +300,15 @@ class AmbiguousFieldDefinition(SchemaError):
 class KeyIndexOverlap(SchemaError):
     """Key specs and index specs must not overlap."""
 
+    def __init__(self, class_name, overlapping_specs):
+        message = (
+            'Cannot use same spec for both key and index in entity class %r.'
+            % class_name
+            )
+        super(KeyIndexOverlap, self).__init__(message)
+        self.class_name = class_name
+        self.overlapping_specs = overlapping_specs
+
 
 class TransactionExecuteRedefinitionRestricted(SchemaError):
     """Overriding `__init__` or `_execute` is not allowed in this class."""

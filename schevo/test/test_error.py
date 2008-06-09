@@ -299,9 +299,9 @@ import schevo.error
 #     schevo.entity:EntityMeta.validate_key_and_index_specs
 # - Tested by
 #     test_schema
-# - Possible metadata
+# - Metadata
 #     class_name
-#     spec
+#     overlapping_specs
 
 
 # ======================================================================

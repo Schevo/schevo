@@ -271,8 +271,7 @@ class EntityMeta(type):
         index_set = set(cls._index_spec)
         duplicates = key_set.intersection(index_set)
         if len(duplicates):
-            raise KeyIndexOverlap(
-                'Cannot use same spec for both key and index.')
+            raise KeyIndexOverlap(cls.__name__, duplicates)
 
 
 class Entity(base.Entity, LabelMixin):
