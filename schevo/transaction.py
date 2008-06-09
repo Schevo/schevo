@@ -39,12 +39,7 @@ class TransactionMeta(schema_metaclass('T')):
             # Base class is restricting its subclasses.
             if '__init__' in class_dict or '_execute' in class_dict:
                 raise TransactionExecuteRedefinitionRestricted(
-                    'Transaction subclass %r, with bases %r, '
-                    'tried to override __init__ or _execute, '
-                    'but that is not allowed with that type '
-                    'of base class.'
-                    % (class_name, bases)
-                    )
+                    class_name, bases)
         cls._x_names = cls.get_method_names('x_')
 
     def get_method_names(cls, prefix):

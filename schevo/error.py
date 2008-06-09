@@ -313,6 +313,17 @@ class KeyIndexOverlap(SchemaError):
 class TransactionExecuteRedefinitionRestricted(SchemaError):
     """Overriding `__init__` or `_execute` is not allowed in this class."""
 
+    def __init__(self, class_name, base_classes):
+        message = (
+            'Transaction subclass %r, with bases %r, '
+            'tried to override __init__ or _execute, '
+            'but that is not allowed with those bases.'
+            % (class_name, base_classes)
+            )
+        super(TransactionExecuteRedefinitionRestricted, self).__init__(message)
+        self.class_name = class_name
+        self.base_classes = base_classes
+
 
 class UnsupportedFieldType(SchemaError):
     """The field type is not supported by the database engine in use."""

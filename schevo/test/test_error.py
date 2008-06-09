@@ -310,7 +310,7 @@ import schevo.error
 #     schevo.transaction:TransactionMeta.__init__
 # - Tested by
 #     transaction-hook-methods.txt
-# - Possible metadata
+# - Metadata
 #     class_name
 #     base_classes
 
