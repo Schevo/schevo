@@ -611,10 +611,10 @@ method, Schevo automatically computes one.
   .. sourcecode:: pycon
 
      >>> label(db.Plant.t.create)
-     u'Create'
+     u'New'
 
      >>> label(db.Plant[1].t.update)
-     u'Update'
+     u'Edit'
 
      >>> label(db.Plant[1].t.delete)
      u'Delete'

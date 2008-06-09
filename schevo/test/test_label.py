@@ -388,10 +388,10 @@ class BaseDecoration(CreatesSchema):
     def test_transaction_decoration(self):
         # Canonical transactions have default labels.
         tx = db.Realm.t.create(name='foo')
-        assert label.label(tx) == 'Create'
+        assert label.label(tx) == 'New'
         realm = db.execute(tx)
         assert label.label(realm.t.delete()) == 'Delete'
-        assert label.label(realm.t.update()) == 'Update'
+        assert label.label(realm.t.update()) == 'Edit'
         # Custom transactions have default labels generated from their
         # class name.
         tx = db.User.t.create_foo_and_bar()
@@ -407,7 +407,7 @@ class BaseDecoration(CreatesSchema):
         # a transaction method for the canonical Create transaction.
         t = db.Realm.t
         assert sorted(list(t)) == ['create']
-        assert label.label(t.create) == 'Create'
+        assert label.label(t.create) == 'New'
         # Entity instances for entity classes that are not customized
         # only have transaction methods for canonical Delete and
         # Update transactions.
@@ -416,7 +416,7 @@ class BaseDecoration(CreatesSchema):
         L = sorted(t)
         assert L == ['clone', 'delete', 'update']
         assert label.label(t.delete) == 'Delete'
-        assert label.label(t.update) == 'Update'
+        assert label.label(t.update) == 'Edit'
         # Transaction methods that aren't labeled are automatically
         # labeled.  Test for labels of custom extent transaction
         # methods.

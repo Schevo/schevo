@@ -9,6 +9,13 @@ import sys
 from schevo.lib import optimize
 
 
+# Modify this dictionary to map default labels to preferred labels.
+PREFERRED_LABELS = {
+    u'Create': u'New',
+    u'Update': u'Edit',
+    }
+
+
 class LabelMixin(object):
     """Mix this in with classes that have labels themselves via a
     `_label` attribute, and whose instances have labels via a
@@ -19,6 +26,14 @@ class LabelMixin(object):
     __slots__ = []
 
 
+def _preferred_label(obj):
+    label = unicode(obj)
+    if label in PREFERRED_LABELS:
+        return PREFERRED_LABELS[label]
+    else:
+        return label
+
+
 def label(obj):
     """Return the unicode label for `obj`.
 
@@ -27,19 +42,19 @@ def label(obj):
     In the case of verbs, return the present tense form.
     """
     if isinstance(obj, LabelMixin):
-        return unicode(obj)
+        return _preferred_label(obj)
     elif hasattr(obj, '_label'):
-        return unicode(obj._label)
+        return _preferred_label(obj._label)
     elif hasattr(obj, 'label'):
-        return unicode(obj.label)
+        return _preferred_label(obj.label)
     else:
-        return unicode(obj)
+        return _preferred_label(obj)
 
 
 def plural(obj):
     """Return the plural noun label for `obj`."""
     if hasattr(obj, '_plural'):
-        return unicode(obj._plural)
+        return _preferred_label(obj._plural)
 
 
 def label_from_name(name):
