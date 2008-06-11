@@ -19,7 +19,7 @@ try:
     from schevo.store._persistent import PersistentBase, ConnectionBase
     [ConnectionBase] # to silence the unused import checker
 except ImportError:
-    print >>stderr, 'Using Python base classes for persistence.'
+    print >>stderr, 'schevo.store using Python base classes for persistence.'
 
     class ConnectionBase(object):
         """
