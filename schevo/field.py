@@ -402,7 +402,7 @@ class Field(base.Field):
         if self.readonly:
             msg = '%s field is readonly and cannot be changed on %s %r' % (
                 self._name, self._instance, self._instance)
-            self._raise(AttributeError, msg)
+            self._raise(schevo.error.FieldReadonly, msg, self, self._instance)
         # Apply any value conversions.
         if value is not UNASSIGNED:
             value = self.convert(value)
@@ -435,7 +435,8 @@ class Field(base.Field):
                 # A value must be provided.
                 msg = '%s value is required by %s' % (
                     self._name, self._instance)
-                self._raise(AttributeError, msg)
+                self._raise(
+                    schevo.error.FieldRequired, msg, self, self._instance)
         elif valid_values is not None and value not in valid_values:
             # Valid values.
             msg = '%s %s must be one of the valid values %r, not %r %r' % (
@@ -453,11 +454,11 @@ class Field(base.Field):
     def was_changed(self):
         return self._value != self._initial
 
-    def _raise(self, exctype, msg):
+    def _raise(self, exctype, msg, *args):
         custom = self.error_message
         if custom is not None:
             msg = custom
-        raise exctype(msg)
+        raise exctype(msg, *args)
 
     def _validate_min_max_value(self, value):
         """Validate `value` against minimum and maximum value of this
@@ -1219,8 +1220,11 @@ class _EntityBase(Field):
             if not self.required:
                 return
             else:
-                msg =  '%s value is required' % self._name
-                self._raise(AttributeError, msg)
+                # A value must be provided.
+                msg = '%s value is required by %s' % (
+                    self._name, self._instance)
+                self._raise(
+                    schevo.error.FieldRequired, msg, self, self._instance)
         allow = self.allow
         extent_name = value.sys.extent.name
         if allow and extent_name not in allow:

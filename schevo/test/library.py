@@ -136,7 +136,7 @@ from schevo.test import (
     test_transaction_before_after,
     test_transaction_cdu_subclass,
     test_transaction_field_reorder,
-    test_transaction_require_changes,
+    test_transaction_requires_changes,
     test_view,
     )
 
@@ -174,7 +174,7 @@ _add_modules(
     test_transaction_before_after,
     test_transaction_cdu_subclass,
     test_transaction_field_reorder,
-    test_transaction_require_changes,
+    test_transaction_requires_changes,
     test_view,
     )
 

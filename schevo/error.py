@@ -170,6 +170,24 @@ class FieldDoesNotExist(KeyError):
         self.new_field_name = new_field_name
 
 
+class FieldReadonly(AttributeError):
+    """Cannot set values of readonly fields."""
+
+    def __init__(self, message, field, instance):
+        super(FieldReadonly, self).__init__(message)
+        self.field = field
+        self.instance = instance
+
+
+class FieldRequired(AttributeError):
+    """Must set values of required fields."""
+
+    def __init__(self, message, field, instance):
+        super(FieldRequired, self).__init__(message)
+        self.field = field
+        self.instance = instance
+
+
 class FindoneFoundMoreThanOne(Exception):
     """Findone found more than one match."""
 
