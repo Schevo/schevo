@@ -99,7 +99,7 @@ setup(
     ],
 
     ext_modules = [
-    Extension('schevo.store._persistent', ['schevo/store/_persistent.c']),
+    Extension('schevo.store._s_persistent', ['schevo/store/_s_persistent.c']),
     ],
 
     entry_points = """

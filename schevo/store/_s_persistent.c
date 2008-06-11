@@ -1,5 +1,5 @@
-/* 
-$URL: svn+ssh://svn/repos/trunk/durus/_persistent.c $
+/*
+$URL: svn+ssh://svn/repos/trunk/durus/_s_persistent.c $
 $Id$
  */
 
@@ -25,7 +25,7 @@ typedef struct {
 
 
 static PyObject *
-pb_new(PyTypeObject *type, PyObject *args, PyObject *kwds) 
+pb_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	PersistentBaseObject *x;
 	x = (PersistentBaseObject *)PyType_GenericNew(type, args, kwds);
@@ -43,7 +43,7 @@ pb_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static void
-pb_dealloc(PersistentBaseObject *self) 
+pb_dealloc(PersistentBaseObject *self)
 {
 	PyObject_GC_UnTrack(self);
 	Py_TRASHCAN_SAFE_BEGIN(self);
@@ -51,7 +51,7 @@ pb_dealloc(PersistentBaseObject *self)
  	Py_XDECREF(self->p_oid);
 	Py_XDECREF(self->p_serial);
  	PyObject_GC_Del(self);
-	Py_TRASHCAN_SAFE_END(self); 
+	Py_TRASHCAN_SAFE_END(self);
 }
 
 static int
@@ -59,7 +59,7 @@ pb_traverse(PersistentBaseObject *self, visitproc visit, void *arg)
 {
 	Py_VISIT(self->p_connection);
 	Py_VISIT(self->p_oid);
-	Py_VISIT(self->p_serial); 
+	Py_VISIT(self->p_serial);
 	return 0;
 }
 
@@ -84,10 +84,10 @@ load_triggering_name(char *s)
 		return 1;
 	if (*s == 'p') {
 		s++;
-		if (*s == '_')	
+		if (*s == '_')
 			return 0; /* _p_ */
 		else
-			return 1; 
+			return 1;
 	}
 	else if (*s == '_') {
 		s++;
@@ -105,7 +105,7 @@ load_triggering_name(char *s)
 	return 1;
 }
 
-static int 
+static int
 call_method(PyObject *self, char *name, PyObject *optional_arg)
 {
 	PyObject *result;
@@ -139,7 +139,7 @@ pb_note_access(PersistentBaseObject *self)
 	    self->p_serial != connection->transaction_serial) {
 		return call_method(
 			(PyObject *)connection, "note_access", (PyObject *)self);
-	} else 
+	} else
 		return 1;
 }
 
@@ -167,7 +167,7 @@ pb_setattro(PersistentBaseObject *self, PyObject *name, PyObject *value)
 {
 	char *sname;
 	if (!PyString_Check(name)) {
-		PyErr_SetString(PyExc_TypeError, 
+		PyErr_SetString(PyExc_TypeError,
 			"attribute name must be a string");
 		return -1;
 	}
@@ -185,7 +185,7 @@ static PyMemberDef pb_members[] = {
 	{"_p_serial", T_OBJECT_EX, offsetof(PersistentBaseObject, p_serial)},
 	{"_p_status", T_INT, offsetof(PersistentBaseObject, p_status)},
 	{"_p_connection", T_OBJECT_EX, offsetof(PersistentBaseObject, p_connection)},
-	{"_p_oid", T_OBJECT_EX, offsetof(PersistentBaseObject, p_oid)},	   
+	{"_p_oid", T_OBJECT_EX, offsetof(PersistentBaseObject, p_oid)},
 	{NULL}
 };
 
@@ -241,7 +241,7 @@ static PyTypeObject PersistentBase_Type = {
 };
 
 static PyObject *
-cb_new(PyTypeObject *type, PyObject *args, PyObject *kwds) 
+cb_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	ConnectionBaseObject *x;
 	x = (ConnectionBaseObject *)PyType_GenericNew(type, args, kwds);
@@ -263,18 +263,18 @@ cb_clear(ConnectionBaseObject *self)
 static int
 cb_traverse(ConnectionBaseObject *self, visitproc visit, void *arg)
 {
-	Py_VISIT(self->transaction_serial);	 
-	return 0;		
+	Py_VISIT(self->transaction_serial);
+	return 0;
 }
 
 static void
-cb_dealloc(ConnectionBaseObject *self) 
+cb_dealloc(ConnectionBaseObject *self)
 {
 	PyObject_GC_UnTrack(self);
 	Py_TRASHCAN_SAFE_BEGIN(self);
 	Py_XDECREF(self->transaction_serial);
 	PyObject_GC_Del(self);
-	Py_TRASHCAN_SAFE_END(self); 
+	Py_TRASHCAN_SAFE_END(self);
 }
 
 static PyMemberDef cb_members[] = {
@@ -286,7 +286,7 @@ static char cb_doc[] = "\
 This is the C implementation of ConnectionBase.\n\
 	Instance attributes:\n\
 		transaction_serial: int\n\
-";	
+";
 
 static PyTypeObject ConnectionBase_Type = {
 	PyObject_HEAD_INIT(0)
@@ -336,10 +336,10 @@ static PyMethodDef persistent_module_methods[] = {
 };
 
 void
-init_persistent(void)
+init_s_persistent(void)
 {
 	PyObject *m, *d;
-	m = Py_InitModule4("_persistent", persistent_module_methods, "",
+	m = Py_InitModule4("_s_persistent", persistent_module_methods, "",
 		NULL, PYTHON_API_VERSION);
 	if (m == NULL)
 		return;
@@ -361,5 +361,5 @@ init_persistent(void)
 	Py_INCREF(&ConnectionBase_Type);
 	if (PyDict_SetItemString(d, "ConnectionBase",
 		(PyObject *)&ConnectionBase_Type) < 0)
-		return;		
+		return;
 }

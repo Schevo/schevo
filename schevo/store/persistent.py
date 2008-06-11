@@ -9,21 +9,21 @@ from schevo.lib import optimize
 from schevo.store.utils import format_oid
 from sys import stderr
 
-# these must match the constants in _persistent.c
+# these must match the constants in _s_persistent.c
 UNSAVED = 1
 SAVED = 0
 GHOST = -1
 
 
 try:
-    from schevo.store._persistent import PersistentBase, ConnectionBase
+    from schevo.store._s_persistent import PersistentBase, ConnectionBase
     [ConnectionBase] # to silence the unused import checker
 except ImportError:
     print >>stderr, 'schevo.store using Python base classes for persistence.'
 
     class ConnectionBase(object):
         """
-        The faster implementation of this class is in _persistent.c.
+        The faster implementation of this class is in _s_persistent.c.
         """
 
         __slots__ = ['transaction_serial']
@@ -42,7 +42,7 @@ except ImportError:
 
     class PersistentBase(object):
         """
-        The faster implementation of this class is in _persistent.c.
+        The faster implementation of this class is in _s_persistent.c.
         The __slots__ and methods of this class are the ones that typical
         applications use very frequently, so we want them to be fast.
 
