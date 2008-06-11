@@ -6,14 +6,26 @@ For copyright, license, and warranty, see bottom of file.
 import sys
 from schevo.lib import optimize
 
-import pkg_resources
+backends = {}
 
-
-backends = dict(
-    # backend-name=backend-class,
-    (p.name, p.load())
-    for p in pkg_resources.iter_entry_points('schevo.backend')
-    )
+try:
+    import pkg_resources
+except IOError, e:
+    # If a custom distutils is included in a py2exe-generated library,
+    # an IOError will occur when we try to find backends.  Silently
+    # pass on this IOError.  py2exe main scripts should manually import
+    # the plugin class and register it, like so::
+    #
+    #     from schevodurus.backend import DurusBackend
+    #     from schevo.backend import backends
+    #     backends['durus'] = DurusBackend
+    pass
+else:
+    backends = dict(
+        # backend-name=backend-class,
+        (p.name, p.load())
+        for p in pkg_resources.iter_entry_points('schevo.backend')
+        )
 
 
 def test_backends_dict():
