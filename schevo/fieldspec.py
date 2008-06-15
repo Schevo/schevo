@@ -165,7 +165,8 @@ class FieldDefinition(object):
                 'Please replace with %r in your schemata.'
                 % (self.__class__.__name__, self._preferred_name)
                 )
-            warn(msg, DeprecationWarning, 2)
+            if not hasattr(sys, 'frozen'):
+                warn(msg, DeprecationWarning, 2)
         # Warn about class deprecation if this class is deprecated.
         if _Field._deprecated_class:
             msg = (
@@ -173,7 +174,8 @@ class FieldDefinition(object):
                 'See %s for more information.'
                 % (self.__class__.__name__, _Field._deprecated_class_see_also)
                 )
-            warn(msg, DeprecationWarning, 2)
+            if not hasattr(sys, 'frozen'):
+                warn(msg, DeprecationWarning, 2)
 
     def __call__(self, fn):
         """For use as a decorator."""
