@@ -361,6 +361,14 @@ class Field(base.Field):
 
     get_immutable = get
 
+    def _on_changed(self):
+        if hasattr(self._instance, 'x'):
+            namespace = getattr(self._instance, 'x')
+            handler_name = 'on_%s__changed' % self._name
+            if hasattr(namespace, handler_name):
+                handler = getattr(namespace, handler_name)
+                handler()
+
     def _restore(self, db):
         """Restore field's true value by converting it from the value stored
         in the database."""
@@ -413,6 +421,8 @@ class Field(base.Field):
         self._value = value
         # Mark this field as having been assigned.
         self.assigned = True
+        # Call the handler.
+        self._on_changed()
 
     def _unassign(self, member):
         """Replace `member` in the field's value with UNASSIGNED.
