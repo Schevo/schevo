@@ -195,13 +195,9 @@ class TransactionSys(NamespaceExtension):
         """True if at least one field was changed."""
         return self._transaction._field_was_changed
 
-    def _get_requires_changes(self):
+    @property
+    def requires_changes(self):
         return getattr(self._transaction, '_requires_changes', False)
-
-    def _set_requires_changes(self, value):
-        self._transaction._requires_changes = value
-
-    requires_changes = property(_get_requires_changes, _set_requires_changes)
 
     def summarize(self):
         return summarize(self._transaction)
