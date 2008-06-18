@@ -19,8 +19,7 @@ from schevo.error import (
     TransactionFieldsNotChanged,
     TransactionNotExecuted,
     )
-from schevo import field
-from schevo.field import not_fget
+from schevo.field import Entity, _EntityBase, not_fget
 from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import label
 from schevo.meta import schema_metaclass
@@ -713,14 +712,14 @@ class _Populate(Transaction):
                 # field without deleting the field_spec entry.
                 delete = True
             else:
-                f = getattr(tx.f, name)
-            if delete or f.readonly or f.hidden:
+                field = getattr(tx.f, name)
+            if delete or field.readonly or field.hidden:
                 del field_spec[name]
         field_names = field_spec.keys()
         field_classes = field_spec.values()
         has_entity_field = False
         for FieldClass in field_classes:
-            if issubclass(FieldClass, field.Entity):
+            if issubclass(FieldClass, Entity):
                 has_entity_field = True
                 allow = FieldClass.allow
                 for extent_name in allow:
@@ -737,7 +736,14 @@ class _Populate(Transaction):
                     value = resolve(db, field_name, value, FieldClass,
                                     field_names)
                     value_map[field_name] = value
-            new = create(**value_map)
+##             new = create(**value_map)
+            new = create()
+            for field_name, value in value_map.iteritems():
+                field = new.f[field_name]
+                if (field.readonly or field.hidden or
+                    getattr(new, field_name) == value):
+                    continue
+                setattr(new, field_name, value)
             try:
                 execute(new)
             except:
@@ -812,7 +818,7 @@ def resolve(db, field_name, value, FieldClass, field_names=None):
     # Since a callable data might resolve entity fields
     # itself, we only do a lookup here if the value supplied
     # is not an Entity instance.
-    if (issubclass(FieldClass, field._EntityBase)
+    if (issubclass(FieldClass, _EntityBase)
         and not isinstance(value, base.Entity)
         and value is not UNASSIGNED
         ):
