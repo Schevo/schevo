@@ -426,6 +426,13 @@ class Delete(Transaction):
         self._update_all_fields('required', False)
         self._setup()
 
+    def __getattr__(self, name):
+        if name == 'm':
+            self.m = attr = self._entity.m
+        else:
+            return Transaction.__getattr__(self, name)
+        return attr
+
     def _setup(self):
         """Override this in subclasses to customize a transaction."""
         pass
@@ -563,6 +570,13 @@ class Update(Transaction):
         for name, value in kw.iteritems():
             setattr(self, name, value)
         self._setup()
+
+    def __getattr__(self, name):
+        if name == 'm':
+            self.m = attr = self._entity.m
+        else:
+            return Transaction.__getattr__(self, name)
+        return attr
 
     def _setup(self):
         """Override this in subclasses to customize a transaction."""
