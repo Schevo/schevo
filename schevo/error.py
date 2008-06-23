@@ -84,15 +84,15 @@ class DeleteRestricted(Restricted):
                  referring_field_name=None):
         message = 'Cannot delete; referenced by one or more other entities.'
         super(DeleteRestricted, self).__init__(message)
-        self.restrictions = []
+        self.restrictions = set()
         if (entity is not None
             and referring_entity is not None
             and referring_field_name is not None
             ):
-            self.append(entity, referring_entity, referring_field_name)
+            self.add(entity, referring_entity, referring_field_name)
 
-    def append(self, entity, referring_entity, referring_field_name):
-        self.restrictions.append((
+    def add(self, entity, referring_entity, referring_field_name):
+        self.restrictions.add((
             entity,
             referring_entity,
             referring_field_name,

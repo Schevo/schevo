@@ -416,9 +416,9 @@ class BaseOnDelete(CreatesSchema):
         try:
             db.execute(tx)
         except error.DeleteRestricted, e:
-            assert e.restrictions == [
+            assert e.restrictions == set([
                 (db.Bam[1], db.Bat[1], 'bam')
-                ]
+                ])
 
     def test_restrict_bamm(self):
         bamm = db.execute(db.Bamm.t.create())
@@ -426,10 +426,10 @@ class BaseOnDelete(CreatesSchema):
         try:
             db.execute(tx)
         except error.DeleteRestricted, e:
-            assert e.restrictions == [
+            assert e.restrictions == set([
                 (db.Bamm[1], db.Bobb[1], 'bamm'),
                 (db.Bobb[1], db.Batt[1], 'bobb'),
-                ]
+                ])
 
     def test_cascade_complex(self):
         # Create the complex structure.
@@ -494,9 +494,9 @@ class BaseOnDelete(CreatesSchema):
         try:
             db.execute(tx)
         except error.DeleteRestricted, e:
-            assert e.restrictions == [
+            assert e.restrictions == set([
                 (alpha_alpha, alpha_charlie, 'alpha_alpha'),
-                ]
+                ])
 
     def test_unassign(self):
         alpha_alpha = self._alpha_alpha()

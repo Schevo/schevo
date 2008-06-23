@@ -473,7 +473,7 @@ class Delete(Transaction):
             for referrer in restricter_keys:
                 restricter_set = restricters[referrer]
                 for f_name, referred in restricter_set:
-                    error.append(referred, referrer, f_name)
+                    error.add(referred, referrer, f_name)
             if error.restrictions:
                 raise error
         else:
