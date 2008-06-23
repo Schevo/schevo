@@ -747,9 +747,9 @@ class BaseTransaction(CreatesSchema):
         try:
             db.execute(folder1.t.delete())
         except error.DeleteRestricted, e:
-            assert e.restrictions == [
+            assert e.restrictions == set([
                 (folder1, folder2, 'parent'),
-                ]
+                ])
         assert folder1 in db.Folder
         assert folder2 in db.Folder
 

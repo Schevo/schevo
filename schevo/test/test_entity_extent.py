@@ -581,16 +581,16 @@ class BaseEntityExtent(CreatesSchema):
         try:
             db.execute(user_del_tx)
         except error.DeleteRestricted, e:
-            assert e.restrictions == [
+            assert e.restrictions == set([
                 (user, avatar, 'user'),
-                ]
+                ])
         realm_del_tx = realm.t.delete()
         try:
             db.execute(realm_del_tx)
         except error.DeleteRestricted, e:
-            assert e.restrictions == [
+            assert e.restrictions == set([
                 (realm, avatar, 'realm'),
-                ]
+                ])
         # After deleting the avatar, deleting user and realm becomes
         # possible.
         db.execute(avatar.t.delete())
