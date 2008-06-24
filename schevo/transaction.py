@@ -263,6 +263,9 @@ class Create(Transaction):
                 while callable(default) and default is not UNASSIGNED:
                     default = default()
                 f.set(default)
+        # Reset metadata_changed on all fields.
+        for f in self._field_map.itervalues():
+            f.reset_metadata_changed()
 
     def _setup(self):
         """Override this in subclasses to customize a transaction."""
@@ -425,6 +428,9 @@ class Delete(Transaction):
         self._update_all_fields('readonly', True)
         self._update_all_fields('required', False)
         self._setup()
+        # Reset metadata_changed on all fields.
+        for f in self._field_map.itervalues():
+            f.reset_metadata_changed()
 
     def __getattr__(self, name):
         if name == 'm':
@@ -570,6 +576,9 @@ class Update(Transaction):
         for name, value in kw.iteritems():
             setattr(self, name, value)
         self._setup()
+        # Reset metadata_changed on all fields.
+        for f in self._field_map.itervalues():
+            f.reset_metadata_changed()
 
     def __getattr__(self, name):
         if name == 'm':

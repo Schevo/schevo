@@ -61,7 +61,8 @@ class FieldMeta(type):
         # Only do something if creating a Field subclass.
         if class_name != 'NoSlotsField':
             slots = [
-                'assigned', '_initial', '_instance', '_rev', '_value', '_x']
+                'assigned', '_initial', '_instance', '_metadata_changed',
+                '_rev', '_value', '_x']
             class_dict['__slots__'] = slots
         return type.__new__(cls, class_name, bases, class_dict)
 
@@ -196,6 +197,7 @@ class Field(base.Field):
     valid_values = None
     was = None
 
+    _metadata_changed = False
     _deprecated_class = False
     _deprecated_class_see_also = None
     _name = None
@@ -203,6 +205,13 @@ class Field(base.Field):
     @property
     def instance(self):
         return self._instance
+
+    @property
+    def metadata_changed(self):
+        return self._metadata_changed
+
+    def reset_metadata_changed(self):
+        object.__setattr__(self, '_metadata_changed', False)
 
     @property
     def name(self):
@@ -250,6 +259,14 @@ class Field(base.Field):
         else:
             # Otherwise a field is created with an initial rev of -1.
             self._rev = -1
+
+    def __setattr__(self, name, value):
+        base_setattr = object.__setattr__
+        # Always set the value.
+        base_setattr(self, name, value)
+        # If it's a public attribute, note a metadata change.
+        if name[0] != '_':
+            base_setattr(self, '_metadata_changed', True)
 
     def _entities_in_value(self):
         """Return a set or frozenset of Placeholders for entities contained in
