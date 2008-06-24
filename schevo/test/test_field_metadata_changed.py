@@ -38,6 +38,10 @@ class BaseFieldMetadataChanged(CreatesSchema):
         foo = db.execute(tx)
         tx = foo.t.update()
         assert tx.f.bar.metadata_changed == False
+        tx.f.bar.readonly = False
+        assert tx.f.bar.metadata_changed == True
+        tx.f.bar.reset_metadata_changed()
+        assert tx.f.bar.metadata_changed == False
         tx.bar = 'frob'
         assert tx.f.bar.readonly == True
         assert tx.f.bar.metadata_changed == True

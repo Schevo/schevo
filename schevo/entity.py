@@ -73,6 +73,7 @@ class EntityMeta(type):
         # Generic Update (for use by cascading delete).  Assigned in
         # this metaclss to prevent subclasses from overriding.
         class _GenericUpdate(transaction.Update):
+            _call_change_handlers_on_init = False
             _EntityClass = cls
             _extent_name = class_name
             _fget_fields = cls._fget_fields

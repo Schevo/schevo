@@ -559,6 +559,8 @@ class Update(Transaction):
 
     _label = u'Update'
 
+    _call_change_handlers_on_init = True
+
     _requires_changes = True
 
     _restrict_subclasses = True
@@ -576,6 +578,15 @@ class Update(Transaction):
         for name, value in kw.iteritems():
             setattr(self, name, value)
         self._setup()
+        # Call change handlers to prepare fields based on stored
+        # values.  Call them in order of field definition, so
+        # side-effects are deterministic.
+        if self._call_change_handlers_on_init:
+            for name in self.f:
+                handler_name = 'x_on_%s__changed' % name
+                handler = getattr(self, handler_name, None)
+                if handler is not None:
+                    handler()
         # Reset metadata_changed on all fields.
         for f in self._field_map.itervalues():
             f.reset_metadata_changed()
