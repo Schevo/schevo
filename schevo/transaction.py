@@ -751,6 +751,12 @@ class _Populate(Transaction):
         # Process the data.
         execute = db.execute
         for values in data:
+            # Convert values to tuple if it's a dict.
+            if isinstance(values, dict):
+                new_values = []
+                for field_name in field_names:
+                    new_values.append(values.get(field_name, DEFAULT))
+                values = new_values
             value_map = {}
             for field_name, value, FieldClass in zip(
                 field_names, values, field_classes

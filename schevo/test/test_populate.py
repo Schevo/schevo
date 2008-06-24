@@ -21,14 +21,34 @@ class BasePopulateSimple(CreatesSchema):
             (1, 'one'),
             (42, 'answer'),
             ]
+
+    class FooDict(E.Entity):
+
+        bar = f.integer(default=42)
+        baz = f.string()
+
+        _sample_unittest = [
+            dict(bar=1,
+                 baz='one',
+                 ),
+            dict(    # Leave out 'bar' to test that it will use default.
+                 baz='answer',
+                 ),
+            ]
     '''
 
     def test_populate_simple(self):
         assert len(db.Foo) == 2
+        # Populated with tuples.
         assert db.Foo[1].bar == 1
         assert db.Foo[1].baz == 'one'
         assert db.Foo[2].bar == 42
         assert db.Foo[2].baz == 'answer'
+        # Populated with dicts.
+        assert db.FooDict[1].bar == 1
+        assert db.FooDict[1].baz == 'one'
+        assert db.FooDict[2].bar == 42
+        assert db.FooDict[2].baz == 'answer'
 
     def test_datalist_simple(self):
         assert db.Foo.as_datalist() == db.Foo._EntityClass._sample_unittest
