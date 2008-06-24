@@ -85,6 +85,26 @@ class BasePopulateComplex(CreatesSchema):
             ]
 
 
+    class BarDict(E.Entity):
+
+        name = f.string()
+        foo = f.entity('Foo')
+
+        _key(name, foo)
+
+        _sample_unittest = [
+            dict(name='a',
+                 foo=dict(bar=42),
+                 ),
+            dict(name='a',
+                 foo=dict(bar=1),
+                 ),
+            dict(name='b',
+                 foo=dict(bar=42),
+                 ),
+            ]
+
+
     class Baz(E.Entity):
 
         name = f.string()
@@ -97,6 +117,28 @@ class BasePopulateComplex(CreatesSchema):
             ('that', ('a', (42,))),
             ('them', ('b', (42,))),
             ('thee', UNASSIGNED),
+            ]
+
+
+    class BazDict(E.Entity):
+
+        name = f.string()
+        bar = f.entity('Bar', required=False)
+
+        _key(name)
+
+        _sample_unittest = [
+            dict(name='this',
+                 bar=dict(name='a', foo=dict(bar=1)),
+                 ),
+            dict(name='that',
+                 bar=dict(name='a', foo=dict(bar=42)),
+                 ),
+            dict(name='them',
+                 bar=dict(name='b', foo=dict(bar=42)),
+                 ),
+            dict(name='thee',
+                 ),
             ]
 
 
@@ -115,6 +157,34 @@ class BasePopulateComplex(CreatesSchema):
             ('thou', ('Foo', (1,))),
             ('thy', ('Foo', (42,))),
             ]
+
+
+    class MultiDict(E.Entity):
+
+        name = f.string()
+        bar = f.entity('Bar', 'Foo', required=False)
+
+        _key(name)
+
+        _sample_unittest = [
+            dict(name='this',
+                 bar=('Bar', dict(name='a', foo=dict(bar=1))),
+                 ),
+            dict(name='that',
+                 bar=('Bar', dict(name='a', foo=dict(bar=42))),
+                 ),
+            dict(name='them',
+                 bar=('Bar', dict(name='b', foo=dict(bar=42))),
+                 ),
+            dict(name='thee',
+                 ),
+            dict(name='thou',
+                 bar=('Foo', dict(bar=1)),
+                 ),
+            dict(name='thy',
+                 bar=('Foo', dict(bar=42)),
+                 ),
+            ]
     '''
 
     def test_populate_complex(self):
@@ -127,6 +197,7 @@ class BasePopulateComplex(CreatesSchema):
         assert db.Bar[3].foo.baz == 'answer'
 
     def test_datalist_complex(self):
+
         assert db.Foo.as_datalist() == sorted(
             db.Foo._EntityClass._sample_unittest)
         assert db.Bar.as_datalist() == sorted(
@@ -134,6 +205,13 @@ class BasePopulateComplex(CreatesSchema):
         assert db.Baz.as_datalist() == sorted(
             db.Baz._EntityClass._sample_unittest)
         assert db.Multi.as_datalist() == sorted(
+            db.Multi._EntityClass._sample_unittest)
+        # Test dictionary versions.
+        assert db.BarDict.as_datalist() == sorted(
+            db.Bar._EntityClass._sample_unittest)
+        assert db.BazDict.as_datalist() == sorted(
+            db.Baz._EntityClass._sample_unittest)
+        assert db.MultiDict.as_datalist() == sorted(
             db.Multi._EntityClass._sample_unittest)
 
 

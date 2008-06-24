@@ -874,8 +874,14 @@ def resolve(db, field_name, value, FieldClass, field_names=None):
             lookup_extent = db.extent(extent_name)
             default_key = lookup_extent.default_key
             if isinstance(value, dict):
-                kw = value
-            elif isinstance(value, tuple):
+                newvalue = []
+                for key_field_name in default_key:
+                    if key_field_name not in value:
+                        raise ValueError('key field %r is required in %r'
+                                         % (key_field_name, value))
+                    newvalue.append(value[key_field_name])
+                value = tuple(newvalue)
+            if isinstance(value, tuple):
                 if len(default_key) != len(value):
                     msg = 'mismatch between default key %r and value %r'
                     raise ValueError, msg % (default_key, value)
