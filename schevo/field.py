@@ -197,7 +197,6 @@ class Field(base.Field):
     valid_values = None
     was = None
 
-    _metadata_changed = False
     _deprecated_class = False
     _deprecated_class_see_also = None
     _name = None
@@ -242,6 +241,7 @@ class Field(base.Field):
         instance is an Entity.
         """
         self.assigned = False
+        self._metadata_changed = False
         # The instance to which this value applies.
         # This should not change once it is set.
         self._instance = instance
