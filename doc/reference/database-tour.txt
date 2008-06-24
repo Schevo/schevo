@@ -485,7 +485,7 @@ methods`_ to get the `transaction method namespace`_ of that object:
      ...         common_name = f.string()
      ...
      ...         _initial = [
-     ...             ('Fern'),
+     ...             ('Fern',),
      ...             ]
      ...     """); db = t.db
 
@@ -520,7 +520,7 @@ By default, databases do not have any transaction methods.
      ...         common_name = f.string()
      ...
      ...         _initial = [
-     ...             ('Fern'),
+     ...             ('Fern',),
      ...             ]
      ...     """); db = t.db
 
@@ -568,7 +568,7 @@ of the parent entity:
         ...         _hide('t_update')
         ...
         ...         _initial = [
-        ...             ('Fern'),
+        ...             ('Fern',),
         ...             ]
         ...     """); db2 = t2.db
 

@@ -725,10 +725,13 @@ class _Populate(Transaction):
         # by instantiating a new create transaction.
         create = extent.t.create
         tx = create()
-        field_spec = tx._field_spec.copy()
-        # Remove readonly fields since we can't set them, and
-        # remove hidden fields since we can't "see" them.
-        for name in field_spec.keys():
+        dict_field_spec = tx._field_spec.copy()
+        tuple_field_spec = tx._field_spec.copy()
+        # For tuples and dicts, remove fields that don't even exist in
+        # the create transaction.
+        # For tuples, remove readonly fields since we can't set them,
+        # and remove hidden fields since we can't "see" them.
+        for name in dict_field_spec.keys():
             delete = False
             if not hasattr(tx.f, name):
                 # The create transaction's _setup() might delete a
@@ -736,51 +739,59 @@ class _Populate(Transaction):
                 delete = True
             else:
                 field = getattr(tx.f, name)
+            if delete:
+                del dict_field_spec[name]
             if delete or field.readonly or field.hidden:
-                del field_spec[name]
-        field_names = field_spec.keys()
-        field_classes = field_spec.values()
-        has_entity_field = False
-        for FieldClass in field_classes:
+                del tuple_field_spec[name]
+        for FieldClass in dict_field_spec.itervalues():
             if issubclass(FieldClass, Entity):
-                has_entity_field = True
                 allow = FieldClass.allow
                 for extent_name in allow:
                     parent_extent = db.extent(extent_name)
                     self._process_data(db, parent_extent, processing)
         # Process the data.
         execute = db.execute
+        dict_field_names = dict_field_spec.keys()
         for values in data:
-            # Convert values to tuple if it's a dict.
-            if isinstance(values, dict):
-                new_values = []
-                for field_name in field_names:
-                    new_values.append(values.get(field_name, DEFAULT))
+            # Convert values to dict if it's a tuple.
+            if isinstance(values, tuple):
+                new_values = {}
+                for field_name, value in zip(tuple_field_spec.iterkeys(),
+                                             values):
+                    new_values[field_name] = value
                 values = new_values
+            # Resolve the dict's values if needed.
             value_map = {}
-            for field_name, value, FieldClass in zip(
-                field_names, values, field_classes
-                ):
+            for field_name, FieldClass in dict_field_spec.iteritems():
+                value = values.get(field_name, DEFAULT)
                 if value is not DEFAULT:
                     value = resolve(db, field_name, value, FieldClass,
-                                    field_names)
+                                    dict_field_names)
                     value_map[field_name] = value
-##             new = create(**value_map)
+            # Assign values in field definition order, so that
+            # interactions with field value-changed handlers is
+            # deterministic.
             new = create()
-            for field_name, value in value_map.iteritems():
-                field = new.f[field_name]
-                if (field.readonly or field.hidden or
-                    getattr(new, field_name) == value):
-                    continue
-                setattr(new, field_name, value)
+            for field_name in dict_field_names:
+                if field_name in value_map:
+                    value = value_map[field_name]
+                    field = new.f[field_name]
+                    if (field.readonly
+                        or getattr(new, field_name) == value
+                        ):
+                        # Skip readonly and unchanged fields.
+                        continue
+                    setattr(new, field_name, value)
             try:
                 execute(new)
             except:
                 print '-' * 40
-                print 'extent:', extent
-                print 'data:', data
-                print 'field_spec:', field_spec
-                print 'value_map:', value_map
+                print '  extent:', extent
+                print '  data:', data
+                print '  values:', values
+                print '  dict_field_spec:', dict_field_spec
+                print '  tuple_field_spec:', tuple_field_spec
+                print '  value_map:', value_map
                 raise
 
 
