@@ -575,9 +575,6 @@ class Update(Transaction):
         self._rev = _entity._rev
         field_map = _entity.sys.field_map(not_fget)
         self._initialize(field_map)
-        for name, value in kw.iteritems():
-            setattr(self, name, value)
-        self._setup()
         # Call change handlers to prepare fields based on stored
         # values.  Call them in order of field definition, so
         # side-effects are deterministic.
@@ -587,6 +584,10 @@ class Update(Transaction):
                 handler = getattr(self, handler_name, None)
                 if handler is not None:
                     handler()
+        # Apply values from keyword arguments.
+        for name, value in kw.iteritems():
+            setattr(self, name, value)
+        self._setup()
         # Reset metadata_changed on all fields.
         for f in self._field_map.itervalues():
             f.reset_metadata_changed()
