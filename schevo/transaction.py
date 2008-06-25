@@ -39,6 +39,7 @@ class TransactionMeta(schema_metaclass('T')):
             if '__init__' in class_dict or '_execute' in class_dict:
                 raise TransactionExecuteRedefinitionRestricted(
                     class_name, bases)
+        cls._h_names = cls.get_method_names('h_')
         cls._x_names = cls.get_method_names('x_')
 
     def get_method_names(cls, prefix):
@@ -158,6 +159,22 @@ class TransactionExtenders(NamespaceExtension):
         for x_name in tx._x_names:
             func = getattr(tx, x_name)
             name = x_name[2:]
+            d[name] = func
+
+
+class TransactionHandlers(NamespaceExtension):
+    """A namespace of field change handlers."""
+
+    __slots__ = NamespaceExtension.__slots__
+
+    _readonly = False
+
+    def __init__(self, tx):
+        super(TransactionExtenders, self).__init__()
+        d = self._d
+        for h_name in tx._h_names:
+            func = getattr(tx, h_name)
+            name = h_name[2:]
             d[name] = func
 
 
@@ -580,7 +597,7 @@ class Update(Transaction):
         # side-effects are deterministic.
         if self._call_change_handlers_on_init:
             for name in self.f:
-                handler_name = 'x_on_%s__changed' % name
+                handler_name = 'h_%s' % name
                 handler = getattr(self, handler_name, None)
                 if handler is not None:
                     handler()

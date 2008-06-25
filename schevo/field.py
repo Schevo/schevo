@@ -379,9 +379,9 @@ class Field(base.Field):
     get_immutable = get
 
     def _on_changed(self):
-        if hasattr(self._instance, 'x'):
-            namespace = getattr(self._instance, 'x')
-            handler_name = 'on_%s__changed' % self._name
+        if hasattr(self._instance, 'h'):
+            namespace = getattr(self._instance, 'h')
+            handler_name = self._name
             if hasattr(namespace, handler_name):
                 handler = getattr(namespace, handler_name)
                 handler()
