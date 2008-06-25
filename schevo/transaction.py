@@ -777,8 +777,16 @@ class _Populate(Transaction):
             for field_name, FieldClass in dict_field_spec.iteritems():
                 value = values.get(field_name, DEFAULT)
                 if value is not DEFAULT:
-                    value = resolve(db, field_name, value, FieldClass,
-                                    dict_field_names)
+                    try:
+                        value = resolve(db, field_name, value, FieldClass,
+                                        dict_field_names)
+                    except:
+                        print '-' * 40
+                        print '  extent:', extent
+                        print '  data:', data
+                        print '  values:', values
+                        print '  while resolving:', value
+                        raise
                     value_map[field_name] = value
             # Assign values in field definition order, so that
             # interactions with field value-changed handlers is
