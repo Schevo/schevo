@@ -379,11 +379,10 @@ class Field(base.Field):
     get_immutable = get
 
     def _on_changed(self):
-        if hasattr(self._instance, 'h'):
-            namespace = getattr(self._instance, 'h')
-            handler_name = self._name
-            if hasattr(namespace, handler_name):
-                handler = getattr(namespace, handler_name)
+        namespace = getattr(self._instance, 'h', None)
+        if namespace is not None:
+            handler = getattr(namespace, self._name, None)
+            if handler is not None:
                 handler()
 
     def _restore(self, db):

@@ -87,7 +87,11 @@ class Param(Query):
         print self.sys.field_map()
 
     def __getattr__(self, name):
-        return self._field_map[name].get()
+        if name == 'h':
+            self.h = attr = ParamChangeHandlers(self)
+        else:
+            attr = self._field_map[name].get()
+        return attr
 
     def __setattr__(self, name, value):
         if name == 'sys' or name.startswith('_') or len(name) == 1:
@@ -104,6 +108,25 @@ class Param(Query):
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
         return sorted(self._field_map.keys())
+
+
+class ParamChangeHandlers(NamespaceExtension):
+    """A namespace of field change handlers."""
+
+    __slots__ = NamespaceExtension.__slots__
+
+    _readonly = False
+
+    def __init__(self, query):
+        super(ParamChangeHandlers, self).__init__()
+        d = self._d
+        # Note: could be optimized via using a metaclass with
+        # ParamQuery.
+        for name in dir(query):
+            if name.startswith('h_'):
+                func = getattr(query, name)
+                name = name[2:]
+                d[name] = func
 
 
 class ParamSys(NamespaceExtension):

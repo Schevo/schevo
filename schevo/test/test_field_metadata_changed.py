@@ -17,7 +17,7 @@ class BaseFieldMetadataChanged(CreatesSchema):
 
         class _Update(T.Update):
 
-            def x_on_bar__changed(self):
+            def h_bar(self):
                 self.f.bar.readonly = True
 
             def _setup(self):

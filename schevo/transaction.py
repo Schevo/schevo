@@ -80,6 +80,8 @@ class Transaction(base.Transaction):
     def __getattr__(self, name):
         if name == 'x':
             self.x = attr = TransactionExtenders(self)
+        elif name == 'h':
+            self.h = attr = TransactionChangeHandlers(self)
         else:
             try:
                 field = self._field_map[name]
@@ -162,7 +164,7 @@ class TransactionExtenders(NamespaceExtension):
             d[name] = func
 
 
-class TransactionHandlers(NamespaceExtension):
+class TransactionChangeHandlers(NamespaceExtension):
     """A namespace of field change handlers."""
 
     __slots__ = NamespaceExtension.__slots__
@@ -170,7 +172,7 @@ class TransactionHandlers(NamespaceExtension):
     _readonly = False
 
     def __init__(self, tx):
-        super(TransactionExtenders, self).__init__()
+        super(TransactionChangeHandlers, self).__init__()
         d = self._d
         for h_name in tx._h_names:
             func = getattr(tx, h_name)
