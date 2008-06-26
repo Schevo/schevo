@@ -30,6 +30,13 @@ class BaseTransactionFieldReorder(CreatesSchema):
         tx = db.Something.t.create()
         assert list(tx.f) == ['field1', 'field3', 'field2']
 
+    def test_reorder_by_odict_reorder_method(self):
+        tx = db.Something.t.create()
+        tx.sys.current_field_map.reorder(0, 'field3')
+        tx.sys.current_field_map.reorder(1, 'field2')
+        tx.sys.current_field_map.reorder(2, 'field1')
+        assert list(tx.f) == ['field3', 'field2', 'field1']
+
 
 class TestTransactionFieldReorder1(BaseTransactionFieldReorder):
 

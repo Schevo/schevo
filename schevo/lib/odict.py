@@ -134,6 +134,13 @@ class odict(dict):
         del self[key]
         return (key, value)
 
+    def reorder(self, pos, key):
+        keys = self._keys
+        if key not in self._keys:
+            raise KeyError('Key not in odict', key)
+        keys.remove(key)
+        keys.insert(pos, key)
+
     def setdefault(self, key, failobj=None):
         """D.setdefault(k[,d]) -> D.get(k,d), also set D[k]=d if k not in D"""
         value = dict.setdefault(self, key, failobj)

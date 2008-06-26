@@ -299,9 +299,9 @@ update(self, other, reorder=False)
   >>> assert od.values() == VALUES
   >>> assert od.items() == ITEMS
 
-Pass `reorder=True` update to add to the end of the key
-sequence any time an existing key is updated, rather than
-keeping its original position::
+Pass `reorder=True` to `update` to add to the end of the key sequence
+any time an existing key is updated, rather than keeping its original
+position::
 
   >>> od = odict()
   >>> od[3] = '3'
@@ -313,6 +313,23 @@ keeping its original position::
   >>> od.update(od2, reorder=True)
   >>> assert od.keys() == [1, 2, 3]
   >>> assert od.values() == ['1', 'two', 'three']
+
+Use the `reorder` method to move an item from its current position to
+a new one.  Rules for `list.insert` are followed when reordering.
+
+  >>> od = odict()
+  >>> od['c'] = 3
+  >>> od['b'] = 2
+  >>> od['a'] = 1
+  >>> od['d'] = 4
+  >>> od.keys()
+  ['c', 'b', 'a', 'd']
+  >>> od.reorder(1, 'a')
+  >>> od.keys()
+  ['c', 'a', 'b', 'd']
+  >>> od.reorder(2, 'c')
+  >>> od.keys()
+  ['a', 'b', 'c', 'd']
 
 `other` must be an odict::
 

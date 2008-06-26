@@ -193,6 +193,10 @@ class TransactionSys(NamespaceExtension):
         return self._transaction._changes
 
     @property
+    def current_field_map(self):
+        return self._transaction._field_map
+
+    @property
     def executed(self):
         return self._transaction._executed
 
