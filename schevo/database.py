@@ -218,7 +218,6 @@ def create(filename, backend_name, backend_args={},
     relabel(db, label)
     # Install icon support.
     icon.install(db)
-    db._on_open()
     return db
 
 
@@ -277,7 +276,6 @@ def evolve(db, schema_source, version):
     - `version`: The new version number of the database schema.
     """
     db._evolve(schema_source, version)
-    db._on_open()
 
 
 def inject(filename, schema_source, version,
@@ -370,7 +368,6 @@ def open(filename, backend_name=None, backend_args=None):
     db._sync()
     # Install icon support and finalize opening of database.
     icon.install(db)
-    db._on_open()
     return db
 
 
