@@ -1194,9 +1194,8 @@ class Database(base.Database):
                 fn(self)
 
     def _remove_stale_links(self, extent_id, field_id, FieldClass):
-        # Remove links from this field to other
-        # entities that are held in the structures for
-        # those other entities.
+        # Remove links from this field to other entities that are held
+        # in the structures for those other entities.
         allow = FieldClass.allow
         for other_name in allow:
             other_extent_map = self._extent_map(other_name)
@@ -1212,9 +1211,9 @@ class Database(base.Database):
                 other_entity['link_count'] = other_link_count
 
     def _schema_format_compatibility_check(self, schema):
-        """Return None if the given schema is compatible with this database
-        engine's format, or raise an error when the first incompatibility
-        is found.
+        """Return None if the given schema is compatible with this
+        database engine's format, or raise an error when the first
+        incompatibility is found.
 
         - `schema`: The schema to check.
         """
@@ -1331,12 +1330,12 @@ class Database(base.Database):
                 if initialize:
                     self._initialize()
             elif schema_version is not None:
-                # Do not allow schema_version to differ from existing version if
-                # opening an existing database.
+                # Do not allow schema_version to differ from existing
+                # version if opening an existing database.
                 if SCHEVO['version'] != schema_version:
                     raise ValueError(
-                        'Existing database; schema_version must be set to None '
-                        'or to the current version of the database.')
+                        'Existing database; schema_version must be set to '
+                        'None or to the current version of the database.')
         except:
             if locked:
                 schevo.schema.import_lock.release()
@@ -1346,6 +1345,7 @@ class Database(base.Database):
         else:
             if commit:
                 self._commit()
+            self._on_open()
 
     def _sync_extents(self, schema, evolving):
         """Synchronize the extents based on the schema."""
