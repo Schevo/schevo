@@ -61,7 +61,13 @@ class Transaction(base.Transaction):
 
     _field_spec = FieldSpecMap()
 
-    # If true, do not allow subclasses to change the behavior of
+    # If True, set all fields to their default value upon
+    # initialization. All standard transaction subclasses set this to
+    # False, but custom subclasses of Transaction benefit from the
+    # default being True.
+    _populate_default_values = True
+
+    # If True, do not allow subclasses to change the behavior of
     # `__init__` or `_execute`.
     _restrict_subclasses = False
 
@@ -76,6 +82,9 @@ class Transaction(base.Transaction):
         self._relaxed = set()
         self.f = schevo.namespace.Fields(self)
         self.sys = TransactionSys(self)
+        if self._populate_default_values:
+            for field in self._field_map.itervalues():
+                field.set(field.default[0])
 
     def __getattr__(self, name):
         if name == 'x':
@@ -233,6 +242,7 @@ class Combination(Transaction):
 
     _label = u'Combination'
 
+    _populate_default_values = False
     _restrict_subclasses = True
 
     def __init__(self, transactions):
@@ -256,6 +266,7 @@ class Create(Transaction):
 
     _style = _Create_Standard
 
+    _populate_default_values = False
     _restrict_subclasses = True
 
     def __init__(self, *args, **kw):
@@ -437,6 +448,7 @@ class Delete(Transaction):
 
     _label = u'Delete'
 
+    _populate_default_values = False
     _restrict_subclasses = True
 
     def __init__(self, entity):
@@ -586,6 +598,7 @@ class Update(Transaction):
 
     _requires_changes = True
 
+    _populate_default_values = False
     _restrict_subclasses = True
 
     def __init__(self, _entity, **kw):
@@ -677,6 +690,7 @@ class Update(Transaction):
 class Inverse(Transaction):
     """An inversion of an executed transaction."""
 
+    _populate_default_values = False
     _restrict_subclasses = True
 
     def __init__(self, original_tx):
@@ -705,6 +719,8 @@ class _Populate(Transaction):
 
     # Subclasses can limit the extents to populate via this list.
     _extent_names = []
+
+    _populate_default_values = False
 
     def __init__(self):
         Transaction.__init__(self)
@@ -870,6 +886,7 @@ class CallableWrapper(Transaction):
     """A transaction that, upon execution, calls a callable object
     with the open database."""
 
+    _populate_default_values = False
     _restrict_subclasses = True
 
     def __init__(self, fn):
