@@ -19,6 +19,10 @@ class BaseTransactionFieldReorder(CreatesSchema):
 
             field3 = f.bytes()
             field2 = f.integer()
+
+        class _Update(T.Update):
+
+            field3 = f.bytes(place_before='field2')
     '''
 
     def test_reorder_by_reassignment(self):
@@ -28,6 +32,7 @@ class BaseTransactionFieldReorder(CreatesSchema):
         # because ``field2`` was recreated afterwards, thus overriding
         # the original position of ``field2``.
         tx = db.Something.t.create()
+        print list(tx.f)
         assert list(tx.f) == ['field1', 'field3', 'field2']
 
     def test_reorder_by_odict_reorder_method(self):
@@ -35,7 +40,15 @@ class BaseTransactionFieldReorder(CreatesSchema):
         tx.sys.current_field_map.reorder(0, 'field3')
         tx.sys.current_field_map.reorder(1, 'field2')
         tx.sys.current_field_map.reorder(2, 'field1')
+        print list(tx.f)
         assert list(tx.f) == ['field3', 'field2', 'field1']
+
+    def test_reorder_by_place_before_argument(self):
+        tx = db.Something.t.create(field1='a', field2=1, field3='abc')
+        something = db.execute(tx)
+        tx = something.t.update()
+        print list(tx.f)
+        assert list(tx.f) == ['field1', 'field3', 'field2']
 
 
 class TestTransactionFieldReorder1(BaseTransactionFieldReorder):

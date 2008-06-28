@@ -215,8 +215,14 @@ class EntityMeta(type):
             NewClass._EntityClass = cls
             NewClass._extent_name = class_name
             NewClass._fget_fields = cls._fget_fields
-            NewClass._field_spec = t_spec.copy()
-            NewClass._field_spec.update(OldClass._field_spec, reorder=True)
+            field_spec = NewClass._field_spec = t_spec.copy()
+            field_spec.update(OldClass._field_spec, reorder=True)
+            # Reorder fields as requested.
+            for field_name, FieldClass in field_spec.items():
+                if FieldClass.place_before is not None:
+                    index = field_spec.index(FieldClass.place_before)
+                    field_spec.reorder(index, field_name)
+            # Perform any class-level initialization.
             if hasattr(NewClass, '_init_class'):
                 NewClass._init_class()
             setattr(cls, name, NewClass)
