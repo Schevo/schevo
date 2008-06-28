@@ -314,6 +314,14 @@ position::
   >>> assert od.keys() == [1, 2, 3]
   >>> assert od.values() == ['1', 'two', 'three']
 
+`other` must be an odict::
+
+  >>> od = odict()
+  >>> od.update(dict(ITEMS))
+  Traceback (most recent call last):
+      ...
+  ValueError: other must be an odict
+
 Use the `reorder` method to move an item from its current position to
 a new one.  Rules for `list.insert` are followed when reordering.
 
@@ -331,11 +339,19 @@ a new one.  Rules for `list.insert` are followed when reordering.
   >>> od.keys()
   ['a', 'b', 'c', 'd']
 
-`other` must be an odict::
+Use the `index` method to find the position of a key.
 
   >>> od = odict()
-  >>> od.update(dict(ITEMS))
-  Traceback (most recent call last):
-      ...
-  ValueError: other must be an odict
+  >>> od['c'] = 3
+  >>> od['b'] = 2
+  >>> od['a'] = 1
+  >>> od['d'] = 4
+  >>> od.keys()
+  ['c', 'b', 'a', 'd']
+  >>> od.index('b')
+  1
+  >>> od.reorder(od.index('b'), 'd')
+  >>> od.keys()
+  ['c', 'd', 'b', 'a']
+
 """

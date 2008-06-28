@@ -85,6 +85,12 @@ class odict(dict):
         items = [(key, self[key]) for key in self._keys]
         return self.__class__(items)
 
+    def index(self, key):
+        """Return index of key in keys."""
+        if key not in self:
+            raise KeyError('index(): key %r not in dictionary' % key)
+        return self._keys.index(key)
+
     def insert(self, index, key, item):
         """Insert key:item at index."""
         if key in self:
