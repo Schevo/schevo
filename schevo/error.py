@@ -35,6 +35,14 @@ class DatabaseExecutingTransaction(RuntimeError):
     executing a transaction."""
 
 
+class DatabaseFileLocked(RuntimeError):
+    """The database file is in use by another process."""
+
+    def __init__(self):
+        message = 'The database file is being used by another process.'
+        RuntimeError.__init__(self, message)
+
+
 class DatabaseFormatMismatch(RuntimeError):
     """The internal structure of the database is not in the correct
     format."""

@@ -4,6 +4,7 @@ For copyright, license, and warranty, see bottom of file.
 """
 
 from schevo import database
+from schevo.error import DatabaseFileLocked
 from schevo.store.backend_test_classes import (
     TestMethods_CreatesDatabase,
     TestMethods_CreatesSchema,
@@ -35,7 +36,7 @@ class SchevoStoreBackend(object):
     TestMethods_CreatesDatabase = TestMethods_CreatesDatabase
     TestMethods_CreatesSchema = TestMethods_CreatesSchema
     TestMethods_EvolvesSchemata = TestMethods_EvolvesSchemata
-    
+
     def __init__(self, filename, fp=None, cache_size=100000):
         """Create a new `SchevoStoreBackend` instance.
 
@@ -105,7 +106,10 @@ class SchevoStoreBackend(object):
     def open(self):
         """Open the underlying storage based on initial arguments."""
         if not self._is_open:
-            self.storage = FileStorage(self._filename, fp=self._fp)
+            try:
+                self.storage = FileStorage(self._filename, fp=self._fp)
+            except RuntimeError:
+                raise DatabaseFileLocked()
             self.conn = Connection(self.storage, cache_size=self._cache_size)
             self._is_open = True
 
