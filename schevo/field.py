@@ -147,6 +147,9 @@ class Field(base.Field):
     notice: A tuple of (notice type, notice text) describing a notice
     for this field, or None for no notice.
 
+    place_after: Name of a field that this one should be placed
+    after in field order, or None if it should not be reordered.
+
     place_before: Name of a field that this one should be placed
     before in field order, or None if it should not be reordered.
 
@@ -192,6 +195,7 @@ class Field(base.Field):
     max_value = None
     may_store_entities = False
     notice = None
+    place_after = None
     place_before = None
     preferred_values = None
     readonly = False

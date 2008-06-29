@@ -61,13 +61,19 @@ class EntityMeta(type):
             cls, class_dict, slots=True)
         # Reorder fields as requested.
         for field_name, FieldClass in field_spec.items():
+            placement = None
             if FieldClass.place_before is not None:
                 this_index = field_spec.index(field_name)
-                other_index = field_spec.index(FieldClass.place_before)
-                if this_index > other_index:
-                    field_spec.reorder(other_index, field_name)
+                placement = field_spec.index(FieldClass.place_before)
+            elif FieldClass.place_after is not None:
+                this_index = field_spec.index(field_name)
+                other_index = field_spec.index(FieldClass.place_after)
+                placement = other_index + 1
+            if placement is not None:
+                if this_index > placement:
+                    field_spec.reorder(placement, field_name)
                 else:
-                    field_spec.reorder(other_index - 1, field_name)
+                    field_spec.reorder(placement - 1, field_name)
         # Setup fields, keeping track of calculated (fget) fields.
         cls.setup_fields()
         # Get slotless specs for queries, transactions and views.
@@ -229,13 +235,19 @@ class EntityMeta(type):
             field_spec.update(OldClass._field_spec, reorder=True)
             # Reorder fields as requested.
             for field_name, FieldClass in field_spec.items():
+                placement = None
                 if FieldClass.place_before is not None:
                     this_index = field_spec.index(field_name)
-                    other_index = field_spec.index(FieldClass.place_before)
-                    if this_index > other_index:
-                        field_spec.reorder(other_index, field_name)
+                    placement = field_spec.index(FieldClass.place_before)
+                elif FieldClass.place_after is not None:
+                    this_index = field_spec.index(field_name)
+                    other_index = field_spec.index(FieldClass.place_after)
+                    placement = other_index + 1
+                if placement is not None:
+                    if this_index > placement:
+                        field_spec.reorder(placement, field_name)
                     else:
-                        field_spec.reorder(other_index - 1, field_name)
+                        field_spec.reorder(placement - 1, field_name)
             # Perform any class-level initialization.
             if hasattr(NewClass, '_init_class'):
                 NewClass._init_class()

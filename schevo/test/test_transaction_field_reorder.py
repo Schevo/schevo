@@ -27,8 +27,13 @@ class BaseTransactionFieldReorder(CreatesSchema):
 
     class SomethingElse(E.Entity):
 
+        field0 = f.string()
         field1 = f.string()
         field2 = f.string(place_before='field1')
+
+        class _Create(T.Create):
+
+            field3 = f.string(place_after='field0')
     '''
 
     def test_reorder_by_reassignment(self):
@@ -47,13 +52,15 @@ class BaseTransactionFieldReorder(CreatesSchema):
         tx.sys.current_field_map.reorder(2, 'field1')
         assert list(tx.f) == ['field3', 'field2', 'field1']
 
-    def test_reorder_entity_field_by_place_before_argument(self):
+    def test_reorder_entity_field_by_place_before_or_place_after(self):
         tx = db.SomethingElse.t.create()
-        assert list(tx.f) == ['field2', 'field1']
+        assert list(tx.f) == ['field0', 'field3', 'field2', 'field1']
+        tx.field0 = '000'
         tx.field1 = 'abc'
         tx.field2 = 'def'
+        tx.field3 = '333'
         something_else = db.execute(tx)
-        assert list(something_else.f) == ['field2', 'field1']
+        assert list(something_else.f) == ['field0', 'field2', 'field1']
 
     def test_reorder_tx_field_by_place_before_argument(self):
         tx = db.Something.t.create(field1='a', field2=1, field3='abc')
