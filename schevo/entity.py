@@ -239,12 +239,10 @@ class EntityMeta(type):
                 if FieldClass.place_before is not None:
                     this_index = field_spec.index(field_name)
                     placement = field_spec.index(FieldClass.place_before)
-                    print field_name, 'before', FieldClass.place_before
                 elif FieldClass.place_after is not None:
                     this_index = field_spec.index(field_name)
                     other_index = field_spec.index(FieldClass.place_after)
                     placement = other_index + 1
-                    print field_name, 'after', FieldClass.place_after
                 if placement is not None:
                     if this_index >= placement:
                         field_spec.reorder(placement, field_name)
