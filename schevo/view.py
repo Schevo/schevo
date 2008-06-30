@@ -53,7 +53,7 @@ class View(base.View):
         elif name == 'm' and self._entity is not None:
             self.m = attr = self._entity.m
         elif name == 'q' and self._entity is not None:
-            self.q = attr = self._entity.q
+            self.q = attr = ViewQueries(self._entity, self)
         elif name == 't' and self._entity is not None:
             self.t = attr = ViewTransactions(self._entity, self)
         elif name == 'v' and self._entity is not None:
@@ -215,6 +215,56 @@ class ViewTransactions(NamespaceExtension):
             hidden_actions = self._v._hidden_actions
         return (k for k in self._d.iterkeys()
                 if k not in hidden_actions)
+
+
+class ViewQueries(NamespaceExtension):
+    """A namespace of view-level queries."""
+
+    __slots__ = NamespaceExtension.__slots__ + ['_v']
+
+    def __init__(self, entity, view):
+        NamespaceExtension.__init__(self)
+        d = self._d
+        self._v = view
+        # Start with the actions defined on the entity.
+        for q_name in entity._q_names:
+            func = getattr(entity, q_name)
+            name = q_name[2:]
+            d[name] = func
+        # The add or override with actions defined on the view.
+        cls = view.__class__
+        q_names = []
+        for attr in dir(cls):
+            if attr.startswith('q_'):
+                q_name = attr
+                func = getattr(cls, q_name)
+                if func.im_self is None:
+                    q_names.append(q_name)
+        for q_name in q_names:
+            name = q_name[2:]
+            func = getattr(view, q_name)
+            # Assign a label if none exists.
+            new_label = None
+            if getattr(func, '_label', None) is None:
+                new_label = label_from_name(name)
+                if new_label is not None:
+                    cls.__dict__[q_name]._label = new_label
+            d[name] = func
+
+    def __contains__(self, name):
+        if self._v._hidden_queries is None:
+            hidden_queries = self._v._entity._hidden_queries
+        else:
+            hidden_queries = self._v._hidden_queries
+        return name in self._d and name not in hidden_queries
+
+    def __iter__(self):
+        if self._v._hidden_queries is None:
+            hidden_queries = self._v._entity._hidden_queries
+        else:
+            hidden_queries = self._v._hidden_queries
+        return (k for k in self._d.iterkeys()
+                if k not in hidden_queries)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
