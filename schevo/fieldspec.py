@@ -79,6 +79,24 @@ class FieldSpecMap(odict):
                  for name, FieldClass in self.iteritems()]
         return FieldMap(pairs)
 
+    def reorder_all(self):
+        """Reorder all fields as requested by their `place_before` and
+        `place_after` attributes."""
+        for field_name, FieldClass in self.items():
+            placement = None
+            if FieldClass.place_before is not None:
+                this_index = self.index(field_name)
+                placement = self.index(FieldClass.place_before)
+            elif FieldClass.place_after is not None:
+                this_index = self.index(field_name)
+                other_index = self.index(FieldClass.place_after)
+                placement = other_index + 1
+            if placement is not None:
+                if this_index > placement:
+                    self.reorder(placement, field_name)
+                elif this_index < placement:
+                    self.reorder(placement - 1, field_name)
+
 
 def field_spec_from_class(cls, class_dict, slots=False):
     field_spec = FieldSpecMap()

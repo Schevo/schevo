@@ -59,21 +59,7 @@ class EntityMeta(type):
         # Create the field spec.
         field_spec = cls._field_spec = field_spec_from_class(
             cls, class_dict, slots=True)
-        # Reorder fields as requested.
-        for field_name, FieldClass in field_spec.items():
-            placement = None
-            if FieldClass.place_before is not None:
-                this_index = field_spec.index(field_name)
-                placement = field_spec.index(FieldClass.place_before)
-            elif FieldClass.place_after is not None:
-                this_index = field_spec.index(field_name)
-                other_index = field_spec.index(FieldClass.place_after)
-                placement = other_index + 1
-            if placement is not None:
-                if this_index >= placement:
-                    field_spec.reorder(placement, field_name)
-                else:
-                    field_spec.reorder(placement - 1, field_name)
+        field_spec.reorder_all()
         # Setup fields, keeping track of calculated (fget) fields.
         cls.setup_fields()
         # Get slotless specs for queries, transactions and views.
@@ -233,21 +219,7 @@ class EntityMeta(type):
             NewClass._fget_fields = cls._fget_fields
             field_spec = NewClass._field_spec = t_spec.copy()
             field_spec.update(OldClass._field_spec, reorder=True)
-            # Reorder fields as requested.
-            for field_name, FieldClass in field_spec.items():
-                placement = None
-                if FieldClass.place_before is not None:
-                    this_index = field_spec.index(field_name)
-                    placement = field_spec.index(FieldClass.place_before)
-                elif FieldClass.place_after is not None:
-                    this_index = field_spec.index(field_name)
-                    other_index = field_spec.index(FieldClass.place_after)
-                    placement = other_index + 1
-                if placement is not None:
-                    if this_index >= placement:
-                        field_spec.reorder(placement, field_name)
-                    else:
-                        field_spec.reorder(placement - 1, field_name)
+            field_spec.reorder_all()
             # Perform any class-level initialization.
             if hasattr(NewClass, '_init_class'):
                 NewClass._init_class()
@@ -276,6 +248,7 @@ class EntityMeta(type):
                 ViewClass._fget_fields = cls._fget_fields
                 ViewClass._field_spec = v_spec.copy()
                 ViewClass._field_spec.update(base_spec, reorder=True)
+                ViewClass._field_spec.reorder_all()
                 if hasattr(ViewClass, '_init_class'):
                     ViewClass._init_class()
 
