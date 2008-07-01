@@ -76,8 +76,6 @@ class SchevoStoreBackend(object):
     def usable_by_backend(cls, filename):
         """Return (`True`, *additional backend args*) if the named
         file is usable by this backend, or `False` if not."""
-        if not os.path.exists(filename):
-            return False
         # Get first 128 bytes of file.
         f = open(filename, 'rb')
         try:
