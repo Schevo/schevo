@@ -76,8 +76,8 @@ class SchevoStoreBackend(object):
         """Return (`True`, *additional backend args*) if the named
         file is usable by this backend, or `False` if not."""
         # Get first 128 bytes of file.
+        f = open(filename, 'rb')
         try:
-            f = open(filename, 'rb')
             try:
                 header = f.read(128)
             except IOError:
