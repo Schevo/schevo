@@ -3,6 +3,7 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
+import os
 import sys
 
 from schevo import database
