@@ -201,13 +201,6 @@ class ViewTransactions(NamespaceExtension):
                     cls.__dict__[t_name]._label = new_label
             d[name] = func
 
-    def __contains__(self, name):
-        if self._v._hidden_actions is None:
-            hidden_actions = self._v._entity._hidden_actions
-        else:
-            hidden_actions = self._v._hidden_actions
-        return name in self._d and name not in hidden_actions
-
     def __iter__(self):
         view = self._v
         if view._hidden_actions is not None:
@@ -260,13 +253,6 @@ class ViewQueries(NamespaceExtension):
                 if new_label is not None:
                     cls.__dict__[q_name]._label = new_label
             d[name] = func
-
-    def __contains__(self, name):
-        if self._v._hidden_queries is None:
-            hidden_queries = self._v._entity._hidden_queries
-        else:
-            hidden_queries = self._v._hidden_queries
-        return name in self._d and name not in hidden_queries
 
     def __iter__(self):
         if self._v._hidden_queries is None:

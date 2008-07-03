@@ -235,9 +235,6 @@ class ExtentQueries(NamespaceExtension):
                     name = key[2:]
                     self._set(name, method)
 
-    def __contains__(self, name):
-        return name in self._d and name not in self._E._hidden_queries
-
     def __iter__(self):
         return (k for k in self._d.iterkeys()
                 if k not in self._E._hidden_queries)
@@ -262,9 +259,6 @@ class ExtentTransactions(NamespaceExtension):
                     # Drop the 't_' prefix.
                     name = key[2:]
                     self._set(name, method)
-
-    def __contains__(self, name):
-        return name in self._d and name not in self._E._hidden_actions
 
     def __iter__(self):
         return (k for k in self._d.iterkeys()

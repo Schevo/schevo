@@ -592,9 +592,6 @@ class EntityQueries(NamespaceExtension):
             name = q_name[2:]
             d[name] = func
 
-    def __contains__(self, name):
-        return name in self._d and name not in self._e._hidden_queries
-
     def __iter__(self):
         return (k for k in self._d.iterkeys()
                 if k not in self._e._hidden_queries)
@@ -743,9 +740,6 @@ class EntityTransactions(NamespaceExtension):
             name = t_name[2:]
             d[name] = func
 
-    def __contains__(self, name):
-        return name in self._d and name not in self._e._hidden_actions
-
     def __iter__(self):
         entity = self._e
         hidden = entity._hidden_actions.copy()
@@ -768,9 +762,6 @@ class EntityViews(NamespaceExtension):
             func = getattr(entity, v_name)
             name = v_name[2:]
             d[name] = func
-
-    def __contains__(self, name):
-        return name in self._d and name not in self._e._hidden_views
 
     def __iter__(self):
         return (k for k in self._d.iterkeys()
