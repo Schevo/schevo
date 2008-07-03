@@ -84,9 +84,6 @@ class NamespaceExtension(object):
     def __init__(self):
         self._d = {}
 
-    def __contains__(self, name):
-        return name in self._d
-
     def __getattr__(self, name):
         try:
             return self._d[name]
