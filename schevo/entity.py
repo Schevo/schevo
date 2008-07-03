@@ -747,8 +747,12 @@ class EntityTransactions(NamespaceExtension):
         return name in self._d and name not in self._e._hidden_actions
 
     def __iter__(self):
-        return (k for k in self._d.iterkeys()
-                if k not in self._e._hidden_actions)
+        entity = self._e
+        hidden = entity._hidden_actions.copy()
+        hidden_t_methods = getattr(entity, '_hidden_t_methods', None)
+        if hidden_t_methods is not None:
+            hidden.update(hidden_t_methods() or [])
+        return (k for k in self._d.iterkeys() if k not in hidden)
 
 
 class EntityViews(NamespaceExtension):

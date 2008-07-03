@@ -284,6 +284,15 @@ class BaseDecoration(CreatesSchema):
             return E.LoopSegment._DirtyCreateLoop()
 
 
+    class Sprocket(E.Entity):
+
+        count = f.integer()
+
+        def _hidden_t_methods(self):
+            if self.count < 50:
+                return ['delete']
+
+
     class Create_Foo_And_Bar(T.Transaction):
 
         def _execute(self, db):
@@ -406,7 +415,7 @@ class BaseDecoration(CreatesSchema):
         # Extents for entity classes that are not customized only have
         # a transaction method for the canonical Create transaction.
         t = db.Realm.t
-        assert sorted(list(t)) == ['create']
+        assert sorted(t) == ['create']
         assert label.label(t.create) == 'New'
         # Entity instances for entity classes that are not customized
         # only have transaction methods for canonical Delete and
@@ -440,7 +449,7 @@ class BaseDecoration(CreatesSchema):
         # _hide('t_txname').
         #
         # First check the extent.
-        assert sorted(list(db.LoopSegment.t)) == [
+        assert sorted(db.LoopSegment.t) == [
             'create_loop', 'dirty_create_loop']
         # Create is still available, even though it's hidden.
         assert isinstance(db.LoopSegment.t.create(), base.Transaction)
@@ -450,8 +459,16 @@ class BaseDecoration(CreatesSchema):
         tx.count = 1
         segment = db.execute(tx)
         # Clone is also hidden since it is a special case of create.
-        assert sorted(list(segment.t)) == ['delete']
+        assert sorted(segment.t) == ['delete']
         assert isinstance(segment.t.update(), base.Transaction)
+        # Define a per-instance _hidden_t_methods method to restrict
+        # the valid methods available for an entity instance.
+        sprocket1 = db.execute(db.Sprocket.t.create(count=1))
+        sprocket99 = db.execute(db.Sprocket.t.create(count=99))
+        assert sorted(sprocket1.t) == ['clone', 'update']
+        assert sorted(sprocket99.t) == ['clone', 'delete', 'update']
+        assert sorted(sprocket1.v.default().t) == ['clone', 'update']
+        assert sorted(sprocket99.v.default().t) == ['clone', 'delete', 'update']
 
     def test_builtin_decoration(self):
         assert label.label('some string') == 'some string'

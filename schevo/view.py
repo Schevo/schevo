@@ -209,12 +209,22 @@ class ViewTransactions(NamespaceExtension):
         return name in self._d and name not in hidden_actions
 
     def __iter__(self):
-        if self._v._hidden_actions is None:
-            hidden_actions = self._v._entity._hidden_actions
+        view = self._v
+        if view._hidden_actions is not None:
+            # Use view's _hidden_actions if available.
+            hidden = view._hidden_actions.copy()
         else:
-            hidden_actions = self._v._hidden_actions
-        return (k for k in self._d.iterkeys()
-                if k not in hidden_actions)
+            # Fall back to entity's.
+            hidden = view._entity._hidden_actions.copy()
+        # Use view's _hidden_t_methods if available.
+        hidden_t_methods = getattr(view, '_hidden_t_methods', None)
+        # Fall back to entity's.
+        if hidden_t_methods is None:
+            hidden_t_methods = getattr(view._entity, '_hidden_t_methods', None)
+        # Combine _hidden_t_methods results with _hidden_actions.
+        if hidden_t_methods is not None:
+            hidden.update(hidden_t_methods() or [])
+        return (k for k in self._d.iterkeys() if k not in hidden)
 
 
 class ViewQueries(NamespaceExtension):
