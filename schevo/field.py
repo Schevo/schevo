@@ -457,7 +457,7 @@ class Field(base.Field):
         raise NotImplementedError(
             '_unassign not implemented for %r' % self.__class__)
 
-    def validate(self, value):
+    def validate(self, value, ignore_valid_values=False):
         """Validate the value, raising an error on failure.
 
         Used by the persistence layer and has strict validation
@@ -471,7 +471,10 @@ class Field(base.Field):
                     self._name, self._instance)
                 self._raise(
                     schevo.error.FieldRequired, msg, self, self._instance)
-        elif valid_values is not None and value not in valid_values:
+        elif (not ignore_valid_values
+              and valid_values is not None
+              and value not in valid_values
+              ):
             # Valid values.
             msg = '%s %s must be one of the valid values %r, not %r %r' % (
                 self._instance, self._name, valid_values, value, type(value))
@@ -1233,7 +1236,17 @@ class _EntityBase(Field):
 
     def validate(self, value):
         """Validate the value, raising an error on failure."""
-        Field.validate(self, value)
+        Field.validate(self, value, ignore_valid_values=True)
+        if self.valid_values is not None:
+            valid_values = [
+                v for v in self.valid_values
+                if isinstance(v, EntityActual)
+                ]
+            if len(valid_values) > 0 and value not in valid_values:
+                msg = '%s %s must be one of the valid values %r, not %r %r' % (
+                    self._instance, self._name, valid_values,
+                    value, type(value))
+                self._raise(ValueError, msg)
         allow = self.allow
         if isinstance(value, tuple):
             return

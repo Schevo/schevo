@@ -301,6 +301,7 @@ class Create(Transaction):
         # Reset metadata_changed on all fields.
         for f in self._field_map.itervalues():
             f.reset_metadata_changed()
+        resolve_valid_values(self)
 
     def _setup(self):
         """Override this in subclasses to customize a transaction."""
@@ -371,77 +372,6 @@ class Create(Transaction):
         # After execute callback.
         self._after_execute(db, entity)
         return entity
-
-
-def find_references(db, entity, traversed,
-                    restricters, cascaders, unassigners, removers):
-    """Support function for Delete transactions.  Acts recursively to
-    get a list of all entities directly or indirectly related to
-    `entity`.
-
-    NOTE: This function returns nothing.  Instead, the `references`
-    and `traversed` arguments are mutated.
-
-    - `db`: The database the Delete is occuring in.
-
-    - `entity`: The entity to inspect when adding to the references
-      list.
-
-    The following arguments are directly mutated during execution:
-
-    - `traversed`: The set of already-traversed entities.
-
-    - `restricters`: Dictionary of ``referrer: set([(f_name,
-      referred), ...])`` pairs storing information about references
-      that RESTRICT deletion.
-
-    - `cascaders`: Dictionary of ``referrer: set([f_name, ...])``
-      pairs storing information about references that allow CASCADE
-      deletion.
-
-    - `unassigners`: Dictionary of ``referrer: set([(f_name,
-      referred), ...])`` pairs storing information about references
-      that desire to UNASSIGN values on deletion.
-
-    - `removers`: Dictionary of ``referrer: set([(f_name, referred),
-      ...])`` pairs storing information about references that desire
-      to REMOVE values on deletion.
-    """
-    if entity in traversed:
-        return
-    traversed.add(entity)
-    entity_extent_name = entity._extent.name
-    for (e_name, f_name), others in entity.sys.links().iteritems():
-        extent = db.extent(e_name)
-        field_class = extent.field_spec[f_name]
-        on_delete_get = field_class.on_delete.get
-        on_delete_default = field_class.on_delete_default
-        for referrer in others:
-            on_delete = on_delete_get(entity_extent_name, on_delete_default)
-            if on_delete is RESTRICT:
-                if referrer == entity:
-                    # Don't restrict when an entity refers to
-                    # itself. Instead, treat it as a CASCADE delete.
-                    field_names = cascaders.setdefault(referrer, set())
-                    field_names.add(f_name)
-                else:
-                    field_referred_set = restricters.setdefault(
-                        referrer, set())
-                    field_referred_set.add((f_name, entity))
-            elif on_delete is CASCADE:
-                field_names = cascaders.setdefault(referrer, set())
-                field_names.add(f_name)
-            elif on_delete is UNASSIGN:
-                field_referred_set = unassigners.setdefault(referrer, set())
-                field_referred_set.add((f_name, entity))
-            elif on_delete is REMOVE:
-                field_referred_set = removers.setdefault(referrer, set())
-                field_referred_set.add((f_name, entity))
-            else:
-                raise ValueError(
-                    'Unrecognized on_delete value %r' % on_delete)
-            find_references(db, referrer, traversed,
-                            restricters, cascaders, unassigners, removers)
 
 
 class Delete(Transaction):
@@ -628,6 +558,7 @@ class Update(Transaction):
         # Reset metadata_changed on all fields.
         for f in self._field_map.itervalues():
             f.reset_metadata_changed()
+        resolve_valid_values(self)
 
     def __getattr__(self, name):
         if name == 'm':
@@ -902,6 +833,77 @@ class CallableWrapper(Transaction):
 # ---------------------------------------------------------------------
 
 
+def find_references(db, entity, traversed,
+                    restricters, cascaders, unassigners, removers):
+    """Support function for Delete transactions.  Acts recursively to
+    get a list of all entities directly or indirectly related to
+    `entity`.
+
+    NOTE: This function returns nothing.  Instead, the `references`
+    and `traversed` arguments are mutated.
+
+    - `db`: The database the Delete is occuring in.
+
+    - `entity`: The entity to inspect when adding to the references
+      list.
+
+    The following arguments are directly mutated during execution:
+
+    - `traversed`: The set of already-traversed entities.
+
+    - `restricters`: Dictionary of ``referrer: set([(f_name,
+      referred), ...])`` pairs storing information about references
+      that RESTRICT deletion.
+
+    - `cascaders`: Dictionary of ``referrer: set([f_name, ...])``
+      pairs storing information about references that allow CASCADE
+      deletion.
+
+    - `unassigners`: Dictionary of ``referrer: set([(f_name,
+      referred), ...])`` pairs storing information about references
+      that desire to UNASSIGN values on deletion.
+
+    - `removers`: Dictionary of ``referrer: set([(f_name, referred),
+      ...])`` pairs storing information about references that desire
+      to REMOVE values on deletion.
+    """
+    if entity in traversed:
+        return
+    traversed.add(entity)
+    entity_extent_name = entity._extent.name
+    for (e_name, f_name), others in entity.sys.links().iteritems():
+        extent = db.extent(e_name)
+        field_class = extent.field_spec[f_name]
+        on_delete_get = field_class.on_delete.get
+        on_delete_default = field_class.on_delete_default
+        for referrer in others:
+            on_delete = on_delete_get(entity_extent_name, on_delete_default)
+            if on_delete is RESTRICT:
+                if referrer == entity:
+                    # Don't restrict when an entity refers to
+                    # itself. Instead, treat it as a CASCADE delete.
+                    field_names = cascaders.setdefault(referrer, set())
+                    field_names.add(f_name)
+                else:
+                    field_referred_set = restricters.setdefault(
+                        referrer, set())
+                    field_referred_set.add((f_name, entity))
+            elif on_delete is CASCADE:
+                field_names = cascaders.setdefault(referrer, set())
+                field_names.add(f_name)
+            elif on_delete is UNASSIGN:
+                field_referred_set = unassigners.setdefault(referrer, set())
+                field_referred_set.add((f_name, entity))
+            elif on_delete is REMOVE:
+                field_referred_set = removers.setdefault(referrer, set())
+                field_referred_set.add((f_name, entity))
+            else:
+                raise ValueError(
+                    'Unrecognized on_delete value %r' % on_delete)
+            find_references(db, referrer, traversed,
+                            restricters, cascaders, unassigners, removers)
+
+
 def resolve(db, field_name, value, FieldClass, field_names=None):
     """Resolve the entity reference(s) in `value` and return the
     actual entity references.
@@ -972,6 +974,20 @@ def resolve(db, field_name, value, FieldClass, field_names=None):
                 raise ValueError('no entity %s found in %s' %
                                  (kw, lookup_extent))
     return value
+
+
+def resolve_valid_values(tx):
+    db = tx._db
+    field_names = list(tx.f)
+    for field_name, field in tx._field_map.iteritems():
+        if (isinstance(field, _EntityBase)
+            and field.valid_values is not None
+            and len(field.valid_values) > 0
+            ):
+            field.valid_values = [
+                resolve(db, field_name, value, field.__class__)
+                for value in field.valid_values
+                ]
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
