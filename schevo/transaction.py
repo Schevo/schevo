@@ -85,7 +85,7 @@ class Transaction(base.Transaction):
         self.sys = TransactionSys(self)
         if self._populate_default_values:
             for field in self._field_map.itervalues():
-                field.set(field.default[0])
+                field.set(field.default[0], check_readonly=False)
 
     def __getattr__(self, name):
         if name == 'x':
@@ -104,7 +104,7 @@ class Transaction(base.Transaction):
         if name == 'sys' or name.startswith('_') or len(name) == 1:
             return base.Transaction.__setattr__(self, name, value)
         else:
-            self._field_map[name].set(value)
+            self._field_map[name].set(value, check_readonly=True)
 
     def __str__(self):
         text = label(self)
@@ -289,7 +289,7 @@ class Create(Transaction):
         # assigned a value.
         field_spec = self._field_spec
         for f in field_map.itervalues():
-            if not f.assigned and not f.readonly:
+            if not f.assigned:
                 default = f.default[0]
                 if f.may_store_entities and not callable(default):
                     field_name = f._name
@@ -297,7 +297,7 @@ class Create(Transaction):
                                       field_spec[field_name])
                 while callable(default) and default is not UNASSIGNED:
                     default = default()
-                f.set(default)
+                f.set(default, check_readonly=False)
         # Reset metadata_changed on all fields.
         for f in self._field_map.itervalues():
             f.reset_metadata_changed()

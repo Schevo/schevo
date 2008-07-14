@@ -423,7 +423,7 @@ class Field(base.Field):
         else:
             return unicode(self)
 
-    def set(self, value):
+    def set(self, value, check_readonly=False):
         """Set the field value."""
         # None is never allowed.
         if value is None:
@@ -431,7 +431,7 @@ class Field(base.Field):
                 self._name, self._instance, self._instance)
             self._raise(ValueError, msg)
         # Readonly fields cannot be changed directly.
-        if self.readonly:
+        if check_readonly and self.readonly:
             msg = '%s field is readonly and cannot be changed on %s %r' % (
                 self._name, self._instance, self._instance)
             self._raise(schevo.error.FieldReadonly, msg, self, self._instance)
