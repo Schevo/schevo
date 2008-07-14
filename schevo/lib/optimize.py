@@ -217,13 +217,13 @@ def make_constants(builtin_only=False, stoplist=[], verbose=False):
 
 class OptimizingMetaclass(type):
     def __init__(cls, name, bases, dict):
-        super(OptimizingMetaclass, cls).__init__(name, bases, dict)
+        type.__init__(cls, name, bases, dict)
         bind_all(cls)
 
 def build_optimizing_metaclass(builtin_only=False, stoplist=[], verbose=False):
     class _OptimizingMetaclass(type):
         def __init__(cls, name, bases, dict):
-            super(_OptimizingMetaclass, cls).__init__(name, bases, dict)
+            type.__init__(cls, name, bases, dict)
             bind_all(cls, builtin_only, stoplist, verbose)
     return _OptimizingMetaclass
 

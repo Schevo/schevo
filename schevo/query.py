@@ -95,7 +95,7 @@ class Param(Query):
 
     def __setattr__(self, name, value):
         if name == 'sys' or name.startswith('_') or len(name) == 1:
-            return super(Param, self).__setattr__(name, value)
+            return Query.__setattr__(self, name, value)
         else:
             self._field_map[name].set(value)
 
@@ -118,7 +118,7 @@ class ParamChangeHandlers(NamespaceExtension):
     _readonly = False
 
     def __init__(self, query):
-        super(ParamChangeHandlers, self).__init__()
+        NamespaceExtension.__init__(self)
         d = self._d
         # Note: could be optimized via using a metaclass with
         # ParamQuery.
@@ -153,7 +153,7 @@ class Exact(Param):
     _label = 'Exact Matches'
 
     def __init__(self, extent, **kw):
-        # NOTE: This deliberately does NOT call super(Exact, self).__init__
+        # NOTE: This deliberately does NOT call Param.__init__
         self._on = extent
         # First, use the fields defined in a subclass, if any.
         field_spec = FieldSpecMap(self._field_spec)
@@ -511,7 +511,7 @@ class ByExample(Intersection):
                 match.value = kw[name]
                 match.operator = '=='
             queries.append(match)
-        super(ByExample, self).__init__(*queries)
+        Intersection.__init__(self, *queries)
 
 
 class Union(Query):

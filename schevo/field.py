@@ -1322,10 +1322,10 @@ class EntityList(_EntityBase):
         if isinstance(value, (list, tuple)):
             new_values = []
             for item in value:
-                new_values.append(super(EntityList, self).convert(item, db))
+                new_values.append(_EntityBase.convert(self, item, db))
             value = new_values
         else:
-            value = super(EntityList, self).convert(value, db)
+            value = _EntityBase.convert(self, value, db)
         return value
 
     def db_equivalence_value(self, stop_entities):
@@ -1449,26 +1449,26 @@ class EntityList(_EntityBase):
             if self.allow_unassigned:
                 for item in value:
                     if item is not UNASSIGNED:
-                        super(EntityList, self).validate(item)
+                        _EntityBase.validate(self, item)
             else:
                 for item in value:
                     if item is not UNASSIGNED:
-                        super(EntityList, self).validate(item)
+                        _EntityBase.validate(self, item)
                     else:
                         msg = ('EntityList %s on %s %r does not '
                                'allow UNASSIGNED members' %
                                (self._name, self._instance, self._instance))
                         self._raise(ValueError, msg)
         else:
-            super(EntityList, self).validate(value)
+            _EntityBase.validate(self, value)
 
     def verify(self, value):
         """Verify the value, raising an error on failure."""
         if isinstance(value, list):
             for item in value:
-                super(EntityList, self).verify(item)
+                _EntityBase.verify(self, item)
         else:
-            super(EntityList, self).verify(value)
+            _EntityBase.verify(self, value)
 
 
 class EntitySet(_EntityBase):
@@ -1492,10 +1492,10 @@ class EntitySet(_EntityBase):
         if isinstance(value, (set, frozenset)):
             new_values = set()
             for item in value:
-                new_values.add(super(EntitySet, self).convert(item, db))
+                new_values.add(_EntityBase.convert(self, item, db))
             value = new_values
         else:
-            value = super(EntitySet, self).convert(value, db)
+            value = _EntityBase.convert(self, value, db)
         return value
 
     def _dump(self):
@@ -1562,17 +1562,17 @@ class EntitySet(_EntityBase):
                     self._name, self.min_size, self._instance, self._instance)
                 self._raise(ValueError, msg)
             for item in value:
-                super(EntitySet, self).validate(item)
+                _EntityBase.validate(self, item)
         else:
-            super(EntitySet, self).validate(value)
+            _EntityBase.validate(self, value)
 
     def verify(self, value):
         """Verify the value, raising an error on failure."""
         if isinstance(value, (set, frozenset)):
             for item in value:
-                super(EntitySet, self).verify(item)
+                _EntityBase.verify(self, item)
         else:
-            super(EntitySet, self).verify(value)
+            _EntityBase.verify(self, value)
 
 
 class EntitySetSet(_EntityBase):
@@ -1600,11 +1600,11 @@ class EntitySetSet(_EntityBase):
             for items in value:
                 new_items = set()
                 for item in items:
-                    new_items.add(super(EntitySetSet, self).convert(item, db))
+                    new_items.add(_EntityBase.convert(self, item, db))
                 new_values.add(frozenset(new_items))
             value = frozenset(new_values)
         else:
-            value = super(EntitySetSet, self).convert(value, db)
+            value = _EntityBase.convert(self, value, db)
         return value
 
     def _dump(self):
@@ -1691,17 +1691,17 @@ class EntitySetSet(_EntityBase):
                            'not a set with item %s %r' % (item_set, item_set,))
                     self._raise(ValueError, msg)
                 for item in item_set:
-                    super(EntitySetSet, self).validate(item)
+                    _EntityBase.validate(self, item)
         else:
-            super(EntitySetSet, self).validate(value)
+            _EntityBase.validate(self, value)
 
     def verify(self, value):
         """Verify the value, raising an error on failure."""
         if isinstance(value, (set, frozenset)):
             for item in value:
-                super(EntitySetSet, self).verify(item)
+                _EntityBase.verify(self, item)
         else:
-            super(EntitySetSet, self).verify(value)
+            _EntityBase.verify(self, value)
 
 
 # --------------------------------------------------------------------

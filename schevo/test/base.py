@@ -303,7 +303,7 @@ class EvolvesSchemata(CreatesDatabase):
     _use_db_cache = True
 
     def __init__(self):
-        super(EvolvesSchemata, self).__init__()
+        CreatesDatabase.__init__(self)
         schema_version = self.schema_version
         if schema_version is None:
             raise ValueError('schema_version must be set.')
@@ -402,7 +402,7 @@ class DocTest(CreatesSchema):
     body = ''
 
     def __init__(self, body=None, schema=None, format=None):
-        super(DocTest, self).__init__()
+        CreatesSchema.__init__(self)
         if not (body or schema):
             body = self.body
             schema = self.schema
@@ -471,7 +471,7 @@ class DocTestEvolve(EvolvesSchemata):
         self.schemata = schemata
         self.schema_version = version
         self.skip_evolution = skip_evolution
-        super(DocTestEvolve, self).__init__()
+        EvolvesSchemata.__init__(self)
         self.setUp()
 
     def done(self):

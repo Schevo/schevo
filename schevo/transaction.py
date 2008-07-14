@@ -28,10 +28,11 @@ from schevo.namespace import NamespaceExtension
 from schevo.trace import log
 
 
-class TransactionMeta(schema_metaclass('T')):
+T_metaclass = schema_metaclass('T')
+class TransactionMeta(T_metaclass):
 
     def __init__(cls, class_name, bases, class_dict):
-        super(TransactionMeta, cls).__init__(class_name, bases, class_dict)
+        T_metaclass.__init__(cls, class_name, bases, class_dict)
         if (cls._restrict_subclasses
             and '_restrict_subclasses' not in class_dict
             ):
@@ -165,7 +166,7 @@ class TransactionExtenders(NamespaceExtension):
     _readonly = False
 
     def __init__(self, tx):
-        super(TransactionExtenders, self).__init__()
+        NamespaceExtension.__init__(self)
         d = self._d
         for x_name in tx._x_names:
             func = getattr(tx, x_name)
@@ -181,7 +182,7 @@ class TransactionChangeHandlers(NamespaceExtension):
     _readonly = False
 
     def __init__(self, tx):
-        super(TransactionChangeHandlers, self).__init__()
+        NamespaceExtension.__init__(self)
         d = self._d
         for h_name in tx._h_names:
             func = getattr(tx, h_name)

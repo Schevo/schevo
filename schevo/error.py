@@ -17,7 +17,7 @@ class DatabaseAlreadyExists(RuntimeError):
 
     def __init__(self, filename):
         message = 'Schevo database already in file %r.' % filename
-        super(DatabaseAlreadyExists, self).__init__(message)
+        RuntimeError.__init__(self, message)
         self.filename = filename
 
 
@@ -26,7 +26,7 @@ class DatabaseDoesNotExist(RuntimeError):
 
     def __init__(self, filename):
         message = 'Schevo database not found in file %r.' % filename
-        super(DatabaseDoesNotExist, self).__init__(message)
+        RuntimeError.__init__(self, message)
         self.filename = filename
 
 
@@ -52,7 +52,7 @@ class DatabaseFormatMismatch(RuntimeError):
             'Source database must be in format %i; currently in format %i.'
             % (required_format, current_format)
             )
-        super(DatabaseFormatMismatch, self).__init__(message)
+        RuntimeError.__init__(self, message)
         self.current_format = current_format
         self.required_format = required_format
 
@@ -65,7 +65,7 @@ class DatabaseMismatch(RuntimeError):
             '%r field of %r cannot be resolved to the current database.'
             % (field_name, field_value)
             )
-        super(DatabaseMismatch, self).__init__(message)
+        RuntimeError.__init__(self, message)
         self.field_name = field_name
         self.field_value = field_value
 
@@ -79,7 +79,7 @@ class DatabaseVersionMismatch(RuntimeError):
             'Current version is %i; expected: %i; requested: %i.'
             % (current_version, expected_version, requested_version)
             )
-        super(DatabaseVersionMismatch, self).__init__(message)
+        RuntimeError.__init__(self, message)
         self.current_version = current_version
         self.expected_version = expected_version
         self.requested_version = requested_version
@@ -91,7 +91,7 @@ class DeleteRestricted(Restricted):
     def __init__(self, entity=None, referring_entity=None,
                  referring_field_name=None):
         message = 'Cannot delete; referenced by one or more other entities.'
-        super(DeleteRestricted, self).__init__(message)
+        Restricted.__init__(self, message)
         self.restrictions = set()
         if (entity is not None
             and referring_entity is not None
@@ -112,7 +112,7 @@ class ExtentExists(KeyError):
 
     def __init__(self, extent_name):
         message = 'Extent %r already exists.' % extent_name
-        super(ExtentExists, self).__init__(message)
+        KeyError.__init__(self, message)
         self.extent_name = extent_name
 
 
@@ -121,7 +121,7 @@ class ExtentDoesNotExist(KeyError):
 
     def __init__(self, extent_name):
         message = 'Extent %r does not exist.' % extent_name
-        super(ExtentDoesNotExist, self).__init__(message)
+        KeyError.__init__(self, message)
         self.extent_name = extent_name
 
 
@@ -133,7 +133,7 @@ class EntityExists(KeyError):
             'Entity OID %i already exists in extent %r.'
             % (oid, extent_name)
             )
-        super(EntityExists, self).__init__(message)
+        KeyError.__init__(self, message)
         self.extent_name = extent_name
         self.oid = oid
 
@@ -152,7 +152,7 @@ class EntityDoesNotExist(KeyError):
                 'OID %i does not exist in extent %r.'
                 % (oid, extent_name)
                 )
-        super(EntityDoesNotExist, self).__init__(message)
+        KeyError.__init__(self, message)
         self.extent_name = extent_name
         self.field_name = field_name
         self.oid = oid
@@ -172,7 +172,7 @@ class FieldDoesNotExist(KeyError):
                 % new_field_name
                 )
         message += '.'
-        super(FieldDoesNotExist, self).__init__(message)
+        KeyError.__init__(self, message)
         self.object_or_name = object_or_name
         self.field_name = field_name
         self.new_field_name = new_field_name
@@ -182,7 +182,7 @@ class FieldReadonly(AttributeError):
     """Cannot set values of readonly fields."""
 
     def __init__(self, message, field, instance):
-        super(FieldReadonly, self).__init__(message)
+        AttributeError.__init__(self, message)
         self.field = field
         self.instance = instance
 
@@ -191,7 +191,7 @@ class FieldRequired(AttributeError):
     """Must set values of required fields."""
 
     def __init__(self, message, field, instance):
-        super(FieldRequired, self).__init__(message)
+        AttributeError.__init__(self, message)
         self.field = field
         self.instance = instance
 
@@ -204,7 +204,7 @@ class FindoneFoundMoreThanOne(Exception):
             'Found more than one match in extent %r for criteria %r.'
             % (extent_name, criteria)
             )
-        super(FindoneFoundMoreThanOne, self).__init__(message)
+        Exception.__init__(self, message)
         self.extent_name = extent_name
         self.criteria = criteria.copy()
 
@@ -217,7 +217,7 @@ class IndexDoesNotExist(Exception):
             'Index %r not found in extent %r.'
             % (index_spec, extent_name)
             )
-        super(IndexDoesNotExist, self).__init__(message)
+        Exception.__init__(self, message)
         self.extent_name = extent_name
         self.index_spec = index_spec
 
@@ -230,7 +230,7 @@ class KeyCollision(KeyError):
             'Duplicate values %r for key %r in extent %r.'
             % (field_values, key_spec, extent_name)
             )
-        super(KeyCollision, self).__init__(message)
+        KeyError.__init__(self, message)
         self.extent_name = extent_name
         self.key_spec = key_spec
         self.field_values = field_values
@@ -245,7 +245,7 @@ class TransactionAlreadyExecuted(RuntimeError):
 
     def __init__(self, transaction):
         message = 'Transaction %r already executed.' % transaction
-        super(TransactionAlreadyExecuted, self).__init__(message)
+        RuntimeError.__init__(self, message)
         self.transaction = transaction
 
 
@@ -258,7 +258,7 @@ class TransactionExpired(RuntimeError):
             'Transaction %r expired; original entity revision was %i, now %i.'
             % (transaction, original_rev, current_rev)
             )
-        super(TransactionExpired, self).__init__(message)
+        RuntimeError.__init__(self, message)
         self.transaction = transaction
         self.original_rev = original_rev
         self.current_rev = current_rev
@@ -272,7 +272,7 @@ class TransactionFieldsNotChanged(RuntimeError):
             'Transaction %r requires at least one field changed.'
             % transaction
             )
-        super(TransactionFieldsNotChanged, self).__init__(message)
+        RuntimeError.__init__(self, message)
         self.transaction = transaction
 
 
@@ -285,7 +285,7 @@ class TransactionNotExecuted(RuntimeError):
             'or undo transaction.'
             % transaction
             )
-        super(TransactionNotExecuted, self).__init__(message)
+        RuntimeError.__init__(self, message)
         self.transaction = transaction
 
 
@@ -293,7 +293,7 @@ class TransactionRuleViolation(RuntimeError):
     """A transaction rule was violated."""
 
     def __init__(self, message, **kwargs):
-        super(TransactionRuleViolation, self).__init__(message)
+        RuntimeError.__init__(self, message)
         self.__dict__.update(kwargs)
 
 
@@ -310,14 +310,14 @@ class AmbiguousFieldDefinition(SchemaError):
 
     def __init__(self, reason):
         message = 'Ambiguous field definition: %r' % reason
-        super(AmbiguousFieldDefinition, self).__init__(message)
+        SchemaError.__init__(self, message)
         self.reason = reason
 ##     def __init__(self, reason, class_name, field_name):
 ##         message = (
 ##             'Ambiguous field definition for %r in class %r: %r'
 ##             % (field_name, class_name, reason)
 ##             )
-##         super(AmbiguousFieldDefinition, self).__init__(message)
+##         SchemaError.__init__(self, message)
 ##         self.reason = reason
 ##         self.class_name = class_name
 ##         self.field_name = field_name
@@ -331,7 +331,7 @@ class KeyIndexOverlap(SchemaError):
             'Cannot use same spec for both key and index in entity class %r.'
             % class_name
             )
-        super(KeyIndexOverlap, self).__init__(message)
+        SchemaError.__init__(self, message)
         self.class_name = class_name
         self.overlapping_specs = overlapping_specs
 
@@ -346,7 +346,7 @@ class TransactionExecuteRedefinitionRestricted(SchemaError):
             'but that is not allowed with those bases.'
             % (class_name, base_classes)
             )
-        super(TransactionExecuteRedefinitionRestricted, self).__init__(message)
+        SchemaError.__init__(self, message)
         self.class_name = class_name
         self.base_classes = base_classes
 
@@ -356,7 +356,7 @@ class UnsupportedFieldType(SchemaError):
 
     def __init__(self, reason):
         message = 'Unsupported field type: %s' % reason
-        super(UnsupportedFieldType, self).__init__(message)
+        SchemaError.__init__(self, message)
         self.reason = reason
 
 
