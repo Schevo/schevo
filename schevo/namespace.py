@@ -44,11 +44,12 @@ class Fields(object):
             raise AttributeError(name)
         del f[name]
 
+    __delitem__ = __delattr__
+
     def __getattr__(self, name):
         return self._obj._field_map[name]
 
-    def __getitem__(self, name):
-        return self.__getattr__(name)
+    __getitem__ = __getattr__
 
     def __iter__(self):
         return iter(self._obj._field_map)
@@ -68,6 +69,8 @@ class Fields(object):
             msg = '%r is not a Field or FieldDefinition instance.' % value
             raise ValueError(msg)
         field_map[name] = value
+
+    __setitem__ = __setattr__
 
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
