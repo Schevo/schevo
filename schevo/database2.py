@@ -931,10 +931,9 @@ class Database(base.Database):
                     # Only process the fields that still exist.
                     if referrer_field_id in all_field_ids:
                         # Remove only the links that no longer exist.
-                        for other_value in (
-                            related_set
-                            - new_related_entities_by_id[referrer_field_id]
-                            ):
+                        new_related_entities = new_related_entities_by_id.get(
+                            referrer_field_id, set())
+                        for other_value in related_set - new_related_entities:
                             # Remove the link to the other entity.
                             other_extent_id = other_value.extent_id
                             other_oid = other_value.oid
