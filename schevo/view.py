@@ -28,6 +28,7 @@ class View(base.View):
 
     _hidden_actions = None
     _hidden_queries = None
+    _hidden_views = None
 
     def __init__(self, entity, *args, **kw):
         self._entity = entity
