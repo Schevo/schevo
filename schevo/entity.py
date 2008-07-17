@@ -243,6 +243,7 @@ class EntityMeta(type):
                 ViewClass._extent_name = class_name
                 ViewClass._hidden_actions = set(cls._hidden_actions)
                 ViewClass._hidden_queries = set(cls._hidden_queries)
+                ViewClass._hidden_views = set(cls._hidden_views)
                 # Acquire field specs from the host entity class.
                 base_spec = ViewClass._field_spec
                 ViewClass._fget_fields = cls._fget_fields
