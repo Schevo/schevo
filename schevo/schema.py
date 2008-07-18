@@ -69,7 +69,7 @@ def _hide(*args):
     # XXX: see schevo.entity.Entity._hidden_*
     hidden_actions = clsLocals.setdefault(
         '_hidden_actions', set(['create_if_necessary', 'generic_update']))
-    hidden_queries = clsLocals.setdefault('_hidden_queries', set([]))
+    hidden_queries = clsLocals.setdefault('_hidden_queries', set())
     hidden_views = clsLocals.setdefault('_hidden_views', set())
     for name in args:
         if name.startswith('q_'):

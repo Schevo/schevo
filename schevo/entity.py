@@ -241,9 +241,17 @@ class EntityMeta(type):
                 ViewClass = attr
                 ViewClass._EntityClass = cls
                 ViewClass._extent_name = class_name
-                ViewClass._hidden_actions = set(cls._hidden_actions)
-                ViewClass._hidden_queries = set(cls._hidden_queries)
-                ViewClass._hidden_views = set(cls._hidden_views)
+                # For each set of hidden methods, update the set based
+                # on the entity class's hidden methods.
+                if ViewClass._hidden_actions is None:
+                    ViewClass._hidden_actions = set()
+                ViewClass._hidden_actions.update(cls._hidden_actions)
+                if ViewClass._hidden_queries is None:
+                    ViewClass._hidden_queries = set()
+                ViewClass._hidden_queries.update(cls._hidden_queries)
+                if ViewClass._hidden_views is None:
+                    ViewClass._hidden_views = set()
+                ViewClass._hidden_views.update(cls._hidden_views)
                 # Acquire field specs from the host entity class.
                 base_spec = ViewClass._field_spec
                 ViewClass._fget_fields = cls._fget_fields
