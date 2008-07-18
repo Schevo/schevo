@@ -229,6 +229,36 @@ class Database(database2.Database):
         append_change = self._append_change
         append_change(DELETE, extent_name, oid)
 
+    def _delete_extent(self, extent_name):
+        """Remove a named extent."""
+        # XXX: Need to check for links to any entity in this extent,
+        # and fail to remove it if so.
+        #
+        # Iterate through all entities in the extent to delete, and
+        # remove bidirectional link information from any entities they
+        # point to.
+        extent_map = self._extent_map(extent_name)
+        extent_id = extent_map['id']
+        entity_field_ids = extent_map['entity_field_ids']
+        for oid, entity_map in extent_map['entities'].iteritems():
+            fields = entity_map['fields']
+            for field_id in entity_field_ids:
+                stored_value = fields.get(field_id, UNASSIGNED)
+                if isinstance(stored_value, tuple):
+                    rel_extent_id, rel_oid = stored_value
+                    rel_extent_map = self._extent_maps_by_id.get(
+                        rel_extent_id, None)
+                    if rel_extent_map is not None:
+                        rel_entity_map = rel_extent_map['entities'][rel_oid]
+                        rel_links = rel_entity_map['links']
+                        key = (extent_id, field_id)
+                        if key in rel_links:
+                            del rel_links[key]
+        # Delete the extent.
+        del self._extent_name_id[extent_name]
+        del self._extent_maps_by_id[extent_id]
+        del self._extent_maps_by_name[extent_name]
+
     def _entity_field(self, extent_name, oid, name):
         """Return the value of a field in an entity in named extent
         with given OID."""

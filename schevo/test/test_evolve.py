@@ -7,6 +7,7 @@ from textwrap import dedent
 
 from schevo.constant import UNASSIGNED
 from schevo import error
+import schevo.debug
 from schevo.test import CreatesDatabase, EvolvesSchemata, raises
 
 
@@ -985,6 +986,7 @@ class BaseEvolveInterVersion(CreatesDatabase):
                 ]
         """)
         self.sync(schema1)
+        assert len(db.Socket[1].sys.links()) == 2
         schema2 = fix("""
         class Location(E.Entity):
             name = f.string()
@@ -1010,11 +1012,9 @@ class BaseEvolveInterVersion(CreatesDatabase):
             _key(socket_a, socket_b)
             _index(socket_a)
             _index(socket_b)
-        def during_evolve(db):
-            pass
         """)
         self.evolve(schema2, version=2)
-        print db.Socket[1].sys.links()
+        assert len(db.Socket[1].sys.links()) == 0
 
     def test_before_during_after(self):
         schema1 = fix("""

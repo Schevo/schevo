@@ -1072,8 +1072,27 @@ class Database(base.Database):
         """Remove a named extent."""
         # XXX: Need to check for links to any entity in this extent,
         # and fail to remove it if so.
+        #
+        # Iterate through all entities in the extent to delete, and
+        # remove bidirectional link information from any entities they
+        # point to.
         extent_map = self._extent_map(extent_name)
         extent_id = extent_map['id']
+        for oid, entity_map in extent_map['entities'].iteritems():
+            related_entities = entity_map['related_entities'].iteritems()
+            for field_id, related_entity_set in related_entities:
+                for related_entity in related_entity_set:
+                    rel_extent_id = related_entity.extent_id
+                    rel_oid = related_entity.oid
+                    rel_extent_map = self._extent_maps_by_id.get(
+                        rel_extent_id, None)
+                    if rel_extent_map is not None:
+                        rel_entity_map = rel_extent_map['entities'][rel_oid]
+                        rel_links = rel_entity_map['links']
+                        key = (extent_id, field_id)
+                        if key in rel_links:
+                            del rel_links[key]
+        # Delete the extent.
         del self._extent_name_id[extent_name]
         del self._extent_maps_by_id[extent_id]
         del self._extent_maps_by_name[extent_name]
