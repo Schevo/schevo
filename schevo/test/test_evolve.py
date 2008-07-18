@@ -943,6 +943,79 @@ class BaseEvolveInterVersion(CreatesDatabase):
         numbers = sorted([pn.number for pn in pns])
         assert numbers == ['555-1234', '555-9876']
 
+    def test_same_extent_name(self):
+        schema1 = fix("""
+        class Location(E.Entity):
+            name = f.string()
+            _key(name)
+            _initial = [
+                ('Left',),
+                ('Right',),
+                ]
+        class LocationConnection(E.Entity):
+            location = f.entity('Location')
+            connection = f.entity('Connection')
+            _key(location, connection)
+            _initial = [
+                (('Left',), (('Socket 1',), ('Socket 2',)),),
+                (('Right',), (('Socket 2',), ('Socket 3',)),),
+                (('Left',), (('Socket 3',), ('Socket 4',)),),
+                (('Right',), (('Socket 4',), ('Socket 1',)),),
+                ]
+        class Connection(E.Entity):
+            socket_a = f.entity('Socket')
+            socket_b = f.entity('Socket')
+            _key(socket_a, socket_b)
+            _index(socket_a)
+            _index(socket_b)
+            _initial = [
+                (('Socket 1',), ('Socket 2',)),
+                (('Socket 2',), ('Socket 3',)),
+                (('Socket 3',), ('Socket 4',)),
+                (('Socket 4',), ('Socket 1',)),
+                ]
+        class Socket(E.Entity):
+            name = f.string()
+            _key(name)
+            _initial = [
+                ('Socket 1',),
+                ('Socket 2',),
+                ('Socket 3',),
+                ('Socket 4',),
+                ]
+        """)
+        self.sync(schema1)
+        schema2 = fix("""
+        class Location(E.Entity):
+            name = f.string()
+            _key(name)
+        class Connection(E.Entity):
+            socket = f.entity('Socket')
+            location = f.entity('Location')
+            connected_to = f.entity('Socket')
+            _key(socket, location, connected_to)
+        class Socket(E.Entity):
+            name = f.string()
+            _key(name)
+        class LocationConnection(E.Entity):
+            _evolve_only = True
+            location = f.entity('Location')
+            connection = f.entity('OldConnection')
+            _key(location, connection)
+        class OldConnection(E.Entity):
+            _evolve_only = True
+            _was = 'Connection'
+            socket_a = f.entity('Socket')
+            socket_b = f.entity('Socket')
+            _key(socket_a, socket_b)
+            _index(socket_a)
+            _index(socket_b)
+        def during_evolve(db):
+            pass
+        """)
+        self.evolve(schema2, version=2)
+        print db.Socket[1].sys.links()
+
     def test_before_during_after(self):
         schema1 = fix("""
         class Foo(E.Entity):
