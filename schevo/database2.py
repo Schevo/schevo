@@ -1091,7 +1091,9 @@ class Database(base.Database):
                         rel_links = rel_entity_map['links']
                         key = (extent_id, field_id)
                         if key in rel_links:
+                            link_count = len(rel_links[key])
                             del rel_links[key]
+                            rel_entity_map['link_count'] -= link_count
         # Delete the extent.
         del self._extent_name_id[extent_name]
         del self._extent_maps_by_id[extent_id]

@@ -1015,6 +1015,7 @@ class BaseEvolveInterVersion(CreatesDatabase):
         """)
         self.evolve(schema2, version=2)
         assert len(db.Socket[1].sys.links()) == 0
+        assert db.Socket[1].sys.count() == 0
 
     def test_before_during_after(self):
         schema1 = fix("""
