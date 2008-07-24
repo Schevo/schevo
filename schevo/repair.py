@@ -102,7 +102,6 @@ class OrphanLinkStructuresRepair(object):
             try:
                 extent_id_name = db._extent_id_name
                 extent_maps_by_id = db._extent_maps_by_id
-                orphans_removed = 0
                 for extent_id, extent_map in extent_maps_by_id.iteritems():
                     extent_name = extent_map['name']
                     for oid, entity_map in extent_map['entities'].iteritems():
@@ -113,12 +112,10 @@ class OrphanLinkStructuresRepair(object):
                                 link_count = len(links[key])
                                 del links[key]
                                 entity_map['link_count'] -= link_count
-                                orphans_removed += link_count
                         entity = db.extent(extent_name)[oid]
                         len_links = sum(
                             len(v) for v in entity.sys.links().itervalues())
                         assert len_links == entity.sys.count()
-                print '%i orphan links removed.' % orphans_removed
                 db._commit()
             except:
                 db._rollback()
