@@ -15,6 +15,7 @@ def repairs_needed(db, db_filename):
     needed = []
     for repair_type in [
         EntityFieldIdsRepair,
+        OrphanLinkStructuresRepair,
         ]:
         repair = repair_type(db, db_filename)
         if repair.is_needed:
@@ -25,6 +26,7 @@ def repairs_needed(db, db_filename):
 class EntityFieldIdsRepair(object):
 
     description = 'Remove entity_field_ids extraneous field IDs. (No data loss)'
+    is_needed_certainty = True
 
     def __init__(self, db, db_filename):
         self.db = db
@@ -80,6 +82,49 @@ class EntityFieldIdsRepair(object):
                     extraneous_field_ids = extents_extraneous.setdefault(
                         extent.name, set())
                     extraneous_field_ids.add(entity_field_id)
+
+
+class OrphanLinkStructuresRepair(object):
+
+    description = 'Remove orphan link structures. (No data loss)'
+    is_needed = True
+    is_needed_certainty = False
+
+    def __init__(self, db, db_filename):
+        self.db = db
+        self.db_filename = db_filename
+
+    def perform(self):
+        # Database starts out closed.
+        db_filename = self.db_filename
+        db = schevo.database.open(db_filename)
+        try:
+            try:
+                extent_id_name = db._extent_id_name
+                extent_maps_by_id = db._extent_maps_by_id
+                orphans_removed = 0
+                for extent_id, extent_map in extent_maps_by_id.iteritems():
+                    extent_name = extent_map['name']
+                    for oid, entity_map in extent_map['entities'].iteritems():
+                        links = entity_map['links']
+                        for key in links.keys():
+                            other_extent_id, other_field_id = key
+                            if other_extent_id not in extent_id_name:
+                                link_count = len(links[key])
+                                del links[key]
+                                entity_map['link_count'] -= link_count
+                                orphans_removed += link_count
+                        entity = db.extent(extent_name)[oid]
+                        len_links = sum(
+                            len(v) for v in entity.sys.links().itervalues())
+                        assert len_links == entity.sys.count()
+                print '%i orphan links removed.' % orphans_removed
+                db._commit()
+            except:
+                db._rollback()
+                raise
+        finally:
+            db.close()
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

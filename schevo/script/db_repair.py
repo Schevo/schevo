@@ -68,6 +68,11 @@ class Repair(Command):
         print 'Repairs needed:'
         for repair in repairs:
             print '-', repair.description
+            if repair.is_needed_certainty == False:
+                print (
+                    '    (Could not detect if needed; '
+                    'assuming so for safety.)'
+                    )
         print
         if not options.repair:
             print 'Use -r or --repair option to perform repairs.'
@@ -80,9 +85,12 @@ class Repair(Command):
         print 'Re-checking for needed repairs...'
         print
         db = schevo.database.open(db_filename)
-        repairs = schevo.repair.repairs_needed(db, db_filename)
+        repairs_with_certainty = [
+            r for r in schevo.repair.repairs_needed(db, db_filename)
+            if r.is_needed_certainty == True
+            ]
         db.close()
-        if len(repairs) > 0:
+        if len(repairs_with_certainty) > 0:
             print 'WARNING! Repairs needed despite actions taken above:'
             for repair in repairs:
                 print '-', repair.description
