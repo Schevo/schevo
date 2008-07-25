@@ -158,13 +158,23 @@ def copy(src_filename, dest_filename, dest_backend_name, dest_backend_args={}):
             dest_links = dest_entity['links'] = d_pdict()
             for key, value in src_links.iteritems():
                 links = dest_links[key] = d_btree()
-                links.update(src_links[key].iteritems())
+                # Do not use update() since schevo.store, durus, and zodb
+                # all have slightly different, incompatible, versions.
+                for k, v in src_links[key].iteritems():
+                    links[k] = v
             dest_entity['related_entities'] = d_pdict(
                 src_entity['related_entities'].iteritems())
         assert log(2, 'Copying indices for', extent_name)
-        dest_extent['index_map'] = d_pdict(src_extent['index_map'].iteritems())
+        dest_extent['index_map'] = d_pdict(
+            (k, d_plist(v))
+            for k, v
+            in src_extent['index_map'].iteritems()
+            )
         dest_extent['normalized_index_map'] = d_pdict(
-            src_extent['normalized_index_map'].iteritems())
+            (k, d_plist(v))
+            for k, v
+            in src_extent['normalized_index_map'].iteritems()
+            )
         dest_indices = dest_extent['indices'] = d_btree()
         for index_spec, src_index_data in src_extent['indices'].iteritems():
             unique, src_index_tree = src_index_data
