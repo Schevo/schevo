@@ -3,13 +3,6 @@
 ====================================
 
 
-.. sectnum::
-
-.. contents::
-
-.. Quick reference: Order of section delineators is === --- ... ~~~
-
-
 Overview
 ========
 
@@ -253,10 +246,10 @@ of declarations:
               return self.sys.count('Person', 'gender')
 
       class Person(E.Entity):
-      
+
           name = f.string()
           gender = f.entity('Gender', required=False)
-      
+
 - Key/index specifications.  Here is a ``Person`` extent whose
   entities must have unique values for their ``name`` field, and that
   is also indexed by ``age`` then ``name``::
@@ -468,7 +461,7 @@ names, e.g. the `Boolean` field class becomes `f.boolean`, and the
 For example, this Entity subclass defines three fields::
 
     class Dog(E.Entity):
-    
+
         name = f.string()                         # [1]
         birthdate = f.date(required=False)        # [2]
         disposition = f.entity('Disposition', on_delete=UNASSIGN,
@@ -481,7 +474,7 @@ For example, this Entity subclass defines three fields::
 2. The `birthdate` field is an optional `Date` field.
 
 3. The `disposition` field is an optional `Entity` field that can
-   store a reference to a `Disposition` entity.  
+   store a reference to a `Disposition` entity.
 
    When the referenced `Disposition` entity is deleted, this field's
    value is set to `UNASSIGNED`. See also `cascading delete rules for
@@ -683,7 +676,7 @@ It is not possible to retrieve the original value from the one-way
 hash.
 
 **HashedPassword** fields are a convenience class to show that a field
-specifically stores hashed values of passwords.  
+specifically stores hashed values of passwords.
 
 This is useful for storing information about a user's password in a
 reasonably secure manner, preventing immediate discovery of passwords
@@ -776,7 +769,7 @@ Embedded simple queries
 .......................
 
 `Simple queries` are queries that do not take any parameters and are
-not visibly composed of subqueries.  
+not visibly composed of subqueries.
 
 Because of these properties, it is easy to embed a function within a
 query method to expose simple queries, without having to write a
@@ -832,4 +825,4 @@ View methods
 ..
      Local Variables:
      mode: rst
-     End: 
+     End:

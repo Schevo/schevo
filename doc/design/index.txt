@@ -1,7 +1,0 @@
-=========================
- Schevo Design Documents
-=========================
-
-- `Design Principles <principles.txt>`__
-
-- `Internal Database Structures <structures.txt>`__

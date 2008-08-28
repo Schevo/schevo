@@ -3,11 +3,6 @@
 ============================
 
 
-.. sectnum::
-
-.. contents::
-
-
 Introduction
 ============
 
@@ -125,7 +120,7 @@ Options:
     Convert to a specific format.  (Default: latest format.)
 
 
-schevo db copy 
+schevo db copy
 --------------
 
 Usage: ``schevo db copy [options] SRCFILE DESTFILE``

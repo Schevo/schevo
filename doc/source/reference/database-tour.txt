@@ -3,57 +3,6 @@
 ======================
 
 
-.. sectnum::
-
-.. contents::
-..
-    1   Overview
-    2   Doctest setup
-    3   Database label
-      3.1  Get database label
-      3.2  Change database label
-    4   Database extents
-      4.1  Get list of extent names
-      4.2  Get list of extents
-      4.3  Get individual extent by name
-    5   Pack database
-    6   Data sets
-      6.1  Populate database with initial data set
-      6.2  Populate with default sample data set
-      6.3  Populate with named sample data set
-    7   Database schema
-      7.1  Get database schema source
-      7.2  Get database schema version
-    8   Database read/write locking
-      8.1  About dummy locks
-      8.2  Install locking support
-      8.3  Use read locks
-      8.4  Use write locks
-      8.5  Promote read lock to write lock via nesting
-    9   Transaction methods
-      9.1  Get transaction method namespace
-      9.2  Get available transaction method names
-      9.3  Get transaction method
-      9.4  Get transaction method label
-    10  Extent information
-      10.1  Get extent database
-      10.2  Get extent index and key specs
-      10.3  Get extent default key spec
-      10.4  Get extent hidden flag
-      10.5  Get extent labels
-      10.6  Get extent name
-      10.7  Get extent relationships
-      10.8  Get extent size
-    11  Extent values as sample data sets
-    12  Extent entity retrieval
-      12.1  Retrieve single entity using OID
-      12.2  Retrieve single entity matching field values
-      12.3  Retrieve entities matching field values
-      12.4  Retrieve entities using iteration
-      12.5  Retrieve entities ordered by key or index spec
-    13  Extent field spec namespace
-    14  Templates
-
 Overview
 ========
 

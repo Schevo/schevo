@@ -3,57 +3,6 @@
 =================
 
 
-.. contents::
-..
-    1   database
-    2   database navigator
-    3   data set
-    4   default key
-    5   engine
-    6   entity
-    7   entity class
-    8   evolve
-    9   execute
-    10  extension method
-    11  extension namespace
-    12  extent
-    13  f namespace
-    14  field
-    15  field class
-    16  field class namespace
-    17  field namespace
-    18  field value
-    19  index
-    20  index spec
-    21  initial data set
-    22  key
-    23  key spec
-    24  label
-    25  OID
-    26  open database
-    27  pack
-    28  plural label
-    29  q namespace
-    30  query namespace
-    31  relationship
-    32  sample data set
-    33  schema
-    34  schema body
-    35  schema package
-    36  schema source
-    37  schema version
-    38  storage backend
-    39  t namespace
-    40  transaction
-    41  transaction method
-    42  transaction namespace
-    43  v namespace
-    44  view
-    45  view method
-    46  view namespace
-    47  x namespace
-
-
 database
 ========
 

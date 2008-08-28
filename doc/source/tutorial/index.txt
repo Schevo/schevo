@@ -8,9 +8,7 @@ various concepts and features of Schevo.
 The tutorials intend to take you from starting a new project all the
 way to turning it into a usable application.
 
+.. toctree::
+   :maxdepth: 2
 
-Movie Reviews
-=============
-
-- The `Movie Reviews tutorial <moviereviews/>`__ shows you how to use
-  Schevo to build a movie rating database.
+   moviereviews/index
