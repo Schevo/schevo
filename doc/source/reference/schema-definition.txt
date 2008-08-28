@@ -31,7 +31,9 @@ structures defined by the database's schema definition.
 Doctest Setup
 =============
 
-This document also functions as a doctest::
+This document also functions as a doctest:
+
+.. doctest::
 
     >>> from schevo.test import DocTest
 
@@ -478,7 +480,7 @@ For example, this Entity subclass defines three fields::
 
    When the referenced `Disposition` entity is deleted, this field's
    value is set to `UNASSIGNED`. See also `cascading delete rules for
-   Entity field types`_.
+   Entity fields`_.
 
    The default value of this field is the `Disposition` entity that
    matches ``('Cheerful',)``.  See `Default field values`_ below.
