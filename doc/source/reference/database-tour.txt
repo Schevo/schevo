@@ -875,30 +875,30 @@ Common text for new doctests:
 
 .. Glossary links:
 
-.. _database navigator: glossary.txt#database-navigator
-.. _default key: glossary.txt#default-key
-.. _engine: glossary.txt#engine
-.. _execute: glossary.txt#execute
-.. _extent: glossary.txt#extent
-.. _keys: glossary.txt#key
-.. _key specs: glossary.txt#key-spec
-.. _index specs: glossary.txt#index-spec
-.. _indices: glossary.txt#index
-.. _initial data set: glossary.txt#initial-data-set
-.. _label: glossary.txt#label
-.. _open database: glossary.txt#open-database
-.. _OID: glossary.txt#oid
-.. _pack: glossary.txt#pack
-.. _relationships: glossary.txt#relationship
-.. _sample data set: glossary.txt#sample-data-set
-.. _schema: glossary.txt#schema
-.. _schema body: glossary.txt#schema-body
-.. _schema package: glossary.txt#schema-package
-.. _schema source: glossary.txt#schema-source
-.. _schema version: glossary.txt#schema-version
-.. _storage backend: glossary.txt#storage-backend
-.. _t namespace: glossary.txt#transaction-method-namespace
-.. _transactions: glossary.txt#transaction
-.. _transaction methods: glossary.txt#transaction-method
-.. _transaction method namespace: glossary.txt#transaction-method-namespace
-.. _views: glossary.txt#view
+.. _database navigator: glossary.html#database-navigator
+.. _default key: glossary.html#default-key
+.. _engine: glossary.html#engine
+.. _execute: glossary.html#execute
+.. _extent: glossary.html#extent
+.. _keys: glossary.html#key
+.. _key specs: glossary.html#key-spec
+.. _index specs: glossary.html#index-spec
+.. _indices: glossary.html#index
+.. _initial data set: glossary.html#initial-data-set
+.. _label: glossary.html#label
+.. _open database: glossary.html#open-database
+.. _OID: glossary.html#oid
+.. _pack: glossary.html#pack
+.. _relationships: glossary.html#relationship
+.. _sample data set: glossary.html#sample-data-set
+.. _schema: glossary.html#schema
+.. _schema body: glossary.html#schema-body
+.. _schema package: glossary.html#schema-package
+.. _schema source: glossary.html#schema-source
+.. _schema version: glossary.html#schema-version
+.. _storage backend: glossary.html#storage-backend
+.. _t namespace: glossary.html#transaction-method-namespace
+.. _transactions: glossary.html#transaction
+.. _transaction methods: glossary.html#transaction-method
+.. _transaction method namespace: glossary.html#transaction-method-namespace
+.. _views: glossary.html#view

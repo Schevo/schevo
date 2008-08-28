@@ -14,7 +14,7 @@ tested on the following operating systems:
 Users of other UNIX-derived or UNIX-like operating systems not listed
 above can use this document as a guideline.
 
-Mac users, see `Install Schevo on Mac OS X <macosx.txt>`__.
+Mac users, see `Install Schevo on Mac OS X <macosx.html>`__.
 
 
 Notes on running Python

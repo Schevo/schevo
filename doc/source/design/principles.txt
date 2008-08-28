@@ -7,37 +7,37 @@
 -------------------
 
 The Schevo `schema definition syntax
-<../reference/schema-definition.txt>`__ and `database usage API
-<../reference/database-usage.txt>`__ were designed very carefully with
-several design principles in mind.
+<../reference/schema-definition.html>`__ and `database usage API
+<../reference/database-usage.html>`__ were designed very carefully
+with several design principles in mind.
 
 In no particular order, they are as follows:
 
 - Code readability.
-  
+
 - Provide deep introspection allowing rich auto-generated user
   interfaces.
-  
+
 - Convenient use in a Python shell: help the user while staying out of
   their way.
-  
+
 - Name and call-signature symmetry and consistency.
-  
+
 - Straightforward and consistent extension of default behavior.
-  
+
 - Encourage composition of smaller pieces into larger ones.
-  
+
 - Prefer declarative over imperative.
-  
+
 - Take full advantage of the core Python language.
-  
+
 - Data consistency assurance.
-  
+
 - Namespace collision avoidance.
-  
+
 - Reduction of boilerplate code.
-  
+
 - Minimal of reserved words.
-  
+
 - Separate layers of functionality, but keep related layers nearby in
   the source code.

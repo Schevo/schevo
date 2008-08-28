@@ -25,7 +25,7 @@ structures defined by the database's schema definition.
 
 .. _Durus: http://www.mems-exchange.org/software/durus/
 
-.. _internal database structures: ../design/structures.txt
+.. _internal database structures: ../design/structures.html
 
 
 Doctest Setup
@@ -793,19 +793,19 @@ Transaction definitions
 Customizing standard Create transactions
 ........................................
 
-See `Transaction Hook Methods <transaction-hook-methods.txt>`__.
+See `Transaction Hook Methods <transaction-hook-methods.html>`__.
 
 
 Customizing standard Delete transactions
 ........................................
 
-See `Transaction Hook Methods <transaction-hook-methods.txt>`__.
+See `Transaction Hook Methods <transaction-hook-methods.html>`__.
 
 
 Customizing standard Update transactions
 ........................................
 
-See `Transaction Hook Methods <transaction-hook-methods.txt>`__.
+See `Transaction Hook Methods <transaction-hook-methods.html>`__.
 
 
 Creating new transactions

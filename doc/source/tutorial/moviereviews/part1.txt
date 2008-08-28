@@ -152,7 +152,7 @@ The default database schema
 In your favorite text editor, open the file
 ``moviereviews/schema/moviereviews_001.py``. This is the filename
 convention that Schevo uses when creating and evolving databases. The
-``001`` represents the version number of the schema.  
+``001`` represents the version number of the schema.
 
 The prefix, while typically the same as the name of the top-level
 package of your project (in this case, `moviereviews`), can be
@@ -206,7 +206,7 @@ classes you'll add to your schema::
    ``E.Entity``. See `Schevo Namespaces`_ to find out more about the ``E``
    namespace.
 
-.. _Schevo Namespaces: ../../reference/namespaces.txt
+.. _Schevo Namespaces: ../../reference/namespaces.html
 
 2. When the database is open, the ``SchevoIcon`` *extent* that is
    based on this class will be designated as hidden. A user interface
@@ -230,7 +230,7 @@ but may not be familiar for those accustomed to working with SQL. Here
 are some basic definitions of those terms. We've left out some details
 to keep this tutorial simple.
 
-For more detail, visit the `Schevo Glossary <../../reference/glossary.txt>`__.
+For more detail, visit the `Schevo Glossary <../../reference/glossary.html>`__.
 
 Entity class
     A class definition in a schema that describes the fields,
@@ -321,7 +321,7 @@ Transactions
 
 All changes to a Schevo database are done via *transaction* objects that are
 responsible for ensuring that changes made to the database follow the rules
-you specify. See `Schevo Transactions <../../reference/transactions.txt>`__
+you specify. See `Schevo Transactions <../../reference/transactions.html>`__
 for further discussion about this design decision and the benefits you gain
 from it.
 
@@ -439,7 +439,7 @@ Find the movie, and inspect it::
 Schevo likes to make things easy for humans to read, so you can go beyond
 thinking of it as a "unicode representation" of something, and think of it
 instead as a singular or plural *label* of an object. See `Object Labels
-<../../reference/object-labels.txt>`__ for further discussion about this
+<../../reference/object-labels.html>`__ for further discussion about this
 feature.
 
 

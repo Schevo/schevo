@@ -25,7 +25,7 @@ structures defined by the database's schema definition.
 
 .. _Durus: http://www.mems-exchange.org/software/durus/
 
-.. _internal database structures: ../design/structures.txt
+.. _internal database structures: ../design/structures.html
 
 .. _SchevoDurus: /schevodurus/
 
