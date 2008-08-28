@@ -9,6 +9,6 @@ The tutorials intend to take you from starting a new project all the
 way to turning it into a usable application.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    moviereviews/index
