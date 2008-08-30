@@ -865,6 +865,11 @@ class BaseTransaction(CreatesSchema):
         assert user2 != user1
         assert user2.name != user1.name
         assert user2.age == user1.age
+        # One may also specify keyword arguments when calling the
+        # 'clone' transaction method.
+        tx = user1.t.clone(name='User 5')
+        user5 = db.execute(tx)
+        assert user5.name == 'User 5'
 
     def test_nested_commit(self):
         assert len(db.User) == 0

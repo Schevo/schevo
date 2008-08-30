@@ -458,11 +458,14 @@ class Entity(base.Entity, LabelMixin):
         return tx
 
     @with_label(u'Clone')
-    def t_clone(self):
+    def t_clone(self, **kw):
         """Return a Clone transaction."""
         # First create a Create transaction based on this entity's
         # fields.
         tx = self._Create(self)
+        # Apply keyword arguments.
+        for name, value in kw.iteritems():
+            setattr(tx, name, value)
         # Relabel the transaction.
         relabel(tx, 'Clone')
         return tx
