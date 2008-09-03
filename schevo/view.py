@@ -32,11 +32,13 @@ class View(base.View):
 
     def __init__(self, entity, *args, **kw):
         self._entity = entity
-        self._extent = entity._extent
-        self._oid = entity._oid
-        self._rev = entity._rev
+        self._extent = getattr(entity, '_extent', None)
+        self._oid = getattr(entity, '_oid', 0)
+        self._rev = getattr(entity, '_rev', 0)
         f_map = self._field_map = self._field_spec.field_map(instance=self)
-        f_map.update_values(entity.sys.field_map(not_fget))
+        sys = getattr(entity, 'sys', None)
+        if sys is not None:
+            f_map.update_values(sys.field_map(not_fget))
         self._setup(entity, *args, **kw)
         # All fields should be readonly by default.
         for field in f_map.itervalues():
