@@ -28,7 +28,6 @@ schevo/meta.py
 schevo/namespace.py
 schevo/placeholder.py
 schevo/query.py
-schevo/release.py
 schevo/repair.py
 schevo/schema.py
 schevo/signal.py

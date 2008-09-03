@@ -1,16 +1,16 @@
 
-    [console_scripts]
-    schevo = schevo.script.main:start
-    schevo_hotshot = schevo.script.main:start_hotshot
+        [console_scripts]
+        schevo = schevo.script.main:start
+        schevo_hotshot = schevo.script.main:start_hotshot
 
-    [paste.paster_create_template]
-    schevo = schevo.template:SchevoTemplate
+        [paste.paster_create_template]
+        schevo = schevo.template:SchevoTemplate
 
-    [schevo.backend]
-    schevo.store = schevo.store.backend:SchevoStoreBackend
+        [schevo.backend]
+        schevo.store = schevo.store.backend:SchevoStoreBackend
 
-    [schevo.schevo_command]
-    backends = schevo.script.backends:start
-    db = schevo.script.db:start
-    shell = schevo.script.shell:start
-    
+        [schevo.schevo_command]
+        backends = schevo.script.backends:start
+        db = schevo.script.db:start
+        shell = schevo.script.shell:start
+        
