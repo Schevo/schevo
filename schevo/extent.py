@@ -7,7 +7,8 @@ import sys
 from schevo.lib import optimize
 
 from schevo import base
-from schevo.entity import Entity, isextentmethod
+from schevo.decorator import isextentmethod
+from schevo.entity import Entity
 from schevo.error import EntityDoesNotExist
 from schevo.error import FindoneFoundMoreThanOne
 from schevo.namespace import NamespaceExtension

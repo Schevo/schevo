@@ -55,7 +55,7 @@ import schevo.query
 import schevo.transaction
 import schevo.view
 
-from schevo.entity import extentclassmethod, extentmethod
+from schevo.decorator import extentclassmethod, extentmethod
 from schevo.lib import optimize
 
 import inspect

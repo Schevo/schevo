@@ -3,6 +3,7 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
+from schevo.decorator import isextentmethod
 from schevo.test import CreatesSchema
 
 
@@ -15,6 +16,13 @@ class BaseExtentMethod(CreatesSchema):
         @extentmethod
         def x_return_extent_name(extent):
             return extent.name
+
+        @extentclassmethod
+        def x_return_class(cls):
+            return cls
+
+        def x_return_oid(self):
+            return self.sys.oid
     '''
 
     def test_extentmethod_is_passed_extent(self):
@@ -22,6 +30,19 @@ class BaseExtentMethod(CreatesSchema):
         result = db.Hotel.x.return_extent_name()
         assert result == extent_name
 
+    def test_extentclassmethod_is_passed_entity_class(self):
+        entity_class = db.schema.E['Hotel']
+        result = db.Hotel.x.return_class()
+        assert result == entity_class
+
+    def test_extentmethod_detection(self):
+        assert isextentmethod(db.Hotel.x.return_extent_name)
+        assert isextentmethod(db.schema.E['Hotel'].x_return_extent_name)
+        assert isextentmethod(db.Hotel.x.return_class)
+        assert isextentmethod(db.schema.E['Hotel'].x_return_class)
+        hotel = db.execute(db.Hotel.t.create())
+        assert not isextentmethod(hotel.x.return_oid)
+        assert not isextentmethod(db.schema.E['Hotel'].x_return_oid)
 
 class TestExtentMethod1(BaseExtentMethod):
 

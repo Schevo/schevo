@@ -66,9 +66,9 @@ definitions:
 - ``db``.  This contains the currently-open database that the schema
   is associated with.
 
-- ``extentmethod``.  This is a decorator used to designate a method as
-  attached to a namespace on an entity class's extent, and passed the
-  entity class's extent as the first argument when called.
+- ``extentmethod`` and ``extentclassmethod``.  These are decorators
+  used to designate a method as attached to a namespace on an entity
+  class's extent.
 
 - ``schevo``.  This is imported into the global namespace.
 

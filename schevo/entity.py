@@ -12,6 +12,7 @@ import inspect
 
 from schevo import base
 from schevo.constant import UNASSIGNED
+from schevo.decorator import extentclassmethod, extentmethod, isextentmethod
 from schevo.error import (
     EntityDoesNotExist, ExtentDoesNotExist, FieldDoesNotExist, KeyIndexOverlap)
 from schevo.fieldspec import field_spec_from_class
@@ -23,74 +24,6 @@ from schevo.namespace import NamespaceExtension
 from schevo import query
 from schevo import transaction
 from schevo import view
-
-
-class extentmethod(object):
-    """Mark a method of an `Entity` class as an extent method.
-
-    When a function `fn` is decorated as an `extentmethod`,
-    `isextentmethod(fn) -> True`, and when the method is called as
-    `method(*args, **kw)`, the function is called as `fn(extent,
-    *args, **kw)`.
-    """
-
-    def __init__(self, fn):
-        self.fn = fn
-        fn._extentmethod = True
-        self._label = getattr(fn, '_label', None)
-
-    def __get__(self, instance, owner=None):
-        if owner is None:
-            owner = type(instance)
-        return _extentmethodcallable(self, owner, owner._extent)
-
-
-class extentclassmethod(extentmethod):
-    """Mark a method of an `Entity` class as an extent method that is
-    called as an entity classmethod.
-
-    When a function `fn` is decorated as an `extentclassmethod`,
-    `isextentmethod(fn) -> True`, and when the method is called as
-    `method(*args, **kw)`, the function is called as `fn(entity_class,
-    *args, **kw)`.
-    """
-
-    def __get__(self, instance, owner=None):
-        if owner is None:
-            owner = type(instance)
-        return _extentmethodcallable(self, owner, owner)
-
-
-class _extentmethodcallable(object):
-
-    _extentmethod = True
-
-    def __init__(self, extentmethod, owner, firstarg):
-        self.extentmethod = extentmethod
-        self.owner = owner
-        self.firstarg = firstarg
-
-    def __call__(self, *args, **kw):
-        return self.extentmethod.fn(self.firstarg, *args, **kw)
-
-    def __repr__(self):
-        return '<extent method %s.%s at 0x%x>' % (
-            self.owner.__name__,
-            self.extentmethod.fn.__name__,
-            id(self),
-            )
-
-    def _get_label(self):
-        return self.extentmethod._label
-
-    def _set_label(self, value):
-        self.extentmethod._label = value
-
-    _label = property(_get_label, _set_label)
-
-
-def isextentmethod(fn):
-    return getattr(fn, '_extentmethod', False)
 
 
 class EntityMeta(type):
