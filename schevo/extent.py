@@ -7,7 +7,7 @@ import sys
 from schevo.lib import optimize
 
 from schevo import base
-from schevo.entity import Entity
+from schevo.entity import Entity, isextentmethod
 from schevo.error import EntityDoesNotExist
 from schevo.error import FindoneFoundMoreThanOne
 from schevo.namespace import NamespaceExtension
@@ -186,8 +186,8 @@ class ExtentExtenders(NamespaceExtension):
             # Extender methods always have x_ prefix.
             if name.startswith('x_'):
                 method = getattr(EntityClass, name)
-                # Methods that apply to an extent are classmethods.
-                if method.im_self == EntityClass:
+                # Methods that apply to an extent are extentmethods.
+                if isextentmethod(method):
                     # Drop the 'x_' prefix.
                     name = name[2:]
                     self._set(name, method)
@@ -229,8 +229,8 @@ class ExtentQueries(NamespaceExtension):
             if key.startswith('q_'):
                 method = getattr(EntityClass, key)
                 # Query methods that apply to an extent are
-                # classmethods of an Entity class.
-                if method.im_self == EntityClass:
+                # extentmethods of an Entity class.
+                if isextentmethod(method):
                     # Drop the 'q_' prefix.
                     name = key[2:]
                     self._set(name, method)
@@ -254,8 +254,8 @@ class ExtentTransactions(NamespaceExtension):
             if key.startswith('t_'):
                 method = getattr(EntityClass, key)
                 # Transaction methods that apply to an extent are
-                # classmethods of an Entity class.
-                if method.im_self == EntityClass:
+                # extentmethods of an Entity class.
+                if isextentmethod(method):
                     # Drop the 't_' prefix.
                     name = key[2:]
                     self._set(name, method)

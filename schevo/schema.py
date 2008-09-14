@@ -22,6 +22,7 @@ __all__ = [
     'RESTRICT',
     'UNASSIGN',
     'UNASSIGNED',
+    'extentclassmethod',
     'extentmethod',
     'relabel',
     'schevo',  # And, indirectly, 'schevo.error'.
@@ -54,7 +55,7 @@ import schevo.query
 import schevo.transaction
 import schevo.view
 
-from schevo.entity import extentmethod
+from schevo.entity import extentclassmethod, extentmethod
 from schevo.lib import optimize
 
 import inspect

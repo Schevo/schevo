@@ -5,6 +5,7 @@ For copyright, license, and warranty, see bottom of file.
 
 from schevo.test import CreatesSchema, raises
 from schevo import base
+from schevo.entity import isextentmethod
 from schevo import error
 from schevo import label
 from schevo import transaction
@@ -469,6 +470,10 @@ class BaseDecoration(CreatesSchema):
         assert sorted(sprocket99.t) == ['clone', 'delete', 'update']
         assert sorted(sprocket1.v.default().t) == ['clone', 'update']
         assert sorted(sprocket99.v.default().t) == ['clone', 'delete', 'update']
+
+    def test_extentmethod_decoration(self):
+        assert isextentmethod(db.LoopSegment.t.create_loop)
+        assert isextentmethod(db.Sprocket.t.create)
 
     def test_builtin_decoration(self):
         assert label.label('some string') == 'some string'

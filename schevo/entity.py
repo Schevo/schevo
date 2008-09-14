@@ -6,6 +6,7 @@ For copyright, license, and warranty, see bottom of file.
 import sys
 from schevo.lib import optimize
 
+from functools import wraps
 from string import digits, ascii_letters
 import inspect
 
@@ -24,17 +25,72 @@ from schevo import transaction
 from schevo import view
 
 
-# extentmethod provides support for decorating methods of entity
-# classes as belonging to the extent, not the entity.
-def extentmethod(fn):
-    def outer_fn(cls, *args, **kw):
-        return fn(cls._extent, *args, **kw)
-    if hasattr(fn, '_label'):
-        _plural = getattr(fn, '_plural', None)
-        decorator = with_label(fn._label, _plural)
-        outer_fn = decorator(outer_fn)
-    outer_fn = classmethod(outer_fn)
-    return outer_fn
+class extentmethod(object):
+    """Mark a method of an `Entity` class as an extent method.
+
+    When a function `fn` is decorated as an `extentmethod`,
+    `isextentmethod(fn) -> True`, and when the method is called as
+    `method(*args, **kw)`, the function is called as `fn(extent,
+    *args, **kw)`.
+    """
+
+    def __init__(self, fn):
+        self.fn = fn
+        fn._extentmethod = True
+        self._label = getattr(fn, '_label', None)
+
+    def __get__(self, instance, owner=None):
+        if owner is None:
+            owner = type(instance)
+        return _extentmethodcallable(self, owner, owner._extent)
+
+
+class extentclassmethod(extentmethod):
+    """Mark a method of an `Entity` class as an extent method that is
+    called as an entity classmethod.
+
+    When a function `fn` is decorated as an `extentclassmethod`,
+    `isextentmethod(fn) -> True`, and when the method is called as
+    `method(*args, **kw)`, the function is called as `fn(entity_class,
+    *args, **kw)`.
+    """
+
+    def __get__(self, instance, owner=None):
+        if owner is None:
+            owner = type(instance)
+        return _extentmethodcallable(self, owner, owner)
+
+
+class _extentmethodcallable(object):
+
+    _extentmethod = True
+
+    def __init__(self, extentmethod, owner, firstarg):
+        self.extentmethod = extentmethod
+        self.owner = owner
+        self.firstarg = firstarg
+
+    def __call__(self, *args, **kw):
+        return self.extentmethod.fn(self.firstarg, *args, **kw)
+
+    def __repr__(self):
+        return '<extent method %s.%s at 0x%x>' % (
+            self.owner.__name__,
+            self.extentmethod.fn.__name__,
+            id(self),
+            )
+
+    def _get_label(self):
+        return self.extentmethod._label
+
+    def _set_label(self, value):
+        self.extentmethod._label = value
+
+    _label = property(_get_label, _set_label)
+
+
+def isextentmethod(fn):
+    return getattr(fn, '_extentmethod', False)
 
 
 class EntityMeta(type):
@@ -128,10 +184,10 @@ class EntityMeta(type):
                 if getattr(func, '_label', None) is None:
                     # Make a label after dropping prefix.
                     new_label = label_from_name(method_name)
-                if func.im_self == cls:
-                    # Classmethod.
+                if isextentmethod(func):
+                    # Extentmethod.
                     if new_label is not None:
-                        func.im_func._label = new_label
+                        func._label = new_label
                 else:
                     # Instancemethod.
                     if new_label is not None:
@@ -143,7 +199,7 @@ class EntityMeta(type):
         for name in dir(cls):
             if name.startswith(prefix):
                 func = getattr(cls, name)
-                if func.im_self is None:
+                if not isextentmethod(func):
                     names.append(name)
         return names
 
@@ -442,14 +498,14 @@ class Entity(base.Entity, LabelMixin):
         q = query.ByExample(extent, **kw)
         return q
 
-    @classmethod
+    @extentclassmethod
     @with_label(u'Create')
     def t_create(cls, *args, **kw):
         """Return a Create transaction."""
         tx = cls._Create(*args, **kw)
         return tx
 
-    @classmethod
+    @extentclassmethod
     @with_label(u'Create If Necessary')
     def t_create_if_necessary(cls, *args, **kw):
         """Return a Create transaction that creates if necessary."""
