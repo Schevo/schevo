@@ -113,16 +113,24 @@ if 'options' in locals():
 
 
     options(
-        setup=setup_meta,
-        sphinx=Bunch(
-            docroot='doc',
-            builddir='build',
-            sourcedir='source',
+        cog=Bunch(
+            basdir='doc/source',
+            includedir='doc/source',
+            pattern='*.txt',
+            beginspec='<==',
+            endspec='==>',
+            endoutput='<==end==>',
         ),
         publish=Bunch(
             username='schevo',
             server='web5.webfaction.com',
             path='/home2/schevo/schevo_docs/schevo/%s' % branch_or_version,
+        ),
+        setup=setup_meta,
+        sphinx=Bunch(
+            docroot='doc',
+            builddir='build',
+            sourcedir='source',
         ),
     )
 
