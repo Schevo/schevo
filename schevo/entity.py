@@ -13,7 +13,8 @@ import inspect
 from schevo import base
 from schevo.constant import UNASSIGNED
 from schevo.decorator import (
-    extentclassmethod, extentmethod, isextentmethod, with_label)
+    extentclassmethod, extentmethod, isextentmethod, isselectionmethod,
+    selectionmethod, with_label)
 from schevo.error import (
     EntityDoesNotExist, ExtentDoesNotExist, FieldDoesNotExist, KeyIndexOverlap)
 from schevo.fieldspec import field_spec_from_class
@@ -90,13 +91,27 @@ class EntityMeta(type):
             # Assign labels if class name is "public".
             cls.assign_labels(class_name, class_dict)
         # Remember queries for the EntityQueries namespace.
-        cls._q_names = cls.get_method_names('q_')
+        def notextentmethod(fn):
+            return not isextentmethod(fn)
+        prefix = 'q_'
+        cls._q_names = cls.get_method_names(prefix, notextentmethod)
+        cls._q_selectionmethod_names = cls.get_method_names(
+            prefix, isselectionmethod)
         # Remember transactions for the EntityTransactions namespace.
-        cls._t_names = cls.get_method_names('t_')
+        prefix = 't_'
+        cls._t_names = cls.get_method_names(prefix, notextentmethod)
+        cls._t_selectionmethod_names = cls.get_method_names(
+            prefix, isselectionmethod)
         # Remember views for the EntityViews namespace.
-        cls._v_names = cls.get_method_names('v_')
+        prefix = 'v_'
+        cls._v_names = cls.get_method_names(prefix, notextentmethod)
+        cls._v_selectionmethod_names = cls.get_method_names(
+            prefix, isselectionmethod)
         # Remember x_methods for the EntityExtenders namespace.
-        cls._x_names = cls.get_method_names('x_')
+        prefix = 'x_'
+        cls._x_names = cls.get_method_names(prefix, notextentmethod)
+        cls._x_selectionmethod_names = cls.get_method_names(
+            prefix, isselectionmethod)
         # Add this class to the schema.
         cls.update_schema(class_name)
 
@@ -127,13 +142,18 @@ class EntityMeta(type):
                     if new_label is not None:
                         class_dict[m_name]._label = new_label
 
-    def get_method_names(cls, prefix):
+    def get_method_names(cls, prefix, *filters):
         """Return list of method names that start with prefix."""
         names = []
         for name in dir(cls):
             if name.startswith(prefix):
                 func = getattr(cls, name)
-                if not isextentmethod(func):
+                append = True
+                for f in filters:
+                    if not f(func):
+                        append = False
+                        break
+                if append:
                     names.append(name)
         return names
 
@@ -464,6 +484,17 @@ class Entity(base.Entity, LabelMixin):
     def t_delete(self):
         """Return a Delete transaction."""
         tx = self._Delete(self)
+        return tx
+
+    @extentmethod
+    @selectionmethod
+    @with_label(u'Delete Selection')
+    def t_delete_selection(self, selection):
+        """Return a transaction to delete all entities in `selection`."""
+        tx = transaction.Combination([
+            entity.t.delete() for entity in selection
+            ])
+        relabel(tx, 'Delete Selection')
         return tx
 
     @with_label(u'Generic Update')

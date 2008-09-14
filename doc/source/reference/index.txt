@@ -9,5 +9,6 @@
    database-tour
    schema-definition
    transaction-hook-methods
+   selectionmethods
    database-usage
    glossary

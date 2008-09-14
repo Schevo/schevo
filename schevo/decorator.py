@@ -7,6 +7,10 @@ import sys
 from schevo.lib import optimize
 
 
+# ----------------------------------------------------------------------
+# Decoration.
+
+
 class extentmethod(object):
     """Mark a method of an `Entity` class as an extent method.
 
@@ -20,6 +24,7 @@ class extentmethod(object):
         self.fn = fn
         fn._extentmethod = True
         self._label = getattr(fn, '_label', None)
+        self._selectionmethod = getattr(fn, '_selectionmethod', False)
 
     def __get__(self, instance, owner=None):
         if owner is None:
@@ -44,6 +49,9 @@ class extentclassmethod(extentmethod):
 
 
 class _extentmethodcallable(object):
+    """A callable that allows certain attributes to be changed in a
+    way that also changes the attributes of the underlying
+    `extentmethod` or `extentclassmethod`."""
 
     _extentmethod = True
 
@@ -62,6 +70,8 @@ class _extentmethodcallable(object):
             id(self),
             )
 
+    # _label
+
     def _get_label(self):
         return self.extentmethod._label
 
@@ -70,9 +80,22 @@ class _extentmethodcallable(object):
 
     _label = property(_get_label, _set_label)
 
+    # _selectionmethod
 
-def isextentmethod(fn):
-    return getattr(fn, '_extentmethod', False)
+    def _get_selectionmethod(self):
+        return self.extentmethod._selectionmethod
+
+    def _set_selectionmethod(self, value):
+        self.extentmethod._selectionmethod = value
+
+    _selectionmethod = property(_get_selectionmethod, _set_selectionmethod)
+
+
+def selectionmethod(fn):
+    """Decorate a transaction or view method as one that takes
+    `selection` as its sole argument."""
+    fn._selectionmethod = True
+    return fn
 
 
 def with_label(label, plural=None):
@@ -84,6 +107,18 @@ def with_label(label, plural=None):
             fn._plural = unicode(plural)
         return fn
     return label_decorator
+
+
+# ----------------------------------------------------------------------
+# Introspection.
+
+
+def isextentmethod(fn):
+    return getattr(fn, '_extentmethod', False)
+
+
+def isselectionmethod(fn):
+    return getattr(fn, '_selectionmethod', False)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
