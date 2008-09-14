@@ -33,6 +33,8 @@ from glob import glob
 import os
 import sys
 
+from schevo.lib import optimize
+
 import schevo
 from schevo.constant import (
     ANY,
@@ -43,7 +45,6 @@ from schevo.constant import (
     UNASSIGN,
     UNASSIGNED,
     )
-from schevo.label import relabel, with_label
 
 import schevo.base
 import schevo.entity
@@ -55,8 +56,8 @@ import schevo.query
 import schevo.transaction
 import schevo.view
 
-from schevo.decorator import extentclassmethod, extentmethod
-from schevo.lib import optimize
+from schevo.decorator import extentclassmethod, extentmethod, with_label
+from schevo.label import relabel
 
 import inspect
 import threading

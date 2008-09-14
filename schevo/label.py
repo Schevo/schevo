@@ -87,17 +87,6 @@ def plural_from_name(name):
     return label_from_name(name) + u's'
 
 
-def with_label(label, plural=None):
-    """Return a decorator that assigns a label and an optional plural
-    label to a function."""
-    def label_decorator(fn):
-        fn._label = unicode(label)
-        if plural is not None:
-            fn._plural = unicode(plural)
-        return fn
-    return label_decorator
-
-
 def relabel(obj, new_label):
     """Relabel an object with a new label."""
     if isinstance(obj, Field):

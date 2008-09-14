@@ -75,6 +75,17 @@ def isextentmethod(fn):
     return getattr(fn, '_extentmethod', False)
 
 
+def with_label(label, plural=None):
+    """Return a decorator that assigns a label and an optional plural
+    label to a function."""
+    def label_decorator(fn):
+        fn._label = unicode(label)
+        if plural is not None:
+            fn._plural = unicode(plural)
+        return fn
+    return label_decorator
+
+
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
 
 

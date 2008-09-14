@@ -12,13 +12,14 @@ import inspect
 
 from schevo import base
 from schevo.constant import UNASSIGNED
-from schevo.decorator import extentclassmethod, extentmethod, isextentmethod
+from schevo.decorator import (
+    extentclassmethod, extentmethod, isextentmethod, with_label)
 from schevo.error import (
     EntityDoesNotExist, ExtentDoesNotExist, FieldDoesNotExist, KeyIndexOverlap)
 from schevo.fieldspec import field_spec_from_class
 from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import (
-    LabelMixin, label_from_name, plural_from_name, relabel, with_label)
+    LabelMixin, label_from_name, plural_from_name, relabel)
 import schevo.namespace
 from schevo.namespace import NamespaceExtension
 from schevo import query
