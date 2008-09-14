@@ -78,3 +78,32 @@ the `Sprocket` class in the schema above::
 
     >>> list(db.Sprocket.t(isselectionmethod))
     []
+
+
+Using selection methods
+=======================
+
+Create a series of `Cog` instances::
+
+    >>> cog1 = db.execute(db.Cog.t.create(name='One'))
+    >>> cog2 = db.execute(db.Cog.t.create(name='Two'))
+    >>> cog3 = db.execute(db.Cog.t.create(name='Three'))
+    >>> cog4 = db.execute(db.Cog.t.create(name='Four'))
+
+Choose two of them as the selection to delete::
+
+    >>> selection = [cog2, cog3]
+
+Create a `delete_selection` transaction to delete the selection::
+
+    >>> tx = db.Cog.t.delete_selection(selection)
+    >>> label(tx)
+    u'Delete Selection'
+
+Execute the transaction and verify the results::
+
+    >>> db.execute(tx)
+    >>> assert cog1 in db.Cog
+    >>> assert cog4 in db.Cog
+    >>> assert cog2 not in db.Cog
+    >>> assert cog3 not in db.Cog

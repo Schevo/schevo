@@ -486,15 +486,12 @@ class Entity(base.Entity, LabelMixin):
         tx = self._Delete(self)
         return tx
 
-    @extentmethod
+    @extentclassmethod
     @selectionmethod
     @with_label(u'Delete Selection')
-    def t_delete_selection(self, selection):
+    def t_delete_selection(cls, selection):
         """Return a transaction to delete all entities in `selection`."""
-        tx = transaction.Combination([
-            entity.t.delete() for entity in selection
-            ])
-        relabel(tx, 'Delete Selection')
+        tx = cls._DeleteSelection(selection)
         return tx
 
     @with_label(u'Generic Update')
@@ -524,6 +521,18 @@ class Entity(base.Entity, LabelMixin):
 
     class _Delete(transaction.Delete):
         pass
+
+    class _DeleteSelection(transaction.Transaction):
+
+        def __init__(self, selection):
+            transaction.Transaction.__init__(self)
+            self._combination = transaction.Combination([
+                entity.t.delete() for entity in selection
+                ])
+
+        def _execute(self, db):
+            db.execute(self._combination)
+            return None
 
     class _Update(transaction.Update):
         pass
