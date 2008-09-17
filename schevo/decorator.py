@@ -113,6 +113,10 @@ def with_label(label, plural=None):
 # Introspection.
 
 
+def isclassmethod(fn):
+    return type(fn.im_class) == type(fn.im_self)
+
+
 def isextentmethod(fn):
     return getattr(fn, '_extentmethod', False)
 

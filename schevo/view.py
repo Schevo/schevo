@@ -7,6 +7,7 @@ import sys
 from schevo.lib import optimize
 
 from schevo import base
+from schevo.decorator import isclassmethod
 from schevo.field import not_fget
 from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import label_from_name
@@ -102,7 +103,7 @@ class ViewExtenders(NamespaceExtension):
             if attr.startswith('x_'):
                 x_name = attr
                 func = getattr(cls, x_name)
-                if func.im_self is None:
+                if not isclassmethod(func):
                     x_names.append(x_name)
         for x_name in x_names:
             name = x_name[2:]
@@ -191,7 +192,7 @@ class ViewTransactions(NamespaceExtension):
             if attr.startswith('t_'):
                 t_name = attr
                 func = getattr(cls, t_name)
-                if func.im_self is None:
+                if not isclassmethod(func):
                     t_names.append(t_name)
         for t_name in t_names:
             name = t_name[2:]
@@ -244,7 +245,7 @@ class ViewQueries(NamespaceExtension):
             if attr.startswith('q_'):
                 q_name = attr
                 func = getattr(cls, q_name)
-                if func.im_self is None:
+                if not isclassmethod(func):
                     q_names.append(q_name)
         for q_name in q_names:
             name = q_name[2:]
