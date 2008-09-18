@@ -7,7 +7,7 @@ import sys
 from schevo.lib import optimize
 
 from schevo import base
-from schevo.decorator import isclassmethod
+from schevo.decorator import isclassmethod, isselectionmethod
 from schevo.field import not_fget
 from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import label_from_name
@@ -205,7 +205,29 @@ class ViewTransactions(NamespaceExtension):
                     cls.__dict__[t_name]._label = new_label
             d[name] = func
 
+    def __call__(self, *filters):
+        if filters == (isselectionmethod, ):
+            hidden = self._hidden_actions()
+            return (k for k, v in self._d.iteritems()
+                    if (k not in hidden
+                        and isselectionmethod(v)
+                        )
+                    )
+        else:
+            # XXX: Should actually scan through transaction methods
+            # and run them through a filter, returning names of those
+            # methods that match.
+            return []
+
     def __iter__(self):
+        hidden = self._hidden_actions()
+        return (k for k, v in self._d.iteritems()
+                if (k not in hidden
+                    and not isselectionmethod(v)
+                    )
+                )
+
+    def _hidden_actions(self):
         view = self._v
         if view._hidden_actions is not None:
             # Use view's _hidden_actions if available.
@@ -221,7 +243,7 @@ class ViewTransactions(NamespaceExtension):
         # Combine _hidden_t_methods results with _hidden_actions.
         if hidden_t_methods is not None:
             hidden.update(hidden_t_methods() or [])
-        return (k for k in self._d.iterkeys() if k not in hidden)
+        return hidden
 
 
 class ViewQueries(NamespaceExtension):

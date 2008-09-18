@@ -57,7 +57,7 @@ Namespace iteration
 ===================
 
 By default, `selectionmethod` method names are hidden when iterating
-over a `t` or `v` namespace::
+over a `t` namespace::
 
     >>> list(db.Cog.t)
     ['create']
@@ -67,6 +67,23 @@ list of names non-hidden selection methods in that namespace::
 
     >>> list(db.Cog.t(isselectionmethod))
     ['delete_selection']
+
+`selectionmethod` methods may also be attached to `Entity` and `View`
+instances::
+
+    >>> cog = db.execute(db.Cog.t.create(name='abc'))
+
+    >>> sorted(cog.t)
+    ['clone', 'delete', 'update']
+    >>> sorted(cog.t(isselectionmethod))
+    ['placeholder_a']
+
+    >>> cogview = cog.v.backwards_name()
+
+    >>> sorted(cogview.t)
+    ['clone', 'delete', 'update']
+    >>> sorted(cogview.t(isselectionmethod))
+    ['placeholder_a', 'placeholder_b']
 
 
 Hiding methods

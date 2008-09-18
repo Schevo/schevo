@@ -26,6 +26,7 @@ __all__ = [
     'extentmethod',
     'relabel',
     'schevo',  # And, indirectly, 'schevo.error'.
+    'selectionmethod',
     'with_label',
     ]
 
@@ -56,7 +57,8 @@ import schevo.query
 import schevo.transaction
 import schevo.view
 
-from schevo.decorator import extentclassmethod, extentmethod, with_label
+from schevo.decorator import (
+    extentclassmethod, extentmethod, selectionmethod, with_label)
 from schevo.label import relabel
 
 import inspect
