@@ -1,0 +1,154 @@
+==============
+ t namespaces
+==============
+
+
+Introduction
+============
+
+
+Doctest setup
+=============
+
+This document also functions as a doctest::
+
+    >>> from schevo.schema import read
+    >>> from schevo.test import DocTest
+    >>> schema = read('doc.source.reference.schema_namespaces', 1)
+    >>> t = DocTest(schema=schema)
+    >>> db = t.db
+
+The doctest uses the following schema::
+
+    # <== include("reference/schema_namespaces/namespaces_001.py") ==>
+    # <==end==>
+
+
+Selection Methods
+=================
+
+Many applications allow the user to select multiple objects in order
+to perform an action on the group of objects or to show summary
+information about the selection.
+
+In your schema, define transactions and views that accept collections
+(or "selections") of objects, and dynamically-generated user
+interfaces may expose such transactions and views for use with
+multiple selections.
+
+
+Default transaction methods
+===========================
+
+Every Entity class provides several default transaction methods,
+accessible using the `t` namespace of an extent, an entity instance,
+or an entity class.
+
+An Entity class's extent provides a Create transaction::
+
+    >>> sorted(db.Frob.t)
+    ['create']
+
+    >>> from schevo.label import label
+    >>> label(db.Frob.t.create)
+    u'New'
+
+An instance of an Entity class provides Clone, Delete, and Update
+transactions::
+
+    >>> frob1 = db.Frob.findone(name='Frob 1')
+    >>> sorted(frob1.t)
+    ['clone', 'delete', 'update']
+
+    >>> label(frob1.t.clone)
+    u'Clone'
+    >>> label(frob1.t.delete)
+    u'Delete'
+    >>> label(frob1.t.update)
+    u'Edit'
+
+The Entity class itself provides a Delete Selected transaction::
+
+    >>> FrobClass = db.Frob.entity_class
+    >>> sorted(FrobClass.t)
+    ['delete_selected']
+
+    >>> label(FrobClass.t.delete_selected)
+    u'Delete Selected'
+
+
+Determining method types
+========================
+
+Given a method, you can determine if it is an entity method, an extent
+method, or a selection method::
+
+    >>> from schevo.introspect import (
+    ...     isentitymethod, isextentmethod, isselectionmethod
+    ...     )
+
+    >>> isentitymethod(db.Frob.t.create)
+    False
+    >>> isextentmethod(db.Frob.t.create)
+    True
+    >>> isselectionmethod(db.Frob.t.create)
+    False
+
+    >>> isentitymethod(frob1.t.update)
+    True
+    >>> isextentmethod(frob1.t.update)
+    False
+    >>> isselectionmethod(frob1.t.update)
+    False
+
+    >>> isentitymethod(FrobClass.t.delete_selected)
+    False
+    >>> isextentmethod(FrobClass.t.delete_selected)
+    False
+    >>> isselectionmethod(FrobClass.t.delete_selected)
+    True
+
+
+Finding a common type for a sequence of objects
+===============================================
+
+Given a sequence of objects, you can find the common type of those
+objects with the `commontype` function::
+
+    >>> from schevo.introspect import commontype
+
+    >>> results = frob1.q.hole_details()()
+    >>> cls = commontype(results)
+    >>> cls.__name__
+    '_Detail'
+
+    >>> cls = commontype(db.Hole)
+    >>> cls.__name__
+    'Hole'
+
+If the series of objects is not homogeneously typed, `commontype` will
+return None::
+
+    >>> cls = commontype(list(db.Hole) + list(db.Thread))
+    >>> cls
+    None
+
+
+Hiding methods
+==============
+
+Hiding the `t_delete` instance method imples hiding the
+`t_delete_selected` selection method.  In the schema above, the
+`t_delete` method is hidden in the `Hole` class::
+
+    >>> 'delete' in frob1.t
+    True
+    >>> 'delete_selected' in FrobClass.t
+    True
+
+    >>> hole = frob1.m.holes()[0]
+    >>> 'delete' in hole.t
+    False
+    >>> HoleClass = type(hole)
+    >>> 'delete_selected' in HoleClass.t
+    False

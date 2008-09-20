@@ -1,0 +1,82 @@
+============
+ Namespaces
+============
+
+
+Introduction
+============
+
+Schevo namespaces are the entry point to much of the functionality of
+Schevo. They are attached to Schevo objects using single-character
+names to prevent accidental name collisions.
+
+Namespaces share a common highly-introspectable API that facilitates
+the use of automatic user interface generation.
+
+Below, we cover a summary of the available namespaces and the
+attributes they share in common.
+
+
+Types of namespaces
+===================
+
++-----------+--------------------------------+---------------------------+
+| Namespace | Description                    | Attached to               |
++===========+================================+===========================+
+| `sys`     | System properties and methods. | - Entity instances        |
+|           |                                | - Extents                 |
+|           |                                | - `Param` query instances |
+|           |                                | - Transaction instances   |
+|           |                                | - View instances          |
++-----------+--------------------------------+---------------------------+
+| `f`       | Field classes and instances.   | - Entity classes          |
+|           |                                | - Entity instances        |
+|           |                                | - Extents                 |
+|           |                                | - `Param` query instances |
+|           |                                | - Transaction instances   |
+|           |                                | - View classes            |
+|           |                                | - View instances          |
++-----------+--------------------------------+---------------------------+
+| `h`       | Field change handlers.         | - `Param` query instances |
+|           |                                | - Transaction instances   |
++-----------+--------------------------------+---------------------------+
+| `m`       | Many-to-many methods.          | - Entity instances        |
+|           |                                | - View instances          |
++-----------+--------------------------------+---------------------------+
+| `q`       | Query methods.                 | - Database instances      |
+|           |                                | - Entity classes          |
+|           |                                | - Entity instances        |
+|           |                                | - Extents                 |
+|           |                                | - View classes            |
+|           |                                | - View instances          |
++-----------+--------------------------------+---------------------------+
+| `t`       | Transaction methods.           | - Database instances      |
+|           |                                | - Entity classes          |
+|           |                                | - Entity instances        |
+|           |                                | - Extents                 |
+|           |                                | - View classes            |
+|           |                                | - View instances          |
++-----------+--------------------------------+---------------------------+
+| `v`       | View methods.                  | - Entity classes          |
+|           |                                | - Entity instances        |
+|           |                                | - View classes            |
+|           |                                | - View instances          |
++-----------+--------------------------------+---------------------------+
+| `x`       | Extender methods.              | - Database instances      |
+|           |                                | - Entity classes          |
+|           |                                | - Entity instances        |
+|           |                                | - Extents                 |
+|           |                                | - Query instances         |
+|           |                                | - Transaction instances   |
+|           |                                | - View classes            |
+|           |                                | - View instances          |
++-----------+--------------------------------+---------------------------+
+
+
+More about specific namespaces
+==============================
+
+.. toctree::
+   :maxdepth: 2
+
+   t_namespaces

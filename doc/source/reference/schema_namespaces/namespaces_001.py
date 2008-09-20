@@ -55,6 +55,8 @@ class Hole(E.Entity):
 
     _key(frob, number)
 
+    _hide('t_delete')
+
     def v_detail(self, thread=None):
         return E.Hole._Detail(self, thread)
 

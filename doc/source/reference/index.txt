@@ -8,7 +8,7 @@
    command-line
    database-tour
    schema-definition
+   namespaces
    transaction-hook-methods
-   selectionmethods
    database-usage
    glossary
