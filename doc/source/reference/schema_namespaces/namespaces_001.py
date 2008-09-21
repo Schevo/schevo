@@ -1,6 +1,9 @@
 from schevo.schema import *
 schevo.schema.prep(locals())
 
+import random
+import string
+
 
 class Frob(E.Entity):
     """Some sort of something that has four holes."""
@@ -47,7 +50,7 @@ class Frob(E.Entity):
 class Hole(E.Entity):
     """A hole on a frob."""
 
-    frob = f.entity('Frob')
+    frob = f.entity('Frob', delete=CASCADE)
     number = f.integer()
     @f.integer()
     def thread_count(self):
@@ -55,7 +58,7 @@ class Hole(E.Entity):
 
     _key(frob, number)
 
-    _hide('t_delete')
+    _hide('t_create', 't_delete')
 
     def v_detail(self, thread=None):
         return E.Hole._Detail(self, thread)
@@ -159,3 +162,11 @@ class Thread(E.Entity):
              thickness=1.5,
              ),
         ]
+
+
+def t_create_random_frob(name_length=16):
+    tx = db.Frob.t.create()
+    tx.name = ''.join(
+        random.choice(string.uppercase) for x in xrange(name_length))
+    relabel(tx, 'Create Random Frob')
+    return tx
