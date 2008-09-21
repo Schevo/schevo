@@ -19,6 +19,7 @@ Doctest setup
 
 This document also functions as a doctest::
 
+    >>> from schevo.label import label
     >>> from schevo.schema import read
     >>> from schevo.test import DocTest
     >>> schema = read('doc.source.reference.schema_namespaces', 1)
@@ -167,8 +168,8 @@ Accessing
 Access an entity or view class's selection transaction methods using
 the class's `t` namespace::
 
-    >>> FrobClass = db.Frob.entity_class
-    >>> sorted(frob1.t)
+    >>> FrobClass = db.Frob.EntityClass
+    >>> sorted(FrobClass.t)
     ['delete_selected']
 
 Method inheritance
@@ -249,7 +250,7 @@ method, or a selection method::
     >>> isselectionmethod(frob1.t.update)
     False
 
-    >>> FrobClass = db.Frob.entity_class
+    >>> FrobClass = db.Frob.EntityClass
     >>> isentitymethod(FrobClass.t.delete_selected)
     False
     >>> isextentmethod(FrobClass.t.delete_selected)
@@ -312,7 +313,7 @@ Hiding the `t_delete` instance method imples hiding the
 `t_delete_selected` selection method.  In the schema above, the
 `t_delete` method is hidden in the `Hole` class::
 
-    >>> FrobClass = db.Frob.entity_class
+    >>> FrobClass = db.Frob.EntityClass
     >>> 'delete' in frob1.t
     True
     >>> 'delete_selected' in FrobClass.t

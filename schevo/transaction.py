@@ -239,25 +239,6 @@ class TransactionSys(NamespaceExtension):
 # --------------------------------------------------------------------
 
 
-class Combination(Transaction):
-    """A transaction that consists of several sub-transactions."""
-
-    _label = u'Combination'
-
-    _populate_default_values = False
-    _restrict_subclasses = True
-
-    def __init__(self, transactions):
-        Transaction.__init__(self)
-        self._transactions = transactions
-
-    def _execute(self, db):
-        results = []
-        for tx in self._transactions:
-            results.append(db.execute(tx))
-        return results
-
-
 _Create_Standard = 0
 _Create_If_Necessary = 1
 
@@ -521,6 +502,29 @@ class Delete(Transaction):
         return None
 
 
+class DeleteSelected(Transaction):
+    """Delete a selection of entity instances."""
+
+    _label = u'Combination'
+
+    _populate_default_values = False
+    _restrict_subclasses = True
+
+    def __init__(self, selection):
+        Transaction.__init__(self)
+        self._selection = selection
+        self._setup()
+
+    def _setup(self):
+        """Override this in subclasses to customize a transaction."""
+        pass
+
+    def _execute(self, db):
+        for entity in self._selection:
+            if entity in entity._extent:
+                db.execute(entity.t.delete())
+
+
 class Update(Transaction):
     """Update an existing entity instance."""
 
@@ -620,6 +624,28 @@ class Update(Transaction):
 # --------------------------------------------------------------------
 
 
+class Combination(Transaction):
+    """A transaction that consists of several sub-transactions."""
+
+    _label = u'Combination'
+
+    _populate_default_values = False
+    _restrict_subclasses = True
+
+    def __init__(self, transactions):
+        Transaction.__init__(self)
+        self._transactions = transactions
+
+    def _execute(self, db):
+        results = []
+        for tx in self._transactions:
+            results.append(db.execute(tx))
+        return results
+
+
+# --------------------------------------------------------------------
+
+
 class Inverse(Transaction):
     """An inversion of an executed transaction."""
 
@@ -672,7 +698,7 @@ class _Populate(Transaction):
         self._extents = extents
         # Apply the priority.
         priority_extents = reversed(sorted(
-            (getattr(extent._EntityClass, priority_attr, 0), extent)
+            (getattr(extent.EntityClass, priority_attr, 0), extent)
             for extent in extents
             ))
         # Process data in order of priority.
@@ -699,8 +725,8 @@ class _Populate(Transaction):
         # data is specified.
         data = []
         data_attr = self._data_attr
-        if hasattr(extent._EntityClass, data_attr):
-            data = getattr(extent._EntityClass, data_attr)
+        if hasattr(extent.EntityClass, data_attr):
+            data = getattr(extent.EntityClass, data_attr)
         if callable(data):
             data = data(db)
         if not data:

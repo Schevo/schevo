@@ -554,7 +554,7 @@ class BaseTransaction(CreatesSchema):
         tx.name = 'foo'
         result = db.execute(tx)
         # The result should be a new User entity.
-        assert isinstance(result, db.User._EntityClass)
+        assert isinstance(result, db.User.EntityClass)
         assert result.sys.oid == 1
         assert result.sys.rev == 0
         assert result.name == 'foo'
@@ -654,7 +654,7 @@ class BaseTransaction(CreatesSchema):
 ##         assert not result2.f.age.changed
         # The result should be the same User entity, except have a new
         # rev and a new name.
-        assert isinstance(result2, db.User._EntityClass)
+        assert isinstance(result2, db.User.EntityClass)
         assert result2.sys.oid == 1
         assert result2.sys.rev == 1
         assert result2.name == 'bar'

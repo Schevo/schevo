@@ -51,7 +51,7 @@ class BasePopulateSimple(CreatesSchema):
         assert db.FooDict[2].baz == 'answer'
 
     def test_datalist_simple(self):
-        assert db.Foo.as_datalist() == db.Foo._EntityClass._sample_unittest
+        assert db.Foo.as_datalist() == db.Foo.EntityClass._sample_unittest
 
 
 class BasePopulateComplex(CreatesSchema):
@@ -199,20 +199,20 @@ class BasePopulateComplex(CreatesSchema):
     def test_datalist_complex(self):
 
         assert db.Foo.as_datalist() == sorted(
-            db.Foo._EntityClass._sample_unittest)
+            db.Foo.EntityClass._sample_unittest)
         assert db.Bar.as_datalist() == sorted(
-            db.Bar._EntityClass._sample_unittest)
+            db.Bar.EntityClass._sample_unittest)
         assert db.Baz.as_datalist() == sorted(
-            db.Baz._EntityClass._sample_unittest)
+            db.Baz.EntityClass._sample_unittest)
         assert db.Multi.as_datalist() == sorted(
-            db.Multi._EntityClass._sample_unittest)
+            db.Multi.EntityClass._sample_unittest)
         # Test dictionary versions.
         assert db.BarDict.as_datalist() == sorted(
-            db.Bar._EntityClass._sample_unittest)
+            db.Bar.EntityClass._sample_unittest)
         assert db.BazDict.as_datalist() == sorted(
-            db.Baz._EntityClass._sample_unittest)
+            db.Baz.EntityClass._sample_unittest)
         assert db.MultiDict.as_datalist() == sorted(
-            db.Multi._EntityClass._sample_unittest)
+            db.Multi.EntityClass._sample_unittest)
 
 
 class BasePopulateHidden(CreatesSchema):

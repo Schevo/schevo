@@ -28,6 +28,7 @@ class Extent(base.Extent):
         # Public API.
         self.db = db
         self.default_key = EntityClass._default_key
+        self.EntityClass = EntityClass
         self.field_spec = EntityClass._field_spec
         self.id = id
         self.index_spec = EntityClass._index_spec
@@ -39,7 +40,6 @@ class Extent(base.Extent):
         self.t = ExtentTransactions(EntityClass)
         self.x = ExtentExtenders(EntityClass)
         # Private variables.
-        self._EntityClass = EntityClass
         self._by = db._by_entity_oids
         self._enforce = db._enforce_index
         self._find = db._find_entity_oids
@@ -65,11 +65,11 @@ class Extent(base.Extent):
     def __getitem__(self, oid):
         if not self.db._extent_contains_oid(self.name, oid):
             raise EntityDoesNotExist(self.name, oid=oid)
-        return self._EntityClass(oid)
+        return self.EntityClass(oid)
 
     def __iter__(self):
         """Return an iterator of entities in order by OID."""
-        Entity = self._EntityClass
+        Entity = self.EntityClass
         oids = self._find(self.name)
         for oid in oids:
             try:
@@ -105,7 +105,7 @@ class Extent(base.Extent):
 
     def by(self, *index_spec):
         """Return an iterator of entities sorted by index_spec."""
-        Entity = self._EntityClass
+        Entity = self.EntityClass
         oids = self._by(self.name, *index_spec)
         def generator():
             for oid in oids:
@@ -133,7 +133,7 @@ class Extent(base.Extent):
 
     def find(self, **criteria):
         """Return list of entities matching given field value(s)."""
-        Entity = self._EntityClass
+        Entity = self.EntityClass
         return ResultsList(
             Entity(oid) for oid in self._find(self.name, **criteria))
 
@@ -147,7 +147,7 @@ class Extent(base.Extent):
         results = self._find(self.name, **criteria)
         count = len(results)
         if count == 1:
-            return self._EntityClass(results[0])
+            return self.EntityClass(results[0])
         elif count == 0:
             return None
         else:
@@ -159,7 +159,7 @@ class Extent(base.Extent):
 
     @property
     def relationships(self):
-        return self._EntityClass._relationships
+        return self.EntityClass._relationships
 
     def relax_index(self, *index_spec):
         """Relax constraints on the specified index until a matching
