@@ -82,17 +82,17 @@ class Transaction(base.Transaction):
         self._inversions = []
         self._known_deletes = []
         self._relaxed = set()
-        self.f = schevo.namespace.Fields(self)
-        self.sys = TransactionSys(self)
+        self.f = schevo.namespace.Fields('f', self)
+        self.sys = TransactionSys('sys', self)
         if self._populate_default_values:
             for field in self._field_map.itervalues():
                 field.set(field.default[0], check_readonly=False)
 
     def __getattr__(self, name):
         if name == 'x':
-            self.x = attr = TransactionExtenders(self)
+            self.x = attr = TransactionExtenders('x', self)
         elif name == 'h':
-            self.h = attr = TransactionChangeHandlers(self)
+            self.h = attr = TransactionChangeHandlers('h', self)
         else:
             try:
                 field = self._field_map[name]
@@ -166,8 +166,8 @@ class TransactionExtenders(NamespaceExtension):
 
     _readonly = False
 
-    def __init__(self, tx):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, tx):
+        NamespaceExtension.__init__(self, name, tx)
         d = self._d
         for x_name in tx._x_names:
             func = getattr(tx, x_name)
@@ -182,8 +182,8 @@ class TransactionChangeHandlers(NamespaceExtension):
 
     _readonly = False
 
-    def __init__(self, tx):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, tx):
+        NamespaceExtension.__init__(self, name, tx)
         d = self._d
         for h_name in tx._h_names:
             func = getattr(tx, h_name)
@@ -193,32 +193,26 @@ class TransactionChangeHandlers(NamespaceExtension):
 
 class TransactionSys(NamespaceExtension):
 
-    __slots__ = NamespaceExtension.__slots__ + ['_transaction']
-
-    def __init__(self, transaction):
-        NamespaceExtension.__init__(self)
-        self._transaction = transaction
-
     @property
     def changes(self):
-        return self._transaction._changes
+        return self._i._changes
 
     @property
     def current_field_map(self):
-        return self._transaction._field_map
+        return self._i._field_map
 
     @property
     def executed(self):
-        return self._transaction._executed
+        return self._i._executed
 
     @property
     def extent_name(self):
-        if hasattr(self._transaction, '_extent_name'):
-            return self._transaction._extent_name
+        if hasattr(self._i, '_extent_name'):
+            return self._i._extent_name
 
     def field_map(self, *filters):
         # Remove fields that should not be included.
-        new_fields = self._transaction._field_map.itervalues()
+        new_fields = self._i._field_map.itervalues()
         for filt in filters:
             new_fields = [field for field in new_fields if filt(field)]
         return FieldMap((field.name, field) for field in new_fields)
@@ -226,14 +220,14 @@ class TransactionSys(NamespaceExtension):
     @property
     def field_was_changed(self):
         """True if at least one field was changed."""
-        return self._transaction._field_was_changed
+        return self._i._field_was_changed
 
     @property
     def requires_changes(self):
-        return getattr(self._transaction, '_requires_changes', False)
+        return getattr(self._i, '_requires_changes', False)
 
     def summarize(self):
-        return summarize(self._transaction)
+        return summarize(self._i)
 
 
 # --------------------------------------------------------------------

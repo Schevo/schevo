@@ -11,6 +11,8 @@ from schevo.test import BaseTest, raises
 
 class NeWithProperty(NamespaceExtension):
 
+    __slots__ = NamespaceExtension.__slots__
+
     @property
     def foobar(self):
         return 'foobar'
@@ -19,7 +21,7 @@ class NeWithProperty(NamespaceExtension):
 class TestNamespaceExtension(BaseTest):
 
     def test_getattr(self):
-        ne = NamespaceExtension()
+        ne = NamespaceExtension('n', None)
         ne._set('foo', 'bar')
         ne._set('baz', 'bof')
         assert ne.foo == 'bar'
@@ -29,7 +31,7 @@ class TestNamespaceExtension(BaseTest):
 ##         assert ne._xyz == 123
 
     def test_getitem(self):
-        ne = NamespaceExtension()
+        ne = NamespaceExtension('n', None)
         ne._set('foo', 'bar')
         ne._set('baz', 'bof')
         assert ne['foo'] == 'bar'
@@ -39,7 +41,7 @@ class TestNamespaceExtension(BaseTest):
 ##         assert raises(KeyError, lambda: ne['_xyz'])
 
     def test_iter(self):
-        ne = NamespaceExtension()
+        ne = NamespaceExtension('n', None)
         ne._set('foo', 'bar')
         ne._set('baz', 'bof')
         L = sorted(ne)
@@ -50,7 +52,7 @@ class TestNamespaceExtension(BaseTest):
         assert L == ['baz', 'foo']
 
     def test_len(self):
-        ne = NamespaceExtension()
+        ne = NamespaceExtension('n', None)
         ne._set('foo', 'bar')
         ne._set('baz', 'bof')
         assert len(ne) == 2
@@ -60,7 +62,7 @@ class TestNamespaceExtension(BaseTest):
 
     def test_setattr_restricted(self):
         # Public attributes cannot be set directly.
-        ne = NamespaceExtension()
+        ne = NamespaceExtension('n', None)
         assert raises(AttributeError, setattr, ne, 'foo', 'bar')
 
 ##     def test_set_restricted(self):
@@ -69,7 +71,7 @@ class TestNamespaceExtension(BaseTest):
 ##         assert raises(KeyError, ne._set, '_foo', 'bar')
 
     def test_property(self):
-        ne = NeWithProperty()
+        ne = NeWithProperty('n', None)
         assert ne.foobar == 'foobar'
 
 

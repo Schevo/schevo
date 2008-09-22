@@ -30,10 +30,7 @@ from schevo import view
 
 class EntityClassExtenders(NamespaceExtension):
 
-    __slots__ = NamespaceExtension.__slots__ + ['_c']
-
-    def __init__(self, cls):
-        self._c = cls
+    __slots__ = NamespaceExtension.__slots__
 
 
 class EntityExtenders(NamespaceExtension):
@@ -41,33 +38,36 @@ class EntityExtenders(NamespaceExtension):
 
     __slots__ = NamespaceExtension.__slots__
 
-    def __init__(self, entity):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, instance):
+        NamespaceExtension.__init__(self, name, instance)
         d = self._d
-        for x_name in entity._x_names:
-            func = getattr(entity, x_name)
+        for x_name in instance._x_names:
+            func = getattr(instance, x_name)
             name = x_name[2:]
             d[name] = func
 
 
 class EntityFields(object):
 
-    __slots__ = ['_entity']
+    __slots__ = ['_n', '_i']
 
-    def __init__(self, entity):
-        self._entity = entity
+    def __init__(self, name, instance):
+        self._n = name
+        self._i = instance
 
     def __getattr__(self, name):
-        e = self._entity
-        FieldClass = e._field_spec[name]
-        field = FieldClass(e, getattr(e, name))
+        instance = self._i
+        FieldClass = instance._field_spec[name]
+        field = FieldClass(instance, getattr(instance, name))
         return field
 
-    def __getitem__(self, name):
-        return self.__getattr__(name)
+    __getitem__ = __getattr__
 
     def __iter__(self):
-        return iter(self._entity._field_spec)
+        return iter(self._i._field_spec)
+
+    def __repr__(self):
+        return '<%r namespace on %r>' % (self._n, self._i)
 
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
@@ -76,15 +76,17 @@ class EntityFields(object):
 
 class EntityOneToMany(NamespaceExtension):
 
-    def __init__(self, entity):
-        NamespaceExtension.__init__(self)
+    __slots__ = NamespaceExtension.__slots__
+
+    def __init__(self, name, instance):
+        NamespaceExtension.__init__(self, name, instance)
         d = self._d
-        e = entity
-        db = e._db
-        extent_name = e._extent.name
-        oid = e._oid
+        i = instance
+        db = i._db
+        extent_name = i._extent.name
+        oid = i._oid
         last_extent_name = ''
-        for other_extent_name, other_field_name in e._extent.relationships:
+        for other_extent_name, other_field_name in i._extent.relationships:
             # The first field for an other_extent becomes the default.
             if other_extent_name == last_extent_name:
                 continue
@@ -93,6 +95,7 @@ class EntityOneToMany(NamespaceExtension):
             many_func = _many_func(db, extent_name, oid,
                                    other_extent_name, other_field_name)
             d[many_name] = many_func
+
 
 def _many_func(db, extent_name, oid, other_extent_name, other_field_name):
     """Return a many function."""
@@ -115,39 +118,30 @@ def _many_name(name):
 
 class EntityClassQueries(NamespaceExtension):
 
-    __slots__ = NamespaceExtension.__slots__ + ['_c']
-
-    def __init__(self, cls):
-        self._c = cls
+    __slots__ = NamespaceExtension.__slots__
 
 
 class EntityQueries(NamespaceExtension):
     """A namespace of entity-level queries."""
 
-    __slots__ = NamespaceExtension.__slots__ + ['_e']
+    __slots__ = NamespaceExtension.__slots__
 
-    def __init__(self, entity):
+    def __init__(self, name, instance):
         NamespaceExtension.__init__(self)
         d = self._d
-        self._e = entity
-        for q_name in entity._q_names:
-            func = getattr(entity, q_name)
+        for q_name in instance._q_names:
+            func = getattr(instance, q_name)
             name = q_name[2:]
             d[name] = func
 
     def __iter__(self):
         return (k for k in self._d.iterkeys()
-                if k not in self._e._hidden_queries)
+                if k not in self._i._hidden_queries)
 
 
 class EntitySys(NamespaceExtension):
 
-    __slots__ = NamespaceExtension.__slots__ + ['_entity']
-
-    def __init__(self, entity):
-        """Create a sys namespace for the `entity`."""
-        NamespaceExtension.__init__(self)
-        self._entity = entity
+    __slots__ = NamespaceExtension.__slots__
 
     def as_data(self):
         """Return tuple of entity values in a form suitable for
@@ -167,59 +161,59 @@ class EntitySys(NamespaceExtension):
             else:
                 return value
         values = []
-        create = self._entity.t_create()
-        e = self._entity
-        for f_name in e.f:
+        instance = self._i
+        create = instance.t_create()
+        for f_name in instance.f:
             if (f_name not in create.f
                 or create.f[f_name].hidden or create.f[f_name].readonly):
                 # Don't include a field that doesn't exist in the
                 # create transaction, or is hidden or readonly.
                 continue
-            f = e.f[f_name]
+            f = instance.f[f_name]
             if f.fget is not None or f.hidden:
                 pass
             else:
-                value = resolve(e, f_name)
+                value = resolve(instance, f_name)
                 values.append(value)
         return tuple(values)
 
     def count(self, other_extent_name=None, other_field_name=None):
         """Return count of all links, or specific links if
         `other_extent_name` and `other_field_name` are supplied."""
-        e = self._entity
-        return e._db._entity_links(e._extent.name, e._oid, other_extent_name,
+        i = self._i
+        return i._db._entity_links(i._extent.name, i._oid, other_extent_name,
                                    other_field_name, return_count=True)
 
     @property
     def db(self):
         """Return the database to which this entity belongs."""
-        return self._entity._db
+        return self._i._db
 
     @property
     def exists(self):
         """Return True if the entity exists; False if it was deleted."""
-        entity = self._entity
-        oid = entity._oid
-        extent = entity._extent
+        instance = self._i
+        oid = instance._oid
+        extent = instance._extent
         return oid in extent
 
     @property
     def extent(self):
         """Return the extent to which this entity belongs."""
-        return self._entity._extent
+        return self._i._extent
 
     @property
     def extent_name(self):
         """Return the name of the extent to which this entity belongs."""
-        return self._entity._extent.name
+        return self._i._extent.name
 
     def field_map(self, *filters):
         """Return field_map for the entity, filtered by optional
         callable objects specified in `filters`."""
-        e = self._entity
-        db = e._db
-        stored_values = e._db._entity_fields(e._extent.name, e._oid)
-        entity_field_map = e._field_spec.field_map(e, stored_values)
+        i = self._i
+        db = i._db
+        stored_values = i._db._entity_fields(i._extent.name, i._oid)
+        entity_field_map = i._field_spec.field_map(i, stored_values)
         # Remove fields that should not be included.
         new_fields = entity_field_map.itervalues()
         for filt in filters:
@@ -229,7 +223,7 @@ class EntitySys(NamespaceExtension):
         for field in entity_field_map.itervalues():
             if field.fget is not None:
                 # Update fields that have fget callables.
-                value = field.fget[0](e)
+                value = field.fget[0](i)
             else:
                 # Allow fields to restore themselves from a stored
                 # value.
@@ -240,14 +234,14 @@ class EntitySys(NamespaceExtension):
         """Return dictionary of (extent_name, field_name): entity_list
         pairs, or list of linking entities if `other_extent_name` and
         `other_field_name` are supplied."""
-        e = self._entity
-        return e._db._entity_links(e._extent.name, e._oid,
+        i = self._i
+        return i._db._entity_links(i._extent.name, i._oid,
                                    other_extent_name, other_field_name)
 
     def links_filter(self, other_extent_name, other_field_name):
         """Return a callable that returns the current list of linking
         entities whenever called."""
-        db = self._entity._db
+        db = self._i._db
         try:
             extent = db.extent(other_extent_name)
         except KeyError:
@@ -261,33 +255,29 @@ class EntitySys(NamespaceExtension):
     @property
     def oid(self):
         """Return the OID of the entity."""
-        return self._entity._oid
+        return self._i._oid
 
     @property
     def rev(self):
         """Return the revision number of the entity."""
-        return self._entity._rev
+        return self._i._rev
 
 
 class EntityClassTransactions(NamespaceExtension):
 
-    __slots__ = NamespaceExtension.__slots__ + ['_c']
-
-    def __init__(self, cls):
-        self._c = cls
+    __slots__ = NamespaceExtension.__slots__
 
 
 class EntityTransactions(NamespaceExtension):
     """A namespace of entity-level transactions."""
 
-    __slots__ = NamespaceExtension.__slots__ + ['_e']
+    __slots__ = NamespaceExtension.__slots__
 
-    def __init__(self, entity):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, instance):
+        NamespaceExtension.__init__(self, name, instance)
         d = self._d
-        self._e = entity
-        for t_name in entity._t_names:
-            func = getattr(entity, t_name)
+        for t_name in instance._t_names:
+            func = getattr(instance, t_name)
             name = t_name[2:]
             d[name] = func
 
@@ -314,9 +304,9 @@ class EntityTransactions(NamespaceExtension):
                 )
 
     def _hidden_actions(self):
-        entity = self._e
-        hidden = entity._hidden_actions.copy()
-        hidden_t_methods = getattr(entity, '_hidden_t_methods', None)
+        instance = self._i
+        hidden = instance._hidden_actions.copy()
+        hidden_t_methods = getattr(instance, '_hidden_t_methods', None)
         if hidden_t_methods is not None:
             hidden.update(hidden_t_methods() or [])
         return hidden
@@ -324,29 +314,25 @@ class EntityTransactions(NamespaceExtension):
 
 class EntityClassViews(NamespaceExtension):
 
-    __slots__ = NamespaceExtension.__slots__ + ['_c']
-
-    def __init__(self, cls):
-        self._c = cls
+    __slots__ = NamespaceExtension.__slots__
 
 
 class EntityViews(NamespaceExtension):
     """A namespace of entity-level views."""
 
-    __slots__ = NamespaceExtension.__slots__ + ['_e']
+    __slots__ = NamespaceExtension.__slots__
 
-    def __init__(self, entity):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, instance):
+        NamespaceExtension.__init__(self, name, instance)
         d = self._d
-        self._e = entity
-        for v_name in entity._v_names:
-            func = getattr(entity, v_name)
+        for v_name in instance._v_names:
+            func = getattr(instance, v_name)
             name = v_name[2:]
             d[name] = func
 
     def __iter__(self):
         return (k for k in self._d.iterkeys()
-                if k not in self._e._hidden_views)
+                if k not in self._i._hidden_views)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

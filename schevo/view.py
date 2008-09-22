@@ -51,19 +51,19 @@ class View(base.View):
 
     def __getattr__(self, name):
         if name == 'sys':
-            self.sys = attr = ViewSys(self)
+            self.sys = attr = ViewSys('sys', self)
         elif name == 'f':
-            self.f = attr = schevo.namespace.Fields(self)
+            self.f = attr = schevo.namespace.Fields('f', self)
         elif name == 'm' and self._entity is not None:
             self.m = attr = self._entity.m
         elif name == 'q' and self._entity is not None:
-            self.q = attr = ViewQueries(self._entity, self)
+            self.q = attr = ViewQueries('q', self, self._entity)
         elif name == 't' and self._entity is not None:
-            self.t = attr = ViewTransactions(self._entity, self)
+            self.t = attr = ViewTransactions('t', self, self._entity)
         elif name == 'v' and self._entity is not None:
             self.v = attr = self._entity.v
         elif name == 'x':
-            self.x = attr = ViewExtenders(self)
+            self.x = attr = ViewExtenders('x', self)
         elif name in self._field_map:
             attr = self._field_map[name].get_immutable()
         else:
@@ -94,8 +94,8 @@ class ViewExtenders(NamespaceExtension):
 
     _readonly = False
 
-    def __init__(self, view):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, view):
+        NamespaceExtension.__init__(self, name, view)
         d = self._d
         cls = view.__class__
         x_names = []
@@ -113,46 +113,42 @@ class ViewExtenders(NamespaceExtension):
 
 class ViewSys(NamespaceExtension):
 
-    __slots__ = NamespaceExtension.__slots__ + ['_view']
-
-    def __init__(self, view):
-        NamespaceExtension.__init__(self)
-        self._view = view
+    __slots__ = NamespaceExtension.__slots__
 
     @property
     def entity(self):
-        return self._view._entity
+        return self._i._entity
 
     def field_map(self, *filters):
         """Return field_map for the view, filtered by optional
         callable objects specified in `filters`."""
         # Remove fields that should not be included.
-        new_fields = self._view._field_map.itervalues()
+        new_fields = self._i._field_map.itervalues()
         for filt in filters:
             new_fields = [field for field in new_fields if filt(field)]
         return FieldMap((field.name, field) for field in new_fields)
 
     @property
     def count(self):
-        return self._view._entity.sys.count
+        return self._i._entity.sys.count
 
     @property
     def exists(self):
         """Return True if the entity exists; False if it was deleted."""
-        return self._view._entity.sys.exists
+        return self._i._entity.sys.exists
 
     @property
     def count(self):
-        return self._view._entity.sys.count
+        return self._i._entity.sys.count
 
     @property
     def exists(self):
         """Return True if the entity exists; False if it was deleted."""
-        return self._view._entity.sys.exists
+        return self._i._entity.sys.exists
 
     @property
     def extent(self):
-        return self._view._entity.sys.extent
+        return self._i._entity.sys.extent
 
     @property
     def extent_name(self):
@@ -160,26 +156,25 @@ class ViewSys(NamespaceExtension):
 
     @property
     def links(self):
-        return self._view._entity.sys.links
+        return self._i._entity.sys.links
 
     @property
     def oid(self):
-        return self._view._entity.sys.oid
+        return self._i._entity.sys.oid
 
     @property
     def rev(self):
-        return self._view._entity.sys.rev
+        return self._i._entity.sys.rev
 
 
 class ViewTransactions(NamespaceExtension):
     """A namespace of view-level transactions."""
 
-    __slots__ = NamespaceExtension.__slots__ + ['_v']
+    __slots__ = NamespaceExtension.__slots__
 
-    def __init__(self, entity, view):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, view, entity):
+        NamespaceExtension.__init__(self, name, view)
         d = self._d
-        self._v = view
         # Start with the actions defined on the entity.
         for t_name in entity._t_names:
             func = getattr(entity, t_name)
@@ -228,7 +223,7 @@ class ViewTransactions(NamespaceExtension):
                 )
 
     def _hidden_actions(self):
-        view = self._v
+        view = self._i
         if view._hidden_actions is not None:
             # Use view's _hidden_actions if available.
             hidden = view._hidden_actions.copy()
@@ -249,12 +244,11 @@ class ViewTransactions(NamespaceExtension):
 class ViewQueries(NamespaceExtension):
     """A namespace of view-level queries."""
 
-    __slots__ = NamespaceExtension.__slots__ + ['_v']
+    __slots__ = NamespaceExtension.__slots__
 
-    def __init__(self, entity, view):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, view, entity):
+        NamespaceExtension.__init__(self, name, view)
         d = self._d
-        self._v = view
         # Start with the actions defined on the entity.
         for q_name in entity._q_names:
             func = getattr(entity, q_name)
@@ -281,10 +275,10 @@ class ViewQueries(NamespaceExtension):
             d[name] = func
 
     def __iter__(self):
-        if self._v._hidden_queries is None:
-            hidden_queries = self._v._entity._hidden_queries
+        if self._i._hidden_queries is None:
+            hidden_queries = self._i._entity._hidden_queries
         else:
-            hidden_queries = self._v._hidden_queries
+            hidden_queries = self._i._hidden_queries
         return (k for k in self._d.iterkeys()
                 if k not in hidden_queries)
 

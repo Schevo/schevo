@@ -76,8 +76,8 @@ class Param(Query):
 
     def __init__(self, *args, **kw):
         f = self._field_map = self._field_spec.field_map(instance=self)
-        self.f = schevo.namespace.Fields(self)
-        self.sys = ParamSys(self)
+        self.f = schevo.namespace.Fields('f', self)
+        self.sys = ParamSys('sys', self)
         if args:
             self._on = args[0]
         else:
@@ -88,7 +88,7 @@ class Param(Query):
 
     def __getattr__(self, name):
         if name == 'h':
-            self.h = attr = ParamChangeHandlers(self)
+            self.h = attr = ParamChangeHandlers('h', self)
         else:
             attr = self._field_map[name].get()
         return attr
@@ -117,8 +117,8 @@ class ParamChangeHandlers(NamespaceExtension):
 
     _readonly = False
 
-    def __init__(self, query):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, query):
+        NamespaceExtension.__init__(self, name, query)
         d = self._d
         # Note: could be optimized via using a metaclass with
         # ParamQuery.
@@ -131,15 +131,11 @@ class ParamChangeHandlers(NamespaceExtension):
 
 class ParamSys(NamespaceExtension):
 
-    __slots__ = NamespaceExtension.__slots__ + ['_query']
-
-    def __init__(self, query):
-        NamespaceExtension.__init__(self)
-        self._query = query
+    __slots__ = NamespaceExtension.__slots__
 
     def field_map(self, *filters):
         # Remove fields that should not be included.
-        new_fields = self._query._field_map.itervalues()
+        new_fields = self._i._field_map.itervalues()
         for filt in filters:
             new_fields = [field for field in new_fields if filt(field)]
         return FieldMap((field.name, field) for field in new_fields)
@@ -173,8 +169,8 @@ class Exact(Param):
                 field_spec[name] = FieldClass
                 field = field_map[name] = FieldClass(self)
                 field._name = name
-        self.f = schevo.namespace.Fields(self)
-        self.sys = ParamSys(self)
+        self.f = schevo.namespace.Fields('f', self)
+        self.sys = ParamSys('sys', self)
         for field in field_map.itervalues():
             field.assigned = False
         for name, value in kw.iteritems():

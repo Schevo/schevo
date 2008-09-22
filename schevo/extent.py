@@ -35,10 +35,10 @@ class Extent(base.Extent):
         self.initial = EntityClass._initial
         self.key_spec = EntityClass._key_spec
         self.name = name
-        self.f = ExtentFieldClasses(EntityClass)
-        self.q = ExtentQueries(EntityClass)
-        self.t = ExtentTransactions(EntityClass)
-        self.x = ExtentExtenders(EntityClass)
+        self.f = ExtentFieldClasses('f', self, EntityClass)
+        self.q = ExtentQueries('q', self, EntityClass)
+        self.t = ExtentTransactions('t', self, EntityClass)
+        self.x = ExtentExtenders('x', self, EntityClass)
         # Private variables.
         self._by = db._by_entity_oids
         self._enforce = db._enforce_index
@@ -180,8 +180,8 @@ class ExtentExtenders(NamespaceExtension):
 
     _readonly = False
 
-    def __init__(self, EntityClass):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, instance, EntityClass):
+        NamespaceExtension.__init__(self, name, instance)
         # Expose methods through this namespace.
         for name in dir(EntityClass):
             # Extender methods always have x_ prefix.
@@ -196,9 +196,11 @@ class ExtentExtenders(NamespaceExtension):
 
 class ExtentFieldClasses(object):
 
-    __slots__ = ['_extent']
+    __slots__ = ['_n', '_i', '_extent']
 
-    def __init__(self, extent):
+    def __init__(self, name, instance, extent):
+        self._n = name
+        self._i = instance
         self._extent = extent
 
     def __getattr__(self, name):
@@ -211,6 +213,9 @@ class ExtentFieldClasses(object):
     def __iter__(self):
         return iter(self._extent._field_spec)
 
+    def __repr__(self):
+        return '<%r namespace on %r>' % (self._n, self._i)
+
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
         return sorted(iter(self))
@@ -221,8 +226,8 @@ class ExtentQueries(NamespaceExtension):
 
     __slots__ = NamespaceExtension.__slots__ + ['_E']
 
-    def __init__(self, EntityClass):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, instance, EntityClass):
+        NamespaceExtension.__init__(self, name, instance)
         self._E = EntityClass
         # Expose query methods through this namespace.
         for key in dir(EntityClass):
@@ -246,8 +251,8 @@ class ExtentTransactions(NamespaceExtension):
 
     __slots__ = NamespaceExtension.__slots__ + ['_E']
 
-    def __init__(self, EntityClass):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, instance, EntityClass):
+        NamespaceExtension.__init__(self, name, instance)
         self._E = EntityClass
         # Expose transaction methods through this namespace.
         for key in dir(EntityClass):

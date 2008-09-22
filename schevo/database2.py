@@ -1317,7 +1317,7 @@ class Database(base.Database):
             self.t = schema.t
             self.Q = schema.Q
             # Create an extenders namespace.
-            self.x = DatabaseExtenders(self._schema_module)
+            self.x = DatabaseExtenders('x', self, self._schema_module)
             # If the schema has changed then sync with it.
             if sync_schema_changes:
                 # Update schema source stored in database.
@@ -1830,8 +1830,8 @@ class DatabaseExtenders(NamespaceExtension):
 
     _readonly = False
 
-    def __init__(self, schema_module):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, instance, schema_module):
+        NamespaceExtension.__init__(self, name, instance)
         # Expose functions through this namespace.
         for name in dir(schema_module):
             # Extender functions always have x_ prefix.
