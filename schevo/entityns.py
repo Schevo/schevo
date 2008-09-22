@@ -47,6 +47,11 @@ class EntityExtenders(NamespaceExtension):
             d[name] = func
 
 
+class EntityClassFields(NamespaceExtension):
+
+    __slots__ = NamespaceExtension.__slots__
+
+
 class EntityFields(object):
 
     __slots__ = ['_n', '_i']

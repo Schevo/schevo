@@ -308,7 +308,8 @@ class Entity(base.Entity, LabelMixin):
 
     # Namespaces.
     sys = namespaceproperty('sys', instance=entityns.EntitySys)
-    f = namespaceproperty('f', instance=entityns.EntityFields)
+    f = namespaceproperty('f', cls=entityns.EntityClassFields,
+                          instance=entityns.EntityFields)
     m = namespaceproperty('m', instance=entityns.EntityOneToMany)
     q = namespaceproperty('q', cls=entityns.EntityClassQueries,
                           instance=entityns.EntityQueries)

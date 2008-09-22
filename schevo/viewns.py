@@ -16,6 +16,11 @@ import schevo.namespace
 from schevo.namespace import NamespaceExtension, namespaceproperty
 
 
+class ViewClassExtenders(NamespaceExtension):
+
+    __slots__ = NamespaceExtension.__slots__
+
+
 class ViewExtenders(NamespaceExtension):
     """A namespace of extra attributes."""
 
@@ -40,6 +45,11 @@ class ViewExtenders(NamespaceExtension):
             d[name] = func
 
 
+class ViewClassFields(NamespaceExtension):
+
+    __slots__ = NamespaceExtension.__slots__
+
+
 class ViewOneToMany(NamespaceExtension):
 
     __slots__ = NamespaceExtension.__slots__
@@ -49,6 +59,53 @@ class ViewOneToMany(NamespaceExtension):
         # Copy one-to-many methods from the view's entity to the view
         # itself.
         self._d.update(view._entity.v._d)
+
+
+class ViewClassQueries(NamespaceExtension):
+
+    __slots__ = NamespaceExtension.__slots__
+
+
+class ViewQueries(NamespaceExtension):
+    """A namespace of view-level queries."""
+
+    __slots__ = NamespaceExtension.__slots__
+
+    def __init__(self, name, view, entity):
+        NamespaceExtension.__init__(self, name, view)
+        d = self._d
+        # Start with the actions defined on the entity.
+        for q_name in entity._q_names:
+            func = getattr(entity, q_name)
+            name = q_name[2:]
+            d[name] = func
+        # The add or override with actions defined on the view.
+        cls = view.__class__
+        q_names = []
+        for attr in dir(cls):
+            if attr.startswith('q_'):
+                q_name = attr
+                func = getattr(cls, q_name)
+                if not isclassmethod(func):
+                    q_names.append(q_name)
+        for q_name in q_names:
+            name = q_name[2:]
+            func = getattr(view, q_name)
+            # Assign a label if none exists.
+            new_label = None
+            if getattr(func, '_label', None) is None:
+                new_label = label_from_name(name)
+                if new_label is not None:
+                    cls.__dict__[q_name]._label = new_label
+            d[name] = func
+
+    def __iter__(self):
+        if self._i._hidden_queries is None:
+            hidden_queries = self._i._entity._hidden_queries
+        else:
+            hidden_queries = self._i._hidden_queries
+        return (k for k in self._d.iterkeys()
+                if k not in hidden_queries)
 
 
 class ViewSys(NamespaceExtension):
@@ -107,46 +164,9 @@ class ViewSys(NamespaceExtension):
         return self._i._entity.sys.rev
 
 
-class ViewQueries(NamespaceExtension):
-    """A namespace of view-level queries."""
+class ViewClassTransactions(NamespaceExtension):
 
     __slots__ = NamespaceExtension.__slots__
-
-    def __init__(self, name, view, entity):
-        NamespaceExtension.__init__(self, name, view)
-        d = self._d
-        # Start with the actions defined on the entity.
-        for q_name in entity._q_names:
-            func = getattr(entity, q_name)
-            name = q_name[2:]
-            d[name] = func
-        # The add or override with actions defined on the view.
-        cls = view.__class__
-        q_names = []
-        for attr in dir(cls):
-            if attr.startswith('q_'):
-                q_name = attr
-                func = getattr(cls, q_name)
-                if not isclassmethod(func):
-                    q_names.append(q_name)
-        for q_name in q_names:
-            name = q_name[2:]
-            func = getattr(view, q_name)
-            # Assign a label if none exists.
-            new_label = None
-            if getattr(func, '_label', None) is None:
-                new_label = label_from_name(name)
-                if new_label is not None:
-                    cls.__dict__[q_name]._label = new_label
-            d[name] = func
-
-    def __iter__(self):
-        if self._i._hidden_queries is None:
-            hidden_queries = self._i._entity._hidden_queries
-        else:
-            hidden_queries = self._i._hidden_queries
-        return (k for k in self._d.iterkeys()
-                if k not in hidden_queries)
 
 
 class ViewTransactions(NamespaceExtension):
@@ -223,6 +243,11 @@ class ViewTransactions(NamespaceExtension):
         if hidden_t_methods is not None:
             hidden.update(hidden_t_methods() or [])
         return hidden
+
+
+class ViewClassViews(NamespaceExtension):
+
+    __slots__ = NamespaceExtension.__slots__
 
 
 class ViewViews(NamespaceExtension):

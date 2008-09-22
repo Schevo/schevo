@@ -29,12 +29,17 @@ class View(base.View):
 
     # Namespaces.
     sys = namespaceproperty('sys', instance=viewns.ViewSys)
-    f = namespaceproperty('f', instance=schevo.namespace.Fields)
+    f = namespaceproperty('f', cls=viewns.ViewClassFields,
+                          instance=schevo.namespace.Fields)
     m = namespaceproperty('m', instance=viewns.ViewOneToMany)
-    q = namespaceproperty('q', instance=viewns.ViewQueries)
-    t = namespaceproperty('t', instance=viewns.ViewTransactions)
-    v = namespaceproperty('v', instance=viewns.ViewViews)
-    x = namespaceproperty('x', instance=viewns.ViewExtenders)
+    q = namespaceproperty('q', cls=viewns.ViewClassQueries,
+                          instance=viewns.ViewQueries)
+    t = namespaceproperty('t', cls=viewns.ViewClassTransactions,
+                          instance=viewns.ViewTransactions)
+    v = namespaceproperty('v', cls=viewns.ViewClassViews,
+                          instance=viewns.ViewViews)
+    x = namespaceproperty('x', cls=viewns.ViewClassExtenders,
+                          instance=viewns.ViewExtenders)
 
     _field_spec = FieldSpecMap()
 
