@@ -31,6 +31,35 @@ class SchemaDefinition(object):
         self.relationships = {}
 
 
+class namespaceproperty(object):
+
+    def __init__(self, name, cls=None, instance=None):
+        self.name = name
+        self.prefixed_name = '_' + name
+        self.cls_class = cls
+        self.instance_class = instance
+        self.cls_namespace = None
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            # Create the class namespace if needed, then return it.
+            if self.cls_namespace is None:
+                cls_class = self.cls_class
+                if cls_class is None:
+                    self.cls_namespace = None
+                else:
+                    self.cls_namespace = cls_class(owner)
+            return self.cls_namespace
+        else:
+            # Create the instance namespace if needed, then return it.
+            name = self.prefixed_name
+            namespace = getattr(instance, name, None)
+            if namespace is None:
+                namespace = self.instance_class(instance)
+                setattr(instance, name, namespace)
+            return namespace
+
+
 class Fields(object):
     """A namespace that gives attribute access to an object's field
     instances."""
