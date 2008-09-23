@@ -87,7 +87,7 @@ def _hide(*args):
             # Special case: If 't_delete' is hidden, that implies that
             # 't_delete_selection' should also be hidden.
             if name == 't_delete':
-                hidden_actions.add('delete_selection')
+                hidden_actions.add('delete_selected')
         elif name.startswith('v_'):
             hidden_views.add(name[2:])
 
