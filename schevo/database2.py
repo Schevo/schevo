@@ -1312,10 +1312,15 @@ class Database(base.Database):
             self._schema_format_compatibility_check(schema)
             self.schema = schema
             self._schema_module = schema_module
-            # Expose database-level namespaces.
+            # Expose database-level namespaces and make the database
+            # the object that the namespace is associated with, for
+            # more effective use with repr().
             self.q = schema.q
+            self.q._i = self
             self.t = schema.t
+            self.t._i = self
             self.Q = schema.Q
+            self.Q._i = self
             # Create an extenders namespace.
             self.x = DatabaseExtenders('x', self, self._schema_module)
             # If the schema has changed then sync with it.
