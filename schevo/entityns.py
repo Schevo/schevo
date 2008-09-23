@@ -280,13 +280,13 @@ class EntityClassTransactions(NamespaceExtension):
             name = t_name[2:]
             d[name] = func
 
-        def __iter__(self):
-            hidden = self._i._hidden_actions
-            return (k for k, v in self._d.iteritems()
-                    if (k not in hidden
-                        and isselectionmethod(v)
-                        )
+    def __iter__(self):
+        hidden = self._i._hidden_actions
+        return (k for k, v in self._d.iteritems()
+                if (k not in hidden
+                    and isselectionmethod(v)
                     )
+                )
 
 
 class EntityTransactions(NamespaceExtension):
