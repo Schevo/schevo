@@ -15,6 +15,14 @@ __all__ = [
     ]
 
 
+def commontype(objs):
+    types = set(type(obj) for obj in objs)
+    if len(types) == 1:
+        return types.pop()
+    else:
+        return None
+
+
 def isextentmethod(fn):
     return getattr(fn, '_extentmethod', False)
 
