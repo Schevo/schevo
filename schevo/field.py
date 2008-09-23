@@ -310,18 +310,10 @@ class Field(base.Field):
         return '<%s field; value:%r>' % (self.__class__.__name__, self._value)
 
     def __str__(self):
-        v = self.get()
-        if v is UNASSIGNED:
-            return '<UNASSIGNED>'
-        else:
-            return str(v)
+        return str(self.get())
 
     def __unicode__(self):
-        v = self.get()
-        if v is UNASSIGNED:
-            return u'<UNASSIGNED>'
-        else:
-            return unicode(v)
+        return unicode(self.get())
 
     def check(self, value):
         """Return True if the value passes all validation checks."""
@@ -1320,14 +1312,14 @@ class EntityList(_EntityBase):
     def __str__(self):
         v = self.get()
         if v is UNASSIGNED:
-            return '<UNASSIGNED>'
+            return _EntityBase.__str__(self)
         else:
             return ', '.join(str(item) for item in v)
 
     def __unicode__(self):
         v = self.get()
         if v is UNASSIGNED:
-            return u'<UNASSIGNED>'
+            return _EntityBase.__unicode__(self)
         else:
             return u', '.join(unicode(item) for item in v)
 
@@ -1490,14 +1482,14 @@ class EntitySet(_EntityBase):
     def __str__(self):
         v = self.get()
         if v is UNASSIGNED:
-            return '<UNASSIGNED>'
+            return _EntityBase.__str__(self)
         else:
             return ', '.join(str(item) for item in v)
 
     def __unicode__(self):
         v = self.get()
         if v is UNASSIGNED:
-            return u'<UNASSIGNED>'
+            return _EntityBase.__unicode__(self)
         else:
             return u', '.join(unicode(item) for item in v)
 
@@ -1594,7 +1586,7 @@ class EntitySetSet(_EntityBase):
     def __str__(self):
         v = self.get()
         if v is UNASSIGNED:
-            return '<UNASSIGNED>'
+            return _EntityBase.__str__(self)
         else:
             return '; '.join(', '.join(str(item) for item in items)
                              for items in v)
@@ -1602,7 +1594,7 @@ class EntitySetSet(_EntityBase):
     def __unicode__(self):
         v = self.get()
         if v is UNASSIGNED:
-            return u'<UNASSIGNED>'
+            return _EntityBase.__unicode__(self)
         else:
             return '; '.join(u', '.join(unicode(item) for item in items)
                              for items in v)
