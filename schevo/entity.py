@@ -18,7 +18,8 @@ from schevo.error import (
     EntityDoesNotExist, ExtentDoesNotExist, FieldDoesNotExist, KeyIndexOverlap)
 from schevo.fieldspec import field_spec_from_class
 from schevo.fieldspec import FieldMap, FieldSpecMap
-from schevo.introspect import isextentmethod, isselectionmethod
+from schevo.introspect import (
+    isextentmethod, isinstancemethod, isselectionmethod)
 from schevo.label import (
     LabelMixin, label_from_name, plural_from_name, relabel)
 import schevo.namespace
@@ -91,29 +92,27 @@ class EntityMeta(type):
             # Assign labels if class name is "public".
             cls.assign_labels(class_name, class_dict)
         # Remember queries for the EntityQueries namespace.
-        def notextentmethod(fn):
-            return not isextentmethod(fn)
         prefix = 'q_'
         cls._q_instancemethod_names = cls.get_method_names(
-            prefix, notextentmethod)
+            prefix, isinstancemethod)
         cls._q_selectionmethod_names = cls.get_method_names(
             prefix, isselectionmethod)
         # Remember transactions for the EntityTransactions namespace.
         prefix = 't_'
         cls._t_instancemethod_names = cls.get_method_names(
-            prefix, notextentmethod)
+            prefix, isinstancemethod)
         cls._t_selectionmethod_names = cls.get_method_names(
             prefix, isselectionmethod)
         # Remember views for the EntityViews namespace.
         prefix = 'v_'
         cls._v_instancemethod_names = cls.get_method_names(
-            prefix, notextentmethod)
+            prefix, isinstancemethod)
         cls._v_selectionmethod_names = cls.get_method_names(
             prefix, isselectionmethod)
         # Remember x_methods for the EntityExtenders namespace.
         prefix = 'x_'
         cls._x_instancemethod_names = cls.get_method_names(
-            prefix, notextentmethod)
+            prefix, isinstancemethod)
         cls._x_selectionmethod_names = cls.get_method_names(
             prefix, isselectionmethod)
         # Add this class to the schema.
@@ -220,6 +219,9 @@ class EntityMeta(type):
         # Fields in a transaction class defined in the schema appear
         # below the fields that come from the entity field spec.
         for name in dir(cls):
+            # Skip namespace names so we do not access them.
+            if len(name) == 1 or name == 'sys':
+                continue
             OldClass = getattr(cls, name)
             if not isinstance(OldClass, type):
                 continue
