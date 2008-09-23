@@ -919,8 +919,9 @@ def find_references(db, entity, traversed,
             else:
                 raise ValueError(
                     'Unrecognized on_delete value %r' % on_delete)
-            find_references(db, referrer, traversed,
-                            restricters, cascaders, unassigners, removers)
+            if on_delete is CASCADE:
+                find_references(db, referrer, traversed,
+                                restricters, cascaders, unassigners, removers)
 
 
 def resolve(db, field_name, value, FieldClass, field_names=None):

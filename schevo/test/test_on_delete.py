@@ -428,7 +428,6 @@ class BaseOnDelete(CreatesSchema):
         except error.DeleteRestricted, e:
             assert e.restrictions == set([
                 (db.Bamm[1], db.Bobb[1], 'bamm'),
-                (db.Bobb[1], db.Batt[1], 'bobb'),
                 ])
 
     def test_cascade_complex(self):
