@@ -35,8 +35,9 @@ class _labelable_classmethod(object):
             return self.decorator.fn(self.firstarg, *args, **kw)
 
         def __repr__(self):
-            return '<%s %s at 0x%x>' % (
+            return '<%s %s.%s at 0x%x>' % (
                 self.decorator.__class__.__name__,
+                self.owner.__name__,
                 self.decorator.fn.__name__,
                 id(self),
                 )

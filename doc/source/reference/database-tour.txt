@@ -537,14 +537,14 @@ namespace:
      >>> method_name = 'create'
      >>> method = db.Plant.t[method_name]
      >>> method    #doctest: +ELLIPSIS
-     <extent method Plant.t_create ...
+     <extentclassmethod Plant.t_create ...
 
 You may also use the `__getattr__` protocol:
 
   .. sourcecode:: pycon
 
      >>> db.Plant.t.create    #doctest: +ELLIPSIS
-     <extent method Plant.t_create ...
+     <extentclassmethod Plant.t_create ...
 
      >>> db.Plant.t.create is db.Plant.t['create']
      True
