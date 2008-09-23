@@ -75,7 +75,7 @@ class ViewQueries(NamespaceExtension):
         NamespaceExtension.__init__(self, name, view)
         d = self._d
         # Start with the actions defined on the entity.
-        for q_name in entity._q_names:
+        for q_name in entity._q_instancemethod_names:
             func = getattr(entity, q_name)
             name = q_name[2:]
             d[name] = func
@@ -180,7 +180,7 @@ class ViewTransactions(NamespaceExtension):
         # Start with the actions defined on the entity.
         entity = view._entity
         if entity is not None:
-            for t_name in entity._t_names:
+            for t_name in entity._t_instancemethod_names:
                 func = getattr(entity, t_name)
                 name = t_name[2:]
                 d[name] = func
@@ -203,20 +203,6 @@ class ViewTransactions(NamespaceExtension):
                 if new_label is not None:
                     cls.__dict__[t_name]._label = new_label
             d[name] = func
-
-    def __call__(self, *filters):
-        if filters == (isselectionmethod, ):
-            hidden = self._hidden_actions()
-            return (k for k, v in self._d.iteritems()
-                    if (k not in hidden
-                        and isselectionmethod(v)
-                        )
-                    )
-        else:
-            # XXX: Should actually scan through transaction methods
-            # and run them through a filter, returning names of those
-            # methods that match.
-            return []
 
     def __iter__(self):
         hidden = self._hidden_actions()

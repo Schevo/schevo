@@ -41,7 +41,7 @@ class EntityExtenders(NamespaceExtension):
     def __init__(self, name, instance):
         NamespaceExtension.__init__(self, name, instance)
         d = self._d
-        for x_name in instance._x_names:
+        for x_name in instance._x_instancemethod_names:
             func = getattr(instance, x_name)
             name = x_name[2:]
             d[name] = func
@@ -134,7 +134,7 @@ class EntityQueries(NamespaceExtension):
     def __init__(self, name, instance):
         NamespaceExtension.__init__(self)
         d = self._d
-        for q_name in instance._q_names:
+        for q_name in instance._q_instancemethod_names:
             func = getattr(instance, q_name)
             name = q_name[2:]
             d[name] = func
@@ -272,6 +272,22 @@ class EntityClassTransactions(NamespaceExtension):
 
     __slots__ = NamespaceExtension.__slots__
 
+    def __init__(self, name, instance):
+        NamespaceExtension.__init__(self, name, instance)
+        d = self._d
+        for t_name in instance._t_selectionmethod_names:
+            func = getattr(instance, t_name)
+            name = t_name[2:]
+            d[name] = func
+
+        def __iter__(self):
+            hidden = self._i._hidden_actions
+            return (k for k, v in self._d.iteritems()
+                    if (k not in hidden
+                        and isselectionmethod(v)
+                        )
+                    )
+
 
 class EntityTransactions(NamespaceExtension):
     """A namespace of entity-level transactions."""
@@ -281,41 +297,32 @@ class EntityTransactions(NamespaceExtension):
     def __init__(self, name, instance):
         NamespaceExtension.__init__(self, name, instance)
         d = self._d
-        for t_name in instance._t_names:
+        for t_name in instance._t_instancemethod_names:
             func = getattr(instance, t_name)
             name = t_name[2:]
             d[name] = func
 
-    def __call__(self, *filters):
-        if filters == (isselectionmethod, ):
-            hidden = self._hidden_actions()
-            return (k for k, v in self._d.iteritems()
-                    if (k not in hidden
-                        and isselectionmethod(v)
-                        )
-                    )
-        else:
-            # XXX: Should actually scan through transaction methods
-            # and run them through a filter, returning names of those
-            # methods that match.
-            return []
+#     def __call__(self, *filters):
+#         hidden = self._hidden_actions()
+#         return (k for k, v in self._d.iteritems()
+#                 if (k not in hidden
+#                     and isselectionmethod(v)
+#                     )
+#                 )
 
     def __iter__(self):
-        hidden = self._hidden_actions()
-        return (k for k, v in self._d.iteritems()
-                if (k not in hidden
-                    and not isselectionmethod(v)
-                    )
-                )
-
-    def _hidden_actions(self):
+        # Find hidden actions.
         instance = self._i
         hidden = instance._hidden_actions.copy()
         hidden_t_methods = getattr(instance, '_hidden_t_methods', None)
         if hidden_t_methods is not None:
             hidden.update(hidden_t_methods() or [])
-        return hidden
-
+        # Find instance methods.
+        return (k for k, v in self._d.iteritems()
+                if (k not in hidden
+                    and not isselectionmethod(v)
+                    )
+                )
 
 class EntityClassViews(NamespaceExtension):
 
@@ -330,7 +337,7 @@ class EntityViews(NamespaceExtension):
     def __init__(self, name, instance):
         NamespaceExtension.__init__(self, name, instance)
         d = self._d
-        for v_name in instance._v_names:
+        for v_name in instance._v_instancemethod_names:
             func = getattr(instance, v_name)
             name = v_name[2:]
             d[name] = func

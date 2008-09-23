@@ -94,22 +94,26 @@ class EntityMeta(type):
         def notextentmethod(fn):
             return not isextentmethod(fn)
         prefix = 'q_'
-        cls._q_names = cls.get_method_names(prefix, notextentmethod)
+        cls._q_instancemethod_names = cls.get_method_names(
+            prefix, notextentmethod)
         cls._q_selectionmethod_names = cls.get_method_names(
             prefix, isselectionmethod)
         # Remember transactions for the EntityTransactions namespace.
         prefix = 't_'
-        cls._t_names = cls.get_method_names(prefix, notextentmethod)
+        cls._t_instancemethod_names = cls.get_method_names(
+            prefix, notextentmethod)
         cls._t_selectionmethod_names = cls.get_method_names(
             prefix, isselectionmethod)
         # Remember views for the EntityViews namespace.
         prefix = 'v_'
-        cls._v_names = cls.get_method_names(prefix, notextentmethod)
+        cls._v_instancemethod_names = cls.get_method_names(
+            prefix, notextentmethod)
         cls._v_selectionmethod_names = cls.get_method_names(
             prefix, isselectionmethod)
         # Remember x_methods for the EntityExtenders namespace.
         prefix = 'x_'
-        cls._x_names = cls.get_method_names(prefix, notextentmethod)
+        cls._x_instancemethod_names = cls.get_method_names(
+            prefix, notextentmethod)
         cls._x_selectionmethod_names = cls.get_method_names(
             prefix, isselectionmethod)
         # Add this class to the schema.
@@ -378,10 +382,11 @@ class Entity(base.Entity, LabelMixin):
 
     # Names of query, transaction, view, and extender methods
     # applicable to entity instances.
-    _q_names = []
-    _t_names = []
-    _v_names = []
-    _x_names = []
+    _q_instancemethod_names = []
+    _t_instancemethod_names = []
+    _t_selectionmethod_names = []
+    _v_instancemethod_names = []
+    _x_instancemethod_names = []
 
     def __init__(self, oid):
         self._oid = oid
@@ -484,7 +489,6 @@ class Entity(base.Entity, LabelMixin):
         tx = self._Delete(self)
         return tx
 
-    @extentclassmethod
     @selectionmethod
     @with_label(u'Delete Selection')
     def t_delete_selection(cls, selection):

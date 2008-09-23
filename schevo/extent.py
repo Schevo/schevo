@@ -266,19 +266,6 @@ class ExtentTransactions(NamespaceExtension):
                     name = key[2:]
                     self._set(name, method)
 
-    def __call__(self, *filters):
-        if filters == (isselectionmethod, ):
-            return (k for k in self._d.iterkeys()
-                    if (k not in self._E._hidden_actions
-                        and 't_' + k in self._E._t_selectionmethod_names
-                        )
-                    )
-        else:
-            # XXX: Should actually scan through transaction methods
-            # and run them through a filter, returning names of those
-            # methods that match.
-            return []
-
     def __iter__(self):
         return (k for k in self._d.iterkeys()
                 if (k not in self._E._hidden_actions
