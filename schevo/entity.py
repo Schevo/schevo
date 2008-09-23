@@ -492,8 +492,8 @@ class Entity(base.Entity, LabelMixin):
         return tx
 
     @selectionmethod
-    @with_label(u'Delete Selection')
-    def t_delete_selection(cls, selection):
+    @with_label(u'Delete Selected')
+    def t_delete_selected(cls, selection):
         """Return a transaction to delete all entities in `selection`."""
         tx = cls._DeleteSelection(selection)
         return tx
