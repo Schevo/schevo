@@ -280,7 +280,7 @@ If the series of objects is not homogeneously typed, `commontype` will
 return None::
 
     >>> cls = commontype(list(db.Hole) + list(db.Thread))
-    >>> cls
+    >>> print cls
     None
 
 Use the common type to find selection methods applicable to that type
