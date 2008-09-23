@@ -302,14 +302,6 @@ class EntityTransactions(NamespaceExtension):
             name = t_name[2:]
             d[name] = func
 
-#     def __call__(self, *filters):
-#         hidden = self._hidden_actions()
-#         return (k for k, v in self._d.iteritems()
-#                 if (k not in hidden
-#                     and isselectionmethod(v)
-#                     )
-#                 )
-
     def __iter__(self):
         # Find hidden actions.
         instance = self._i
