@@ -3,7 +3,7 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
-from schevo.decorator import isextentmethod
+from schevo.introspect import isextentmethod
 from schevo.test import CreatesSchema
 
 

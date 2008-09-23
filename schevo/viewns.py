@@ -7,9 +7,9 @@ import sys
 from schevo.lib import optimize
 
 from schevo import base
-from schevo.decorator import isclassmethod, isselectionmethod
 from schevo.field import not_fget
 from schevo.fieldspec import FieldMap, FieldSpecMap
+from schevo.introspect import isselectionmethod
 from schevo.label import label_from_name
 from schevo.meta import schema_metaclass
 import schevo.namespace
@@ -37,8 +37,7 @@ class ViewExtenders(NamespaceExtension):
             if attr.startswith('x_'):
                 x_name = attr
                 func = getattr(cls, x_name)
-                if not isclassmethod(func):
-                    x_names.append(x_name)
+                x_names.append(x_name)
         for x_name in x_names:
             name = x_name[2:]
             func = getattr(view, x_name)
@@ -86,8 +85,7 @@ class ViewQueries(NamespaceExtension):
             if attr.startswith('q_'):
                 q_name = attr
                 func = getattr(cls, q_name)
-                if not isclassmethod(func):
-                    q_names.append(q_name)
+                q_names.append(q_name)
         for q_name in q_names:
             name = q_name[2:]
             func = getattr(view, q_name)
@@ -191,8 +189,7 @@ class ViewTransactions(NamespaceExtension):
             if attr.startswith('t_'):
                 t_name = attr
                 func = getattr(cls, t_name)
-                if not isclassmethod(func):
-                    t_names.append(t_name)
+                t_names.append(t_name)
         for t_name in t_names:
             name = t_name[2:]
             func = getattr(view, t_name)

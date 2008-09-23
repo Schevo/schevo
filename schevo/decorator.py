@@ -7,10 +7,6 @@ import sys
 from schevo.lib import optimize
 
 
-# ----------------------------------------------------------------------
-# Decoration.
-
-
 class _labelable_classmethod(object):
 
     _label = None
@@ -108,25 +104,6 @@ def with_label(label, plural=None):
             fn._plural = unicode(plural)
         return fn
     return label_decorator
-
-
-# ----------------------------------------------------------------------
-# Introspection.
-
-
-@optimize.do_not_optimize
-def isclassmethod(fn):
-    return type(fn.im_class) == type(fn.im_self)
-
-
-@optimize.do_not_optimize
-def isextentmethod(fn):
-    return getattr(fn, '_extentmethod', False)
-
-
-@optimize.do_not_optimize
-def isselectionmethod(fn):
-    return getattr(fn, '_selectionmethod', False)
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

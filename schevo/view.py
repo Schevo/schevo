@@ -7,7 +7,6 @@ import sys
 from schevo.lib import optimize
 
 from schevo import base
-from schevo.decorator import isclassmethod, isselectionmethod
 from schevo.field import not_fget
 from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import label_from_name, LabelMixin

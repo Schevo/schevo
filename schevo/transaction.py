@@ -10,7 +10,6 @@ from schevo import base
 from schevo.change import summarize
 from schevo.constant import (CASCADE, DEFAULT, REMOVE, RESTRICT,
                              UNASSIGN, UNASSIGNED)
-from schevo.decorator import isclassmethod
 from schevo.error import (
     DeleteRestricted,
     KeyCollision,
@@ -50,8 +49,7 @@ class TransactionMeta(T_metaclass):
         for name in dir(cls):
             if name.startswith(prefix):
                 func = getattr(cls, name)
-                if not isclassmethod(func):
-                    names.append(name)
+                names.append(name)
         return names
 
 

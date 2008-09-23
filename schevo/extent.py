@@ -7,10 +7,10 @@ import sys
 from schevo.lib import optimize
 
 from schevo import base
-from schevo.decorator import isextentmethod, isselectionmethod
 from schevo.entity import Entity
 from schevo.error import EntityDoesNotExist
 from schevo.error import FindoneFoundMoreThanOne
+from schevo.introspect import isextentmethod, isselectionmethod
 from schevo.namespace import NamespaceExtension
 from schevo.query import ResultsIterator, ResultsList
 
