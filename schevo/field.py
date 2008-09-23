@@ -19,7 +19,7 @@ from schevo.constant import ANY, RESTRICT, UNASSIGNED
 import schevo.error
 import schevo.fieldspec
 import schevo.namespace
-from schevo.namespace import NamespaceExtension
+from schevo.namespace import NamespaceExtension, namespaceproperty
 from schevo.placeholder import Placeholder
 
 
@@ -232,11 +232,7 @@ class Field(base.Field):
     def value(self):
         return self.get()
 
-    @property
-    def x(self):
-        if getattr(self, '_x', None) is None:
-            self._x = FieldExtenders()
-        return self._x
+    x = namespaceproperty('x', instance=FieldExtenders)
 
     def __init__(self, instance, value=None, rev=None):
         """Create a Field instance for an instance with a given value.
