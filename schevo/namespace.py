@@ -35,29 +35,28 @@ class namespaceproperty(object):
 
     def __init__(self, name, cls=None, instance=None):
         self.name = name
-        self.prefixed_name = '_' + name
+        self.prefixed_name_cls = '__' + name
+        self.prefixed_name_instance = '_' + name
         self.cls_class = cls
         self.instance_class = instance
-        self.cls_namespace = None
 
     def __get__(self, instance, owner):
-        if instance is None:
+        namespace = None
+        if instance is None and self.cls_class is not None:
             # Create the class namespace if needed, then return it.
-            if self.cls_namespace is None:
-                cls_class = self.cls_class
-                if cls_class is None:
-                    self.cls_namespace = None
-                else:
-                    self.cls_namespace = cls_class(self.name, owner)
-            return self.cls_namespace
-        else:
+            name = self.prefixed_name_cls
+            namespace = getattr(owner, name, None)
+            if namespace is None:
+                namespace = self.cls_class(self.name, owner)
+                setattr(owner, name, namespace)
+        elif instance is not None:
             # Create the instance namespace if needed, then return it.
-            name = self.prefixed_name
+            name = self.prefixed_name_instance
             namespace = getattr(instance, name, None)
             if namespace is None:
                 namespace = self.instance_class(self.name, instance)
                 setattr(instance, name, namespace)
-            return namespace
+        return namespace
 
 
 class Fields(object):
