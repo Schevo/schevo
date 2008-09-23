@@ -17,9 +17,10 @@ from schevo import base
 from schevo.base import Entity as EntityActual
 from schevo.constant import ANY, RESTRICT, UNASSIGNED
 import schevo.error
+from schevo import fieldns
 import schevo.fieldspec
 import schevo.namespace
-from schevo.namespace import NamespaceExtension, namespaceproperty
+from schevo.namespace import namespaceproperty
 from schevo.placeholder import Placeholder
 
 
@@ -232,7 +233,7 @@ class Field(base.Field):
     def value(self):
         return self.get()
 
-    x = namespaceproperty('x', instance=FieldExtenders)
+    x = namespaceproperty('x', instance=fieldns.FieldExtenders)
 
     def __init__(self, instance, value=None, rev=None):
         """Create a Field instance for an instance with a given value.
@@ -517,17 +518,6 @@ class Field(base.Field):
         if max_size is not None and value_len > int(max_size):
             msg = '%s value length must be <= %r' % (self._name, max_size)
             self._raise(ValueError, msg)
-
-
-# --------------------------------------------------------------------
-
-
-class FieldExtenders(NamespaceExtension):
-    """A namespace of extra attributes."""
-
-    __slots__ = NamespaceExtension.__slots__
-
-    _readonly = False
 
 
 # --------------------------------------------------------------------
