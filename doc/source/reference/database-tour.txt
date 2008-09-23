@@ -438,17 +438,17 @@ methods`_ to get the `transaction method namespace`_ of that object:
      ...             ]
      ...     """); db = t.db
 
-     >>> db.t    #doctest: +ELLIPSIS
-     <schevo.namespace.DatabaseTransactions object ...
+     >>> db.t
+     <'t' namespace on <Database u'Schevo Database' :: V 1>>
 
      >>> db.Plant.t    #doctest: +ELLIPSIS
-     <schevo.extent.ExtentTransactions object ...
+     <'t' namespace on <Extent 'Plant' in <Database ...>>>
 
      >>> db.Plant[1].t    #doctest: +ELLIPSIS
-     <schevo.entity.EntityTransactions object ...
+     <'t' namespace on <Plant entity oid:1 rev:0>>
 
      >>> db.Plant[1].v.default().t    #doctest: +ELLIPSIS
-     <schevo.view.ViewTransactions object ...
+     <'t' namespace on <schevo.entity._DefaultView ...>>
 
      >>> t.done()
 
