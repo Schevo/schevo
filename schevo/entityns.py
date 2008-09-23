@@ -132,7 +132,7 @@ class EntityQueries(NamespaceExtension):
     __slots__ = NamespaceExtension.__slots__
 
     def __init__(self, name, instance):
-        NamespaceExtension.__init__(self)
+        NamespaceExtension.__init__(self, name, instance)
         d = self._d
         for q_name in instance._q_instancemethod_names:
             func = getattr(instance, q_name)
