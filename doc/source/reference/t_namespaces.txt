@@ -189,10 +189,10 @@ Using Delete Selected transactions
 
 Create four random Frob instances for this example::
 
-    >>> frob_a = db.execute(db.create_random_frob())
-    >>> frob_b = db.execute(db.create_random_frob())
-    >>> frob_c = db.execute(db.create_random_frob())
-    >>> frob_d = db.execute(db.create_random_frob())
+    >>> frob_a = db.execute(db.t.create_random_frob())
+    >>> frob_b = db.execute(db.t.create_random_frob())
+    >>> frob_c = db.execute(db.t.create_random_frob())
+    >>> frob_d = db.execute(db.t.create_random_frob())
 
 Delete `frob_b` and `frob_d` by placing them in a selection and using
 the Delete Selected transaction::
