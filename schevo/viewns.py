@@ -166,6 +166,15 @@ class ViewClassTransactions(NamespaceExtension):
 
     __slots__ = NamespaceExtension.__slots__
 
+    def __init__(self, name, cls):
+        NamespaceExtension.__init__(self, name, cls)
+        for key in dir(cls):
+            if key.startswith('t_'):
+                method = getattr(cls, key)
+                if isselectionmethod(method):
+                    name = key[2:]
+                    self._set(name, method)
+
 
 class ViewTransactions(NamespaceExtension):
     """A namespace of view-level transactions."""
