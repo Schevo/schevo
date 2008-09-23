@@ -233,17 +233,17 @@ Given a method, you can determine if it is an entity method, an extent
 method, or a selection method::
 
     >>> from schevo.introspect import (
-    ...     isentitymethod, isextentmethod, isselectionmethod
+    ...     isinstancemethod, isextentmethod, isselectionmethod
     ...     )
 
-    >>> isentitymethod(db.Frob.t.create)
+    >>> isinstancemethod(db.Frob.t.create)
     False
     >>> isextentmethod(db.Frob.t.create)
     True
     >>> isselectionmethod(db.Frob.t.create)
     False
 
-    >>> isentitymethod(frob1.t.update)
+    >>> isinstancemethod(frob1.t.update)
     True
     >>> isextentmethod(frob1.t.update)
     False
@@ -251,7 +251,7 @@ method, or a selection method::
     False
 
     >>> FrobClass = db.Frob.EntityClass
-    >>> isentitymethod(FrobClass.t.delete_selected)
+    >>> isinstancemethod(FrobClass.t.delete_selected)
     False
     >>> isextentmethod(FrobClass.t.delete_selected)
     False
