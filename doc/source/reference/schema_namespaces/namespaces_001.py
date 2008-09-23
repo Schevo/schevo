@@ -50,7 +50,7 @@ class Frob(E.Entity):
 class Hole(E.Entity):
     """A hole on a frob."""
 
-    frob = f.entity('Frob', delete=CASCADE)
+    frob = f.entity('Frob', on_delete=CASCADE)
     number = f.integer()
     @f.integer()
     def thread_count(self):
