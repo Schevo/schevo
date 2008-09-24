@@ -24,15 +24,15 @@ class View(base.View):
 
     __slots__ = LabelMixin.__slots__ + [
         '_entity', '_extent', '_field_map', '_oid', '_rev',
-        '_f', '_m', '_q', '_sys', '_t', '_v', '_x']
+        '_f', '_m', '_q', '_s', '_t', '_v', '_x']
 
     # Namespaces.
-    s = namespaceproperty('s', instance=viewns.ViewSys)
     f = namespaceproperty('f', cls=viewns.ViewClassFields,
                           instance=schevo.namespace.Fields)
     m = namespaceproperty('m', instance=viewns.ViewOneToMany)
     q = namespaceproperty('q', cls=viewns.ViewClassQueries,
                           instance=viewns.ViewQueries)
+    s = namespaceproperty('s', instance=viewns.ViewSys)
     t = namespaceproperty('t', cls=viewns.ViewClassTransactions,
                           instance=viewns.ViewTransactions)
     v = namespaceproperty('v', cls=viewns.ViewClassViews,
@@ -41,7 +41,7 @@ class View(base.View):
                           instance=viewns.ViewExtenders)
 
     # Deprecated namespaces.
-    sys = namespaceproperty('sys', instance=viewns.ViewSys, deprecated=True)
+    sys = namespaceproperty('s', instance=viewns.ViewSys, deprecated=True)
 
     _field_spec = FieldSpecMap()
 
@@ -68,12 +68,11 @@ class View(base.View):
         pass
 
     def __getattr__(self, name):
-        if name in self._field_map:
-            attr = self._field_map[name].get_immutable()
-        else:
+        try:
+            return self._field_map[name].get_immutable()
+        except KeyError:
             msg = 'Field %r does not exist on %r.' % (name, self)
             raise AttributeError(msg)
-        return attr
 
     def __setattr__(self, name, value):
         if name == 'sys' or name.startswith('_') or len(name) == 1:

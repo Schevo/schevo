@@ -310,15 +310,15 @@ class Entity(base.Entity, LabelMixin):
     __metaclass__ = EntityMeta
 
     __slots__ = LabelMixin.__slots__ + [
-        '_oid', '_sys', '_f', '_m', '_q', '_t', '_v', '_x']
+        '_oid', '_f', '_m', '_q', '_s', '_t', '_v', '_x']
 
     # Namespaces.
-    s = namespaceproperty('s', instance=entityns.EntitySys)
     f = namespaceproperty('f', cls=entityns.EntityClassFields,
                           instance=entityns.EntityFields)
     m = namespaceproperty('m', instance=entityns.EntityOneToMany)
     q = namespaceproperty('q', cls=entityns.EntityClassQueries,
                           instance=entityns.EntityQueries)
+    s = namespaceproperty('s', instance=entityns.EntitySys)
     t = namespaceproperty('t', cls=entityns.EntityClassTransactions,
                           instance=entityns.EntityTransactions)
     v = namespaceproperty('v', cls=entityns.EntityClassViews,
@@ -327,7 +327,7 @@ class Entity(base.Entity, LabelMixin):
                           instance=entityns.EntityExtenders)
 
     # Deprecated namespaces.
-    sys = namespaceproperty('sys', instance=entityns.EntitySys, deprecated=True)
+    sys = namespaceproperty('s', instance=entityns.EntitySys, deprecated=True)
 
     # The actual class/extent name to use for this Entity type.
     _actual_name = None
