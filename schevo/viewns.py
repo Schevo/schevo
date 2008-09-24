@@ -70,9 +70,10 @@ class ViewQueries(NamespaceExtension):
 
     __slots__ = NamespaceExtension.__slots__
 
-    def __init__(self, name, view, entity):
+    def __init__(self, name, view):
         NamespaceExtension.__init__(self, name, view)
         d = self._d
+        entity = view._entity
         # Start with the actions defined on the entity.
         for q_name in entity._q_instancemethod_names:
             func = getattr(entity, q_name)
