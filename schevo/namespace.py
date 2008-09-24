@@ -4,10 +4,13 @@ For copyright, license, and warranty, see bottom of file.
 """
 
 import sys
+from schevo.lib import optimize
+
+from warnings import warn
+
 from schevo import base
 from schevo.fieldspec import FieldDefinition
 from schevo.label import label_from_name
-from schevo.lib import optimize
 
 
 # Global objects used during Schevo schema loading.
@@ -33,14 +36,18 @@ class SchemaDefinition(object):
 
 class namespaceproperty(object):
 
-    def __init__(self, name, cls=None, instance=None):
+    def __init__(self, name, cls=None, instance=None, deprecated=False):
         self.name = name
-        self.prefixed_name_cls = '__' + name
-        self.prefixed_name_instance = '_' + name
         self.cls_class = cls
         self.instance_class = instance
+        self.deprecated = deprecated
+        self.prefixed_name_cls = '__' + name
+        self.prefixed_name_instance = '_' + name
 
     def __get__(self, instance, owner):
+        if self.deprecated:
+            warning = "'sys' namespace is deprecated; use 's' instead."
+            warn(warning, DeprecationWarning, 2)
         namespace = None
         if instance is None and self.cls_class is not None:
             # Create the class namespace if needed, then return it.

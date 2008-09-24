@@ -313,7 +313,7 @@ class Entity(base.Entity, LabelMixin):
         '_oid', '_sys', '_f', '_m', '_q', '_t', '_v', '_x']
 
     # Namespaces.
-    sys = namespaceproperty('sys', instance=entityns.EntitySys)
+    s = namespaceproperty('s', instance=entityns.EntitySys)
     f = namespaceproperty('f', cls=entityns.EntityClassFields,
                           instance=entityns.EntityFields)
     m = namespaceproperty('m', instance=entityns.EntityOneToMany)
@@ -325,6 +325,10 @@ class Entity(base.Entity, LabelMixin):
                           instance=entityns.EntityViews)
     x = namespaceproperty('x', cls=entityns.EntityClassExtenders,
                           instance=entityns.EntityExtenders)
+
+    # Deprecated namespaces.
+    sys = namespaceproperty('sys', instance=entityns.EntitySys,
+                            deprecated=True)
 
     # The actual class/extent name to use for this Entity type.
     _actual_name = None
