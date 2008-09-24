@@ -27,7 +27,7 @@ class View(base.View):
         '_f', '_m', '_q', '_sys', '_t', '_v', '_x']
 
     # Namespaces.
-    sys = namespaceproperty('sys', instance=viewns.ViewSys)
+    s = namespaceproperty('s', instance=viewns.ViewSys)
     f = namespaceproperty('f', cls=viewns.ViewClassFields,
                           instance=schevo.namespace.Fields)
     m = namespaceproperty('m', instance=viewns.ViewOneToMany)
@@ -39,6 +39,9 @@ class View(base.View):
                           instance=viewns.ViewViews)
     x = namespaceproperty('x', cls=viewns.ViewClassExtenders,
                           instance=viewns.ViewExtenders)
+
+    # Deprecated namespaces.
+    sys = namespaceproperty('sys', instance=viewns.ViewSys, deprecated=True)
 
     _field_spec = FieldSpecMap()
 

@@ -327,8 +327,7 @@ class Entity(base.Entity, LabelMixin):
                           instance=entityns.EntityExtenders)
 
     # Deprecated namespaces.
-    sys = namespaceproperty('sys', instance=entityns.EntitySys,
-                            deprecated=True)
+    sys = namespaceproperty('sys', instance=entityns.EntitySys, deprecated=True)
 
     # The actual class/extent name to use for this Entity type.
     _actual_name = None
