@@ -24,8 +24,9 @@ from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import label
 from schevo.meta import schema_metaclass
 import schevo.namespace
-from schevo.namespace import NamespaceExtension
+from schevo.namespace import namespaceproperty
 from schevo.trace import log
+from schevo import transactionns
 
 
 T_metaclass = schema_metaclass('T')
@@ -61,6 +62,16 @@ class Transaction(base.Transaction):
 
     _field_spec = FieldSpecMap()
 
+    # Namespaces.
+    f = namespaceproperty('f', instance=schevo.namespace.Fields)
+    h = namespaceproperty('h', instance=transactionns.TransactionChangeHandlers)
+    s = namespaceproperty('s', instance=transactionns.TransactionSys)
+    x = namespaceproperty('x', instance=transactionns.TransactionExtenders)
+
+    # Deprecated namespaces.
+    sys = namespaceproperty('s', instance=transactionns.TransactionSys,
+                            deprecated=True)
+
     # If True, set all fields to their default value upon
     # initialization. All standard transaction subclasses set this to
     # False, but custom subclasses of Transaction benefit from the
@@ -80,24 +91,16 @@ class Transaction(base.Transaction):
         self._inversions = []
         self._known_deletes = []
         self._relaxed = set()
-        self.f = schevo.namespace.Fields('f', self)
-        self.sys = TransactionSys('sys', self)
         if self._populate_default_values:
             for field in self._field_map.itervalues():
                 field.set(field.default[0], check_readonly=False)
 
     def __getattr__(self, name):
-        if name == 'x':
-            self.x = attr = TransactionExtenders('x', self)
-        elif name == 'h':
-            self.h = attr = TransactionChangeHandlers('h', self)
-        else:
-            try:
-                field = self._field_map[name]
-            except KeyError, e:
-                raise AttributeError(*e.args)
-            attr = field.get()
-        return attr
+        try:
+            return self._field_map[name].get()
+        except KeyError:
+            msg = 'Field %r does not exist on %r.' % (name, self)
+            raise AttributeError(msg)
 
     def __setattr__(self, name, value):
         if name == 'sys' or name.startswith('_') or len(name) == 1:
@@ -155,77 +158,6 @@ class Transaction(base.Transaction):
         """Update the attribute `name` to `value` on all fields."""
         for field in self._field_map.values():
             setattr(field, name, value)
-
-
-class TransactionExtenders(NamespaceExtension):
-    """A namespace of extra attributes."""
-
-    __slots__ = NamespaceExtension.__slots__
-
-    _readonly = False
-
-    def __init__(self, name, tx):
-        NamespaceExtension.__init__(self, name, tx)
-        d = self._d
-        for x_name in tx._x_names:
-            func = getattr(tx, x_name)
-            name = x_name[2:]
-            d[name] = func
-
-
-class TransactionChangeHandlers(NamespaceExtension):
-    """A namespace of field change handlers."""
-
-    __slots__ = NamespaceExtension.__slots__
-
-    _readonly = False
-
-    def __init__(self, name, tx):
-        NamespaceExtension.__init__(self, name, tx)
-        d = self._d
-        for h_name in tx._h_names:
-            func = getattr(tx, h_name)
-            name = h_name[2:]
-            d[name] = func
-
-
-class TransactionSys(NamespaceExtension):
-
-    @property
-    def changes(self):
-        return self._i._changes
-
-    @property
-    def current_field_map(self):
-        return self._i._field_map
-
-    @property
-    def executed(self):
-        return self._i._executed
-
-    @property
-    def extent_name(self):
-        if hasattr(self._i, '_extent_name'):
-            return self._i._extent_name
-
-    def field_map(self, *filters):
-        # Remove fields that should not be included.
-        new_fields = self._i._field_map.itervalues()
-        for filt in filters:
-            new_fields = [field for field in new_fields if filt(field)]
-        return FieldMap((field.name, field) for field in new_fields)
-
-    @property
-    def field_was_changed(self):
-        """True if at least one field was changed."""
-        return self._i._field_was_changed
-
-    @property
-    def requires_changes(self):
-        return getattr(self._i, '_requires_changes', False)
-
-    def summarize(self):
-        return summarize(self._i)
 
 
 # --------------------------------------------------------------------
