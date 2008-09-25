@@ -22,7 +22,7 @@ class BaseExtentMethod(CreatesSchema):
             return cls
 
         def x_return_oid(self):
-            return self.sys.oid
+            return self.s.oid
     '''
 
     def test_extentmethod_is_passed_extent(self):

@@ -156,10 +156,10 @@ class BaseSchema(CreatesSchema):
         tx = d.T.TxWithFields()
         assert 'foo' in tx._field_spec
         assert 'bar' in tx._field_spec
-        assert 'foo' in tx.sys.field_map()
-        assert 'bar' in tx.sys.field_map()
-        assert type(tx.sys.field_map()['foo']) is type(tx.f.foo)
-        assert type(tx.sys.field_map()['bar']) is type(tx.f.bar)
+        assert 'foo' in tx.s.field_map()
+        assert 'bar' in tx.s.field_map()
+        assert type(tx.s.field_map()['foo']) is type(tx.f.foo)
+        assert type(tx.s.field_map()['bar']) is type(tx.f.bar)
 
     def test_database_level_t_namespace(self):
         d = db.schema

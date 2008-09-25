@@ -126,25 +126,25 @@ class ViewSys(NamespaceExtension):
 
     @property
     def count(self):
-        return self._i._entity.sys.count
+        return self._i._entity.s.count
 
     @property
     def exists(self):
         """Return True if the entity exists; False if it was deleted."""
-        return self._i._entity.sys.exists
+        return self._i._entity.s.exists
 
     @property
     def count(self):
-        return self._i._entity.sys.count
+        return self._i._entity.s.count
 
     @property
     def exists(self):
         """Return True if the entity exists; False if it was deleted."""
-        return self._i._entity.sys.exists
+        return self._i._entity.s.exists
 
     @property
     def extent(self):
-        return self._i._entity.sys.extent
+        return self._i._entity.s.extent
 
     @property
     def extent_name(self):
@@ -152,15 +152,15 @@ class ViewSys(NamespaceExtension):
 
     @property
     def links(self):
-        return self._i._entity.sys.links
+        return self._i._entity.s.links
 
     @property
     def oid(self):
-        return self._i._entity.sys.oid
+        return self._i._entity.s.oid
 
     @property
     def rev(self):
-        return self._i._entity.sys.rev
+        return self._i._entity.s.rev
 
 
 class ViewClassTransactions(NamespaceExtension):

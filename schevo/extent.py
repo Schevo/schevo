@@ -91,7 +91,7 @@ class Extent(base.Extent):
     def as_datalist(self):
         """Return sorted list of entity value tuples in a form
         suitable for initial or sample data in a schema."""
-        return sorted([entity.sys.as_data() for entity in self])
+        return sorted([entity.s.as_data() for entity in self])
 
     def as_unittest_code(self):
         """Return formatted string of entity value tuples in a form

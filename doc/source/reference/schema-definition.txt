@@ -245,7 +245,7 @@ of declarations:
           name = f.string()
           @f.integer()
           def count(self):
-              return self.sys.count('Person', 'gender')
+              return self.s.count('Person', 'gender')
 
       class Person(E.Entity):
 

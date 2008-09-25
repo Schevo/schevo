@@ -1606,7 +1606,7 @@ class Database(base.Database):
             if typ in (CREATE, UPDATE):
                 EntityClass = entity_classes[extent_name]
                 entity = EntityClass(oid)
-                field_map = entity.sys.field_map(not_fget)
+                field_map = entity.s.field_map(not_fget)
                 for field in field_map.itervalues():
                     field.validate(field._value)
 

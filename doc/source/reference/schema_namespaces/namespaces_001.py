@@ -54,7 +54,7 @@ class Hole(E.Entity):
     number = f.integer()
     @f.integer()
     def thread_count(self):
-        return self.sys.count('Thread')
+        return self.s.count('Thread')
 
     _key(frob, number)
 
@@ -67,7 +67,7 @@ class Hole(E.Entity):
 
         @f.entity('Hole')
         def from_hole(self):
-            return self.sys.entity
+            return self.s.entity
         thread = f.entity('Thread')
         to_hole = f.entity('Hole')
         @f.float()
@@ -81,7 +81,7 @@ class Hole(E.Entity):
         def _setup(self, entity, thread=None):
             if thread is not None:
                 self.thread = thread
-                if thread.hole_a == self.sys.entity:
+                if thread.hole_a == self.s.entity:
                     self.to_hole = thread.hole_b
                 else:
                     self.to_hole = thread.hole_a

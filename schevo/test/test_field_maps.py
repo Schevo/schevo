@@ -3,7 +3,7 @@
 TODO:
 
 - Test field map implementations for views, queries, and transactions,
-  as they all have a slightly unique implementation of .sys.field_map
+  as they all have a slightly unique implementation of .s.field_map
 
 For copyright, license, and warranty, see bottom of file.
 """
@@ -35,7 +35,7 @@ class BaseFieldMaps(CreatesSchema):
         tx.bbb = 'b'
         entity = db.execute(tx)
         def fkeys(*filters):
-            return tuple(entity.sys.field_map(*filters).keys())
+            return tuple(entity.s.field_map(*filters).keys())
         # No filters.
         expected = 'aaa', 'bbb', 'ccc', 'ddd',
         keys = fkeys()

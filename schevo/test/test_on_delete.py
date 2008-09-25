@@ -446,9 +446,9 @@ class BaseOnDelete(CreatesSchema):
         assert baz.m.bars() == [bar]
         assert boo.m.bars() == [bar]
         assert boo.m.bazs() == [baz]
-        assert boo.sys.count() == 2
-        assert bar.sys.count() == 1
-        assert baz.sys.count() == 1
+        assert boo.s.count() == 2
+        assert bar.s.count() == 1
+        assert baz.s.count() == 1
         self.internal_cascade_complex_1()
         # Delete it.
         db.execute(boo.t.delete())

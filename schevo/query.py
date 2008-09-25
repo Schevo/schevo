@@ -158,7 +158,7 @@ class Exact(Param):
     @property
     def _criteria(self):
         criteria = odict()
-        for name, field in self.sys.field_map().iteritems():
+        for name, field in self.s.field_map().iteritems():
             if field.assigned:
                 criteria[name] = field.get()
         return criteria
@@ -192,7 +192,7 @@ class Links(Query):
         self._other_field_name = other_field_name
 
     def _results(self):
-        return results(self._entity.sys.links(
+        return results(self._entity.s.links(
             self._other_extent, self._other_field_name))
 
 

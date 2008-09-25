@@ -59,7 +59,7 @@ class BaseTransaction(CreatesSchema):
         name = f.string()
         @f.integer()
         def count(self):
-            return self.sys.count('Person', 'gender')
+            return self.s.count('Person', 'gender')
 
         _key(code)
         _key(name)
@@ -475,7 +475,7 @@ class BaseTransaction(CreatesSchema):
         name = f.string()
         @f.integer()
         def count(self):
-            return self.sys.count('Person', 'gender')
+            return self.s.count('Person', 'gender')
 
         _key(code)
         _key(name)
@@ -549,14 +549,14 @@ class BaseTransaction(CreatesSchema):
         assert tx.name is UNASSIGNED
         assert tx.f.name.get() is UNASSIGNED
         # Only one field exists in the transaction.
-        assert tx.sys.field_map().keys() == ['name', 'age']
+        assert tx.s.field_map().keys() == ['name', 'age']
         # Set a field and execute the transaction against the db.
         tx.name = 'foo'
         result = db.execute(tx)
         # The result should be a new User entity.
         assert isinstance(result, db.User.EntityClass)
-        assert result.sys.oid == 1
-        assert result.sys.rev == 0
+        assert result.s.oid == 1
+        assert result.s.rev == 0
         assert result.name == 'foo'
         assert len(db.User) == 1
         assert db.User[1].name == 'foo'
@@ -607,7 +607,7 @@ class BaseTransaction(CreatesSchema):
         # Person from one db with same gender in other db.
         self.reopen()
         other = db.execute(db.Person.t.create(john, name='Other Foo'))
-        assert other.sys.db != john.sys.db
+        assert other.s.db != john.s.db
         assert other.gender.name == 'Male'
         # Person from one db WITHOUT same gender in other db.
         self.reopen()
@@ -627,7 +627,7 @@ class BaseTransaction(CreatesSchema):
     def test_create_with_fget(self):
         tx = db.Gender.t.create()
         # Transaction has a field for the fget field, but it's hidden.
-        assert tx.sys.field_map().keys() == ['code', 'name', 'count']
+        assert tx.s.field_map().keys() == ['code', 'name', 'count']
         assert tx.f.count.hidden == True
         # Transaction still executes properly.
         tx.code = 'M'
@@ -644,7 +644,7 @@ class BaseTransaction(CreatesSchema):
         # Get an update transaction from the resulting entity instance.
         tx = result1.t.update()
         # It should have the same field values as the entity itself.
-        assert tx.sys.field_map().keys() == ['name', 'age']
+        assert tx.s.field_map().keys() == ['name', 'age']
         assert tx.name == 'foo'
         # Change 'name' and execute.
         tx.name = 'bar'
@@ -655,15 +655,15 @@ class BaseTransaction(CreatesSchema):
         # The result should be the same User entity, except have a new
         # rev and a new name.
         assert isinstance(result2, db.User.EntityClass)
-        assert result2.sys.oid == 1
-        assert result2.sys.rev == 1
+        assert result2.s.oid == 1
+        assert result2.s.rev == 1
         assert result2.name == 'bar'
         assert len(db.User) == 1
         assert db.User[1].name == 'bar'
         assert db.User[1] == result2
         # The second result may not be the same Python object as the
         # first result, but they should be equal.
-        assert result1.sys.rev == 1
+        assert result1.s.rev == 1
         assert result1.name == 'bar'
         assert result1 == result2
 
@@ -687,7 +687,7 @@ class BaseTransaction(CreatesSchema):
         result = db.execute(tx)
         tx = result.t.update()
         # Transaction has fget fields, but they are hidden.
-        assert tx.sys.field_map().keys() == ['code', 'name', 'count']
+        assert tx.s.field_map().keys() == ['code', 'name', 'count']
         assert tx.f.count.hidden == True
         # Transaction still executes properly.
         tx.code = 'F'
@@ -717,7 +717,7 @@ class BaseTransaction(CreatesSchema):
         # Get a delete transaction from the resulting entity instance.
         tx = result1.t.delete()
         # It should have the same field values as the entity itself.
-        assert tx.sys.field_map().keys() == ['name', 'age']
+        assert tx.s.field_map().keys() == ['name', 'age']
         assert tx.name == 'foo'
         # Fields should be readonly.
         assert raises(AttributeError, setattr, tx, 'name', 'bar')
@@ -733,11 +733,11 @@ class BaseTransaction(CreatesSchema):
             name = result1.name
         except error.EntityDoesNotExist, e:
             assert e.extent_name == 'User'
-            assert e.oid == result1.sys.oid
+            assert e.oid == result1.s.oid
         # Creating a new entity should result in a new OID.
         tx = db.User.t.create(name='baz')
         result = db.execute(tx)
-        assert result.sys.oid == 2
+        assert result.s.oid == 2
 
     def test_delete_restrict(self):
         folder1 = db.execute(db.Folder.t.create(name='folder1'))
@@ -821,7 +821,7 @@ class BaseTransaction(CreatesSchema):
         result = db.execute(tx)
         tx = result.t.delete()
         # Transaction has fget fields, but they are hidden.
-        assert tx.sys.field_map().keys() == ['code', 'name', 'count']
+        assert tx.s.field_map().keys() == ['code', 'name', 'count']
         assert tx.f.count.hidden == True
         # Transaction still executes properly.
         db.execute(tx)
@@ -913,9 +913,9 @@ class BaseTransaction(CreatesSchema):
         """You can tell if a transaction has been executed yet by
         checking its sys.executed flag."""
         tx = db.User.t.create(name='foo')
-        assert not tx.sys.executed
+        assert not tx.s.executed
         db.execute(tx)
-        assert tx.sys.executed
+        assert tx.s.executed
 
     def test_subtransactions(self):
         tx = db.t.subtransactions()
@@ -928,7 +928,7 @@ class BaseTransaction(CreatesSchema):
         for oid in oids:
             user = db.User[oid]
             assert user.name == str(oid)
-            assert user.sys.rev == 0
+            assert user.s.rev == 0
 
     def test_only_one_top_level(self):
         # Cannot pass more than one top-level transaction.
@@ -943,7 +943,7 @@ class BaseTransaction(CreatesSchema):
         # sprockets.
         tx = db.Cog.t.create(name='Cogswell')
         cog = db.execute(tx)
-        assert cog.sys.count('Sprocket', 'cog') == 5
+        assert cog.s.count('Sprocket', 'cog') == 5
         # However, creating a cog with a name of 'Spacely' should
         # result in only a cog being created, and no sprockets.
         len_cogs = len(db.Cog)
@@ -990,7 +990,7 @@ class BaseTransaction(CreatesSchema):
         # The create_name_only transaction method for the User extent
         # deletes the .age field from the transaction's .f namespace.
         tx = db.User.t.create_name_only()
-        assert tx.sys.field_map().keys() == ['name']
+        assert tx.s.field_map().keys() == ['name']
         tx.name = 'foo'
         # 'age' isn't required, so the transaction will execute just
         # fine.
@@ -1002,7 +1002,7 @@ class BaseTransaction(CreatesSchema):
         # is required.
         tx = db.User.t.create()
         del tx.f.name
-        assert tx.sys.field_map().keys() == ['age']
+        assert tx.s.field_map().keys() == ['age']
         tx.age = 5
         assert raises(AttributeError, db.execute, tx)
 
@@ -1036,7 +1036,7 @@ class BaseTransaction(CreatesSchema):
 ##         del tx.f.age
 ##         tx.f.age = fage
 ##         tx.f.name = fname
-##         assert tx.sys.field_map().keys() == ['age', 'name']
+##         assert tx.s.field_map().keys() == ['age', 'name']
 
 ##     def test_f_setattr_extra(self):
 ##         # Because some subclasses of standard transactions extend the
@@ -1167,7 +1167,7 @@ class BaseTransaction(CreatesSchema):
         # the transaction, but in ProblemGender we've inserted them as
         # fields of different types.
         tx = db.ProblemGender.t.create()
-        assert sorted(tx.sys.field_map().keys()) == [
+        assert sorted(tx.s.field_map().keys()) == [
             'code', 'count', 'foo', 'name']
         # When executing the transaction, the superclass T.Create
         # should ignore .count since it was an fget field.
@@ -1183,9 +1183,9 @@ class BaseTransaction(CreatesSchema):
         # in the database as a string though, since in cases where the
         # type of the calculated field is an entity field
         assert db._entity_field(
-            'ProblemGender', pgender.sys.oid, 'count') != 'foo'
+            'ProblemGender', pgender.s.oid, 'count') != 'foo'
         assert raises(KeyError, db._entity_field, 'ProblemGender',
-                      pgender.sys.oid, 'foo')
+                      pgender.s.oid, 'foo')
         # Same thing for updates.
         tx = pgender.t.update()
         tx.count = 'bar'
@@ -1193,21 +1193,21 @@ class BaseTransaction(CreatesSchema):
         pgender = db.execute(tx)
         assert pgender.count == 0
         assert db._entity_field(
-            'ProblemGender', pgender.sys.oid, 'count') != 'foo'
+            'ProblemGender', pgender.s.oid, 'count') != 'foo'
         assert raises(KeyError, db._entity_field, 'ProblemGender',
-                      pgender.sys.oid, 'foo')
+                      pgender.s.oid, 'foo')
 
     def test_delete_update_count_links(self):
-        """Standard delete and update transactions have .sys.count and
-        .sys.links properties corresponding to the transaction's entity."""
+        """Standard delete and update transactions have .s.count and
+        .s.links properties corresponding to the transaction's entity."""
         exe = db.execute
         realm = exe(db.Realm.t.create(name='Foo'))
         user = exe(db.User.t.create(name='Bar'))
         avatar = exe(db.Avatar.t.create(realm=realm, user=user, name='Baz'))
         delete = realm.t.delete()
-        assert delete.sys.count() == realm.sys.count()
+        assert delete.s.count() == realm.s.count()
         update = realm.t.update()
-        assert update.sys.count() == realm.sys.count()
+        assert update.s.count() == realm.s.count()
 
     def test_callable_wrapper(self):
         exe = db.execute
@@ -1253,11 +1253,11 @@ class TestTransaction1(BaseTransaction):
         Gender_field_name_id = Gender_extent['field_name_id']
         Person_field_name_id = Person_extent['field_name_id']
         # Check for p.gender having correct field values.
-        p = Person_extent['entities'][person_entity.sys.oid]
+        p = Person_extent['entities'][person_entity.s.oid]
         p_fields = p['fields']
         Person_gender_field_id = Person_field_name_id['gender']
         p_gender = p_fields[Person_gender_field_id]
-        assert p_gender == (Gender_extent_id, expected.sys.oid)
+        assert p_gender == (Gender_extent_id, expected.s.oid)
 
 
 class TestTransaction2(BaseTransaction):
@@ -1279,7 +1279,7 @@ class TestTransaction2(BaseTransaction):
         Gender_field_name_id = Gender_extent['field_name_id']
         Person_field_name_id = Person_extent['field_name_id']
         # Check for p.gender having correct related entity structures.
-        p = Person_extent['entities'][person_entity.sys.oid]
+        p = Person_extent['entities'][person_entity.s.oid]
         p_related_entities = p['related_entities']
         Person_gender_field_id = Person_field_name_id['gender']
         p_related_genders = p_related_entities[Person_gender_field_id]

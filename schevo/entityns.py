@@ -157,11 +157,11 @@ class EntitySys(NamespaceExtension):
             if isinstance(value, base.Entity):
                 entity = value
                 values = []
-                for fieldname in entity.sys.extent.default_key:
+                for fieldname in entity.s.extent.default_key:
                     value = resolve(entity, fieldname)
                     values.append(value)
                 if len(field.allow) > 1:
-                    values = (entity.sys.extent.name, tuple(values))
+                    values = (entity.s.extent.name, tuple(values))
                 return tuple(values)
             else:
                 return value

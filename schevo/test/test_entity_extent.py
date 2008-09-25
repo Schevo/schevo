@@ -139,7 +139,7 @@ class BaseEntityExtent(CreatesSchema):
         name = f.string()
         @f.integer()
         def count(self):
-            return self.sys.count('Person', 'gender')
+            return self.s.count('Person', 'gender')
 
         _key(code)
         _key(name)
@@ -342,7 +342,7 @@ class BaseEntityExtent(CreatesSchema):
         tx = db.User.t.create_if_necessary(name='foo')
         user_foo2 = db.execute(tx)
         assert user_foo == user_foo2
-        assert user_foo2.sys.rev == 0
+        assert user_foo2.s.rev == 0
 
     def test_key_conflicts_on_update(self):
         extent = db.User
@@ -379,7 +379,7 @@ class BaseEntityExtent(CreatesSchema):
         extent = db.User
         tx = extent.t.create(name='foo')
         user_foo = db.execute(tx)
-        assert user_foo.sys.oid == 2
+        assert user_foo.s.oid == 2
 
     def test_multiple_keys_create(self):
         tx = db.Batch_Job.t.multiple_keys_create()
@@ -457,8 +457,8 @@ class BaseEntityExtent(CreatesSchema):
         user = db.User[1]
         realm = db.Realm[1]
         avatar = db.Avatar[1]
-        user_links = user.sys.links()
-        realm_links = realm.sys.links()
+        user_links = user.s.links()
+        realm_links = realm.s.links()
         assert len(user_links) == 1
         assert len(realm_links) == 1
         assert ('Avatar', 'user') in user_links
@@ -470,15 +470,15 @@ class BaseEntityExtent(CreatesSchema):
         assert len(avatar_realm) == 1
         assert avatar_realm[0] == avatar
         # Argument to links.
-        user_links = user.sys.links('Avatar', 'user')
+        user_links = user.s.links('Avatar', 'user')
         assert len(user_links) == 1
         assert user_links[0] == avatar
-        realm_links = realm.sys.links('Avatar', 'realm')
+        realm_links = realm.s.links('Avatar', 'realm')
         assert len(realm_links) == 1
         assert realm_links[0] == avatar
         # Extent name typo.
         try:
-            realm.sys.links('Ratava', 'realm')
+            realm.s.links('Ratava', 'realm')
         except error.ExtentDoesNotExist, e:
             assert e.extent_name == 'Ratava'
 
@@ -500,9 +500,9 @@ class BaseEntityExtent(CreatesSchema):
         user2 = db.User[2]
         realm = db.Realm[1]
         avatar = db.Avatar[1]
-        links = user1.sys.links()
+        links = user1.s.links()
         assert len(links) == 0
-        links = user2.sys.links()
+        links = user2.s.links()
         assert len(links) == 1
         assert ('Avatar', 'user') in links
         avatar_user = links[('Avatar', 'user')]
@@ -517,14 +517,14 @@ class BaseEntityExtent(CreatesSchema):
         self.reopen()
         user = db.User[1]
         realm = db.Realm[1]
-        assert len(user.sys.links()) == 0
-        assert len(realm.sys.links()) == 0
+        assert len(user.s.links()) == 0
+        assert len(realm.s.links()) == 0
 
     def test_entity_links_filter(self):
         user, realm, avatar = db.execute(db.t.user_realm_avatar())
         # Create two filters.
-        user_links_filter = user.sys.links_filter('Avatar', 'user')
-        realm_links_filter = realm.sys.links_filter('Avatar', 'realm')
+        user_links_filter = user.s.links_filter('Avatar', 'user')
+        realm_links_filter = realm.s.links_filter('Avatar', 'realm')
         # Initially, the results of calling each filter only results
         # in one item each.
         user_links = user_links_filter()
@@ -542,9 +542,9 @@ class BaseEntityExtent(CreatesSchema):
         # results this time.
         user_links = user_links_filter()
         assert len(user_links) == 2
-        user_links = [(e.sys.extent.name, e.sys.oid) for e in user_links]
-        assert ('Avatar', avatar.sys.oid) in user_links
-        assert ('Avatar', avatar2.sys.oid) in user_links
+        user_links = [(e.s.extent.name, e.s.oid) for e in user_links]
+        assert ('Avatar', avatar.s.oid) in user_links
+        assert ('Avatar', avatar2.s.oid) in user_links
 
     def test_entity_links_bad_args(self):
         user, realm, avatar = self.db.execute(db.t.user_realm_avatar())
@@ -552,22 +552,22 @@ class BaseEntityExtent(CreatesSchema):
         user = db.User[1]
         args = ('Avatar', 'userr')
         try:
-            user.sys.links(*args)
+            user.s.links(*args)
         except error.FieldDoesNotExist, e:
             assert e.object_or_name == 'Avatar'
             assert e.field_name == 'userr'
         try:
-            user.sys.links_filter(*args)
+            user.s.links_filter(*args)
         except error.FieldDoesNotExist, e:
             assert e.object_or_name == 'Avatar'
             assert e.field_name == 'userr'
         args = ('Avatarr', 'user')
         try:
-            user.sys.links(*args)
+            user.s.links(*args)
         except error.ExtentDoesNotExist, e:
             assert e.extent_name == 'Avatarr'
         try:
-            user.sys.links_filter(*args)
+            user.s.links_filter(*args)
         except error.ExtentDoesNotExist, e:
             assert e.extent_name == 'Avatarr'
 
@@ -740,8 +740,8 @@ class BaseEntityExtent(CreatesSchema):
     def test_field_namespace(self):
         extent = db.User
         user = db.execute(extent.t.create(name='foo', age=20))
-        assert isinstance(user.f.name, type(user.sys.field_map()['name']))
-        assert isinstance(user.f.age, type(user.sys.field_map()['age']))
+        assert isinstance(user.f.name, type(user.s.field_map()['name']))
+        assert isinstance(user.f.age, type(user.s.field_map()['age']))
         # Make sure entity fields are readonly, including calculated fields.
         assert user.f.name.readonly
         assert user.f.age.readonly
@@ -769,7 +769,7 @@ class BaseEntityExtent(CreatesSchema):
         assert male.count == 1
         assert female.count == 2
         # sys.field_map should also have the results of fget calls.
-        male_field_map = male.sys.field_map()
+        male_field_map = male.s.field_map()
         assert male_field_map['count'].get() == 1
         assert male.f.count.get() == 1
 
@@ -794,8 +794,8 @@ class BaseEntityExtent(CreatesSchema):
         # Make sure different extents but same oid don't hash the same.
         fred = db.Person.findone(name='Fred Flintstone')
         male = db.execute(db.Gender.t.create(code='M', name='Male'))
-        assert fred.sys.oid == 1
-        assert male.sys.oid == 1
+        assert fred.s.oid == 1
+        assert male.s.oid == 1
         d = {}
         d[fred] = None
         assert male not in d
@@ -835,22 +835,22 @@ class BaseEntityExtent(CreatesSchema):
         count = 0
         for user in db.User:
             count += 1
-            assert count == user.sys.oid
+            assert count == user.s.oid
         assert count == total
 
     def test_entity_equality(self):
         """Entity instances referring to the same entity always have the same
         OID, revision, and field values, and are also equal."""
         realm = db.execute(db.Realm.t.create(name='Foo'))
-        assert realm.sys.oid == 1
-        assert realm.sys.rev == 0
+        assert realm.s.oid == 1
+        assert realm.s.rev == 0
         assert realm.name == 'Foo'
         realm2 = db.execute(realm.t.update(name='Bar'))
-        assert realm2.sys.oid == 1
-        assert realm2.sys.rev == 1
+        assert realm2.s.oid == 1
+        assert realm2.s.rev == 1
         assert realm2.name == 'Bar'
         assert realm == realm2
-        assert realm.sys.rev == 1
+        assert realm.s.rev == 1
         assert realm.name == realm2.name
 
     def test_extent_sorting(self):

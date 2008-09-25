@@ -1141,7 +1141,7 @@ class _EntityBase(Field):
         if isinstance(value, base.Entity) and value._db is not db:
             entity = value
             if entity._default_key is not None:
-                extent_name = entity.sys.extent.name
+                extent_name = entity.s.extent.name
                 if hasattr(db, extent_name):
                     extent = getattr(db, extent_name)
                     criteria = dict(
@@ -1180,7 +1180,7 @@ class _EntityBase(Field):
         if value is UNASSIGNED:
             return u''
         else:
-            return u'%s-%i' % (value.sys.extent.name, value.sys.oid)
+            return u'%s-%i' % (value.s.extent.name, value.s.oid)
 
     def reversible_valid_values(self, db):
         """Returns a list of (reversible, value) tuples for the valid
@@ -1234,7 +1234,7 @@ class _EntityBase(Field):
             msg = '%s value must be an Entity instance, not %r %r' % (
                 self._name, type(value), value)
             self._raise(TypeError, msg)
-        elif allow and value.sys.extent.name not in allow:
+        elif allow and value.s.extent.name not in allow:
             msg = '%s value must be an instance of %r, not %r %r' % (
                 self._name, allow, type(value), value)
             self._raise(TypeError, msg)
@@ -1251,7 +1251,7 @@ class _EntityBase(Field):
                 self._raise(
                     schevo.error.FieldRequired, msg, self, self._instance)
         allow = self.allow
-        extent_name = value.sys.extent.name
+        extent_name = value.s.extent.name
         if allow and extent_name not in allow:
             msg = "%s value's class must be %r, not %r" % (
                 self._name, allow, extent_name)
@@ -1275,7 +1275,7 @@ class Entity(_EntityBase):
                 stop_entities = set(stop_entities)
                 stop_entities.add(value)
                 stop_entities = frozenset(stop_entities)
-                field_map = value.sys.field_map(not_fget)
+                field_map = value.s.field_map(not_fget)
                 values = tuple(
                     field.db_equivalence_value(stop_entities)
                     for field in field_map.itervalues()
@@ -1332,7 +1332,7 @@ class EntityList(_EntityBase):
                     stop_entities = set(stop_entities)
                     stop_entities.add(v)
                     stop_entities = frozenset(stop_entities)
-                    field_map = v.sys.field_map(not_fget)
+                    field_map = v.s.field_map(not_fget)
                     values = tuple(
                         field.db_equivalence_value(stop_entities)
                         for field in field_map.itervalues()

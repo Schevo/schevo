@@ -98,7 +98,7 @@ class Summary(object):
 
 def summarize(tx):
     """Return a summary of changes."""
-    changes = set(tx.sys.changes)
+    changes = set(tx.s.changes)
     creates = set((ext, oid) for typ, ext, oid in changes if typ == CREATE)
     deletes = set((ext, oid) for typ, ext, oid in changes if typ == DELETE)
     updates = set((ext, oid) for typ, ext, oid in changes if typ == UPDATE)

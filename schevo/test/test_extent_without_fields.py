@@ -14,17 +14,17 @@ class BaseExtentWithoutFields(CreatesSchema):
 
     class NoFieldsAtAll(E.Entity):
         def __unicode__(self):
-            return unicode(self.sys.oid)
+            return unicode(self.s.oid)
 
     class OneCalculatedField(E.Entity):
         @f.integer()
         def calc(self):
-            return self.sys.oid
+            return self.s.oid
 
     class ExpensiveCalculatedField(E.Entity):
         @f.integer(expensive=True)
         def calc(self):
-            return self.sys.oid
+            return self.s.oid
 
     class Subclassed(E.OneCalculatedField):
         pass
@@ -44,11 +44,11 @@ class BaseExtentWithoutFields(CreatesSchema):
     def test_entity_get_calc_using_property(self):
         exe = db.execute
         entity = exe(db.OneCalculatedField.t.create())
-        assert entity.calc == entity.sys.oid
+        assert entity.calc == entity.s.oid
         entity = exe(db.ExpensiveCalculatedField.t.create())
-        assert entity.calc == entity.sys.oid
+        assert entity.calc == entity.s.oid
         entity = exe(db.Subclassed.t.create())
-        assert entity.calc == entity.sys.oid
+        assert entity.calc == entity.s.oid
 
 
 class TestExtentWithoutFields1(BaseExtentWithoutFields):

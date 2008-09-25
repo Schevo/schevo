@@ -664,12 +664,12 @@ A field container ``obj`` implements the following:
         #    baz = f.string()
         #    bar = f.string()
 
-* They have a method, ``obj.sys.fields()``, that returns a
+* They have a method, ``obj.s.fields()``, that returns a
   `schevo.fieldspec.FieldMap` ordered dictionary for the fields in
   ``obj``.
 
   - Certain types of field decorators accept additional arguments to
-    the call to ``obj.sys.fields()``.
+    the call to ``obj.s.fields()``.
 
 
 Iterators

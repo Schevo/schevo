@@ -790,7 +790,7 @@ the entity from that extent that has that OID:
   .. sourcecode:: pycon
 
      >>> jack = db.Person.findone(name='Jack')
-     >>> oid = jack.sys.oid
+     >>> oid = jack.s.oid
      >>> type(oid)
      <type 'int'>
      >>> person = db.Person[oid]

@@ -82,7 +82,7 @@ class Gender(E.Entity):
     name = f.string()
     @f.integer()
     def count(self):
-        return self.sys.count('Person', 'gender')
+        return self.s.count('Person', 'gender')
 
     _key(code)
     _key(name)
@@ -156,7 +156,7 @@ class CreateDelete(T.Transaction):
 
     def _execute(self, db):
         user = db.execute(db.User.t.create(name='1'))
-        oid = user.sys.oid
+        oid = user.s.oid
         db.execute(user.t.delete())
         return oid
 
@@ -212,12 +212,12 @@ class BaseChangeset(CreatesSchema):
     def test_create(self):
         tx = db.User.t.create(name='foo')
         user = db.execute(tx)
-        oid = user.sys.oid
-        changes = tx.sys.changes
+        oid = user.s.oid
+        changes = tx.s.changes
         assert list(changes) == [
             (CREATE, 'User', oid),
             ]
-        summary = tx.sys.summarize()
+        summary = tx.s.summarize()
         assert summary.creates == dict(User=set([oid]))
         assert summary.deletes == dict()
         assert summary.updates == dict()
@@ -225,14 +225,14 @@ class BaseChangeset(CreatesSchema):
     def test_delete(self):
         tx = db.User.t.create(name='foo')
         user = db.execute(tx)
-        oid = user.sys.oid
+        oid = user.s.oid
         tx = user.t.delete()
         db.execute(tx)
-        changes = tx.sys.changes
+        changes = tx.s.changes
         assert list(changes) == [
             (DELETE, 'User', oid),
             ]
-        summary = tx.sys.summarize()
+        summary = tx.s.summarize()
         assert summary.creates == dict()
         assert summary.deletes == dict(User=set([oid]))
         assert summary.updates == dict()
@@ -240,14 +240,14 @@ class BaseChangeset(CreatesSchema):
     def test_update(self):
         tx = db.User.t.create(name='foo')
         user = db.execute(tx)
-        oid = user.sys.oid
+        oid = user.s.oid
         tx = user.t.update(name='bar')
         db.execute(tx)
-        changes = tx.sys.changes
+        changes = tx.s.changes
         assert list(changes) == [
             (UPDATE, 'User', oid),
             ]
-        summary = tx.sys.summarize()
+        summary = tx.s.summarize()
         assert summary.creates == dict()
         assert summary.deletes == dict()
         assert summary.updates == dict(User=set([oid]))
@@ -255,29 +255,29 @@ class BaseChangeset(CreatesSchema):
     def test_create_create(self):
         tx = db.t.create_create()
         user1, user2 = db.execute(tx)
-        changes = tx.sys.changes
+        changes = tx.s.changes
         assert list(changes) == [
-            (CREATE, 'User', user1.sys.oid),
-            (CREATE, 'User', user2.sys.oid),
+            (CREATE, 'User', user1.s.oid),
+            (CREATE, 'User', user2.s.oid),
             ]
         assert list(changes) == list(normalize(changes))
-        summary = tx.sys.summarize()
+        summary = tx.s.summarize()
         assert summary.creates == dict(
-            User=set([user1.sys.oid, user2.sys.oid]))
+            User=set([user1.s.oid, user2.s.oid]))
         assert summary.deletes == dict()
         assert summary.updates == dict()
 
     def test_create_delete(self):
         tx = db.t.create_delete()
         oid = db.execute(tx)
-        changes = tx.sys.changes
+        changes = tx.s.changes
         assert list(changes) == [
             (CREATE, 'User', oid),
             (DELETE, 'User', oid),
             ]
         changes = normalize(changes)
         assert list(changes) == []
-        summary = tx.sys.summarize()
+        summary = tx.s.summarize()
         assert summary.creates == dict()
         assert summary.deletes == dict()
         assert summary.updates == dict()
@@ -285,17 +285,17 @@ class BaseChangeset(CreatesSchema):
     def test_create_update(self):
         tx = db.t.create_update()
         user = db.execute(tx)
-        changes = tx.sys.changes
+        changes = tx.s.changes
         assert list(changes) == [
-            (CREATE, 'User', user.sys.oid),
-            (UPDATE, 'User', user.sys.oid),
+            (CREATE, 'User', user.s.oid),
+            (UPDATE, 'User', user.s.oid),
             ]
         changes = normalize(changes)
         assert list(changes) == [
-            (CREATE, 'User', user.sys.oid),
+            (CREATE, 'User', user.s.oid),
             ]
-        summary = tx.sys.summarize()
-        assert summary.creates == dict(User=set([user.sys.oid]))
+        summary = tx.s.summarize()
+        assert summary.creates == dict(User=set([user.s.oid]))
         assert summary.deletes == dict()
         assert summary.updates == dict()
 
@@ -303,19 +303,19 @@ class BaseChangeset(CreatesSchema):
         user = db.execute(db.User.t.create(name='1'))
         tx = db.t.update_update(user)
         db.execute(tx)
-        changes = tx.sys.changes
+        changes = tx.s.changes
         assert list(changes) == [
-            (UPDATE, 'User', user.sys.oid),
-            (UPDATE, 'User', user.sys.oid),
+            (UPDATE, 'User', user.s.oid),
+            (UPDATE, 'User', user.s.oid),
             ]
         changes = normalize(changes)
         assert list(changes) == [
-            (UPDATE, 'User', user.sys.oid),
+            (UPDATE, 'User', user.s.oid),
             ]
-        summary = tx.sys.summarize()
+        summary = tx.s.summarize()
         assert summary.creates == dict()
         assert summary.deletes == dict()
-        assert summary.updates == dict(User=set([user.sys.oid]))
+        assert summary.updates == dict(User=set([user.s.oid]))
 
 
 class BaseExecuteNotification(CreatesSchema):
@@ -387,7 +387,7 @@ class BaseDistributor(CreatesSchema):
         self.dist.subscribe(watcher)
         tx = db.User.t.create(name='foo')
         user = db.execute(tx)
-        oid = user.sys.oid
+        oid = user.s.oid
         self.dist.distribute()
         tx = user.t.delete()
         db.execute(tx)
@@ -402,7 +402,7 @@ class BaseDistributor(CreatesSchema):
         self.dist.subscribe(watcher)
         tx = db.User.t.create(name='foo')
         user = db.execute(tx)
-        oid = user.sys.oid
+        oid = user.s.oid
         tx = user.t.delete()
         db.execute(tx)
         self.dist.distribute()
@@ -414,7 +414,7 @@ class BaseDistributor(CreatesSchema):
         self.dist.subscribe(watcher)
         tx = db.User.t.create(name='foo')
         user = db.execute(tx)
-        oid = user.sys.oid
+        oid = user.s.oid
         self.dist.distribute()
         self.dist.unsubscribe(watcher)
         tx = user.t.delete()
@@ -429,7 +429,7 @@ class BaseDistributor(CreatesSchema):
         self.dist.subscribe(watcher, DELETE)
         tx = db.User.t.create(name='foo')
         user = db.execute(tx)
-        oid = user.sys.oid
+        oid = user.s.oid
         self.dist.distribute()
         tx = user.t.delete()
         db.execute(tx)
@@ -443,7 +443,7 @@ class BaseDistributor(CreatesSchema):
         self.dist.subscribe(watcher, DELETE)
         tx = db.User.t.create(name='foo')
         user = db.execute(tx)
-        oid = user.sys.oid
+        oid = user.s.oid
         tx = user.t.delete()
         db.execute(tx)
         self.dist.distribute()
@@ -456,7 +456,7 @@ class BaseDistributor(CreatesSchema):
         self.dist.subscribe(watcher)
         tx = db.User.t.create(name='foo')
         user = db.execute(tx)
-        oid = user.sys.oid
+        oid = user.s.oid
         tx = user.t.delete()
         db.execute(tx)
         assert list(watcher.received) == [

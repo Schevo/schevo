@@ -149,7 +149,7 @@ class BaseDecoration(CreatesSchema):
         name = f.string()
         @f.integer()
         def count(self):
-            return self.sys.count('Person', 'gender')
+            return self.s.count('Person', 'gender')
 
         _key(code)
         _key(name)

@@ -110,7 +110,7 @@ class Transaction(base.Transaction):
 
     def __str__(self):
         text = label(self)
-        extent_name = self.sys.extent_name
+        extent_name = self.s.extent_name
         if extent_name is not None:
             text += ' :: %s' % extent_name
         return text
@@ -292,10 +292,10 @@ class Delete(Transaction):
         Transaction.__init__(self)
         self._entity = entity
         self._rev = entity._rev
-        self.sys._set('count', entity.sys.count)
-        self.sys._set('links', entity.sys.links)
-        self.sys._set('old', entity)
-        field_map = entity.sys.field_map(not_fget)
+        self.s._set('count', entity.s.count)
+        self.s._set('links', entity.s.links)
+        self.s._set('old', entity)
+        field_map = entity.s.field_map(not_fget)
         self._initialize(field_map)
         self._update_all_fields('readonly', True)
         self._update_all_fields('required', False)
@@ -377,7 +377,7 @@ class Delete(Transaction):
         # DeleteRestrict from being raised by the database itself.
         referrers = set()
         for referrer, field_names in cascaders.iteritems():
-            field_map = referrer.sys.field_map(not_fget)
+            field_map = referrer.s.field_map(not_fget)
             field_dump_map = dict(field_map.dump_map())
             field_related_entity_map = dict(field_map.related_entity_map())
             new_dump_map = dict((name, UNASSIGNED) for name in field_names)
@@ -464,12 +464,12 @@ class Update(Transaction):
     def __init__(self, _entity, **kw):
         Transaction.__init__(self)
         self._entity = _entity
-        self.sys._set('count', _entity.sys.count)
-        self.sys._set('links', _entity.sys.links)
-        self.sys._set('old', _entity)
+        self.s._set('count', _entity.s.count)
+        self.s._set('links', _entity.s.links)
+        self.s._set('old', _entity)
         self._oid = _entity._oid
         self._rev = _entity._rev
-        field_map = _entity.sys.field_map(not_fget)
+        field_map = _entity.s.field_map(not_fget)
         self._initialize(field_map)
         # Call change handlers to prepare fields based on stored
         # values.  Call them in order of field definition, so
@@ -822,7 +822,7 @@ def find_references(db, entity, traversed,
         return
     traversed.add(entity)
     entity_extent_name = entity._extent.name
-    for (e_name, f_name), others in entity.sys.links().iteritems():
+    for (e_name, f_name), others in entity.s.links().iteritems():
         extent = db.extent(e_name)
         field_class = extent.field_spec[f_name]
         on_delete_get = field_class.on_delete.get
