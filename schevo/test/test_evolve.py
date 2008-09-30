@@ -1094,7 +1094,7 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.evolve(schema3, version=3)
         assert db.x.get_bar() == 44
 
-    def test_field_valid_values_during_evolve(self):
+    def test_field_tuple_formatted_valid_values_during_evolve(self):
         schema1 = fix("""
         class Foo(E.Entity):
             name = f.string()
