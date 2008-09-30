@@ -1122,17 +1122,12 @@ class BaseEvolveInterVersion(CreatesDatabase):
             number = f.integer()
             _key(name)
         def during_evolve(db):
-            print id(db)
             for bar in db.Bar:
                 db.execute(bar.t.update(number=bar.number + 1))
         """)
         self.sync(schema1)
         self.evolve(schema2, version=2)
         assert db.Bar[1].name == 'one'
-        print 'bar 1 foo db', id(db.Bar[1].foo._db)
-        print 'bar 1 foo extent', id(db.Bar[1].foo._extent)
-        print 'foo 1 db', id(db.Foo[1]._db)
-        print 'foo 1 extent', id(db.Foo[1]._extent)
         assert db.Bar[1].foo == db.Foo[1]
         assert db.Bar[1].number == 2
 

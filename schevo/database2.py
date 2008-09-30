@@ -52,6 +52,7 @@ class Database(base.Database):
 
         - `backend`: The storage backend instance to use.
         """
+        self._sync_count = 0
         self.backend = backend
         self._BTree = backend.BTree
         self._PDict = backend.PDict
@@ -1261,6 +1262,7 @@ class Database(base.Database):
         - `evolving`: True if the synchronization is occuring during a
           database evolution.
         """
+        self._sync_count += 1
         sync_schema_changes = True
         locked = False
         try:
