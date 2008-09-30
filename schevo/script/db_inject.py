@@ -95,7 +95,7 @@ class Inject(Command):
             backend_name=options.backend_name,
             backend_args=options.backend_args,
             schema_source=schema_source,
-            schema_version=schema_version,
+            version=schema_version,
             )
         print 'Schema injected as version %i.' % schema_version
 
