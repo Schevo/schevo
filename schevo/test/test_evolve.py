@@ -1094,6 +1094,43 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.evolve(schema3, version=3)
         assert db.x.get_bar() == 44
 
+    def test_field_tuple_formatted_valid_values_during_evolve(self):
+        schema1 = fix("""
+        class Foo(E.Entity):
+            name = f.string()
+            _key(name)
+            _initial = [
+                ('a',),
+                ]
+        class Bar(E.Entity):
+            name = f.string()
+            foo = f.entity('Foo')
+            number = f.integer()
+            _key(name)
+            _initial = [
+                ('one', ('a',), 1),
+                ]
+        """)
+        schema2 = fix("""
+        VALID_FOOS = [('a',)]
+        class Foo(E.Entity):
+            name = f.string()
+            _key(name)
+        class Bar(E.Entity):
+            name = f.string()
+            foo = f.entity('Foo', valid_values=VALID_FOOS)
+            number = f.integer()
+            _key(name)
+        def during_evolve(db):
+            for bar in db.Bar:
+                db.execute(bar.t.update(number=bar.number + 1))
+        """)
+        self.sync(schema1)
+        self.evolve(schema2, version=2)
+        assert db.Bar[1].name == 'one'
+        assert db.Bar[1].foo == db.Foo[1]
+        assert db.Bar[1].number == 2
+
 
 class BaseEvolvesSchemataNoSkip(EvolvesSchemata):
 

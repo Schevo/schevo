@@ -12,13 +12,14 @@ from schevo.constant import UNASSIGNED
 class Placeholder(object):
     """Placeholder for an Entity via its extent ID and OID."""
 
-    __slots__ = ['extent_id', 'oid', 'entity']
+    __slots__ = ['extent_id', 'oid', 'entity', 'db_sync_count']
 
     def __init__(self, entity):
         """Create a Placeholder instance based on `entity`."""
         self.extent_id = entity._extent.id
         self.oid = entity._oid
         self.entity = entity
+        self.db_sync_count = -1
 
     def __getstate__(self):
         # Only store the extent and OID of the entity, not the entity
@@ -82,7 +83,7 @@ class Placeholder(object):
         must have some other value other than a reference to entity A.
         Therefore, UNASSIGNED is used instead.
         """
-        if self.entity is not None:
+        if self.entity is not None and self.db_sync_count == db._sync_count:
             # Use the attached entity if it's there; only foolishness
             # would result in it being the wrong one.
             return self.entity
@@ -90,6 +91,7 @@ class Placeholder(object):
         oid = self.oid
         if oid in extent:
             entity = self.entity = extent[oid]
+            self.db_sync_count = db._sync_count
             return entity
         else:
             return UNASSIGNED
