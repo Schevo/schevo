@@ -518,6 +518,13 @@ class Entity(base.Entity, LabelMixin):
         """Return the Default view."""
         return self._DefaultView(self)
 
+    @classmethod
+    def _hidden_t_selectionmethods(cls, selection):
+        if len(selection) < 2:
+            return ['delete_selected']
+        else:
+            return []
+
     @property
     def _rev(self):
         """Return the revision number of the entity."""
