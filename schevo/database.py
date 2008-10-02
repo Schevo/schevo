@@ -267,7 +267,7 @@ def equivalent(db1, db2, require_identical_schema_source=True):
             # Get field values for each entity in the extent, and increment
             # value counts.
             for entity in extent:
-                field_map = entity.sys.field_map(not_fget)
+                field_map = entity.s.field_map(not_fget)
                 stop_entities = frozenset([entity])
                 values = tuple(
                     field.db_equivalence_value(stop_entities)

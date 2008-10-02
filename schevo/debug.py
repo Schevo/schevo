@@ -12,7 +12,7 @@ def print_entity_information(db, entity):
     print '=' * 70
     print 'Entity information for %r' % entity
     print 'Label: %r' % label(entity)
-    extent = entity.sys.extent
+    extent = entity.s.extent
     print 'Extent: %r (id %r)' % (
         extent.name,
         db._extent_name_id[extent.name],
@@ -20,7 +20,7 @@ def print_entity_information(db, entity):
     print 'Fields:'
     extent_map = db._extent_map(extent.name)
     field_id_name = extent_map['field_id_name']
-    entity_map = db._entity_map(extent.name, entity.sys.oid)
+    entity_map = db._entity_map(extent.name, entity.s.oid)
     for field_id, stored_value in sorted(entity_map['fields'].iteritems()):
         print '    %r (name %r): %r' % (
             field_id,

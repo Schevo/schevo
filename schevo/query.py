@@ -16,7 +16,8 @@ from schevo.label import label, plural
 from schevo.lib.odict import odict
 from schevo.meta import schema_metaclass
 import schevo.namespace
-from schevo.namespace import NamespaceExtension
+from schevo.namespace import namespaceproperty
+from schevo import queryns
 from schevo.trace import log
 
 
@@ -70,31 +71,37 @@ class Param(Query):
     """Parameterized query that has field definitions, and an optional
     object on which to operate."""
 
-    __slots__ = ['_on', '_field_map', 'f', 'sys', '_label']
+    __slots__ = ['_on', '_field_map', '_label',
+                 '_f', '_h', '_s']
 
     _field_spec = FieldSpecMap()
 
+    # Namespaces.
+    f = namespaceproperty('f', instance=schevo.namespace.Fields)
+    h = namespaceproperty('h', instance=queryns.ParamChangeHandlers)
+    s = namespaceproperty('s', instance=queryns.ParamSys)
+
+    # Deprecated namespaces.
+    sys = namespaceproperty('s', instance=queryns.ParamSys)
+
     def __init__(self, *args, **kw):
-        f = self._field_map = self._field_spec.field_map(instance=self)
-        self.f = schevo.namespace.Fields(self)
-        self.sys = ParamSys(self)
+        self._field_map = self._field_spec.field_map(instance=self)
         if args:
             self._on = args[0]
         else:
             self._on = None
         for name, value in kw.iteritems():
             setattr(self, name, value)
-        print self.sys.field_map()
 
     def __getattr__(self, name):
-        if name == 'h':
-            self.h = attr = ParamChangeHandlers(self)
-        else:
-            attr = self._field_map[name].get()
-        return attr
+        try:
+            return self._field_map[name].get()
+        except KeyError:
+            msg = 'Field %r does not exist on %r.' % (name, self)
+            raise AttributeError(msg)
 
     def __setattr__(self, name, value):
-        if name == 'sys' or name.startswith('_') or len(name) == 1:
+        if name.startswith('_') or len(name) == 1:
             return Query.__setattr__(self, name, value)
         else:
             self._field_map[name].set(value)
@@ -108,41 +115,6 @@ class Param(Query):
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
         return sorted(self._field_map.keys())
-
-
-class ParamChangeHandlers(NamespaceExtension):
-    """A namespace of field change handlers."""
-
-    __slots__ = NamespaceExtension.__slots__
-
-    _readonly = False
-
-    def __init__(self, query):
-        NamespaceExtension.__init__(self)
-        d = self._d
-        # Note: could be optimized via using a metaclass with
-        # ParamQuery.
-        for name in dir(query):
-            if name.startswith('h_'):
-                func = getattr(query, name)
-                name = name[2:]
-                d[name] = func
-
-
-class ParamSys(NamespaceExtension):
-
-    __slots__ = NamespaceExtension.__slots__ + ['_query']
-
-    def __init__(self, query):
-        NamespaceExtension.__init__(self)
-        self._query = query
-
-    def field_map(self, *filters):
-        # Remove fields that should not be included.
-        new_fields = self._query._field_map.itervalues()
-        for filt in filters:
-            new_fields = [field for field in new_fields if filt(field)]
-        return FieldMap((field.name, field) for field in new_fields)
 
 
 class Exact(Param):
@@ -173,8 +145,6 @@ class Exact(Param):
                 field_spec[name] = FieldClass
                 field = field_map[name] = FieldClass(self)
                 field._name = name
-        self.f = schevo.namespace.Fields(self)
-        self.sys = ParamSys(self)
         for field in field_map.itervalues():
             field.assigned = False
         for name, value in kw.iteritems():
@@ -188,7 +158,7 @@ class Exact(Param):
     @property
     def _criteria(self):
         criteria = odict()
-        for name, field in self.sys.field_map().iteritems():
+        for name, field in self.s.field_map().iteritems():
             if field.assigned:
                 criteria[name] = field.get()
         return criteria
@@ -222,7 +192,7 @@ class Links(Query):
         self._other_field_name = other_field_name
 
     def _results(self):
-        return results(self._entity.sys.links(
+        return results(self._entity.s.links(
             self._other_extent, self._other_field_name))
 
 

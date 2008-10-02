@@ -24,8 +24,9 @@ from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.label import label
 from schevo.meta import schema_metaclass
 import schevo.namespace
-from schevo.namespace import NamespaceExtension
+from schevo.namespace import namespaceproperty
 from schevo.trace import log
+from schevo import transactionns
 
 
 T_metaclass = schema_metaclass('T')
@@ -49,8 +50,7 @@ class TransactionMeta(T_metaclass):
         for name in dir(cls):
             if name.startswith(prefix):
                 func = getattr(cls, name)
-                if func.im_self is None:
-                    names.append(name)
+                names.append(name)
         return names
 
 
@@ -61,6 +61,16 @@ class Transaction(base.Transaction):
     _db = None
 
     _field_spec = FieldSpecMap()
+
+    # Namespaces.
+    f = namespaceproperty('f', instance=schevo.namespace.Fields)
+    h = namespaceproperty('h', instance=transactionns.TransactionChangeHandlers)
+    s = namespaceproperty('s', instance=transactionns.TransactionSys)
+    x = namespaceproperty('x', instance=transactionns.TransactionExtenders)
+
+    # Deprecated namespaces.
+    sys = namespaceproperty('s', instance=transactionns.TransactionSys,
+                            deprecated=True)
 
     # If True, set all fields to their default value upon
     # initialization. All standard transaction subclasses set this to
@@ -81,24 +91,16 @@ class Transaction(base.Transaction):
         self._inversions = []
         self._known_deletes = []
         self._relaxed = set()
-        self.f = schevo.namespace.Fields(self)
-        self.sys = TransactionSys(self)
         if self._populate_default_values:
             for field in self._field_map.itervalues():
                 field.set(field.default[0], check_readonly=False)
 
     def __getattr__(self, name):
-        if name == 'x':
-            self.x = attr = TransactionExtenders(self)
-        elif name == 'h':
-            self.h = attr = TransactionChangeHandlers(self)
-        else:
-            try:
-                field = self._field_map[name]
-            except KeyError, e:
-                raise AttributeError(*e.args)
-            attr = field.get()
-        return attr
+        try:
+            return self._field_map[name].get()
+        except KeyError:
+            msg = 'Field %r does not exist on %r.' % (name, self)
+            raise AttributeError(msg)
 
     def __setattr__(self, name, value):
         if name == 'sys' or name.startswith('_') or len(name) == 1:
@@ -108,7 +110,7 @@ class Transaction(base.Transaction):
 
     def __str__(self):
         text = label(self)
-        extent_name = self.sys.extent_name
+        extent_name = self.s.extent_name
         if extent_name is not None:
             text += ' :: %s' % extent_name
         return text
@@ -158,103 +160,7 @@ class Transaction(base.Transaction):
             setattr(field, name, value)
 
 
-class TransactionExtenders(NamespaceExtension):
-    """A namespace of extra attributes."""
-
-    __slots__ = NamespaceExtension.__slots__
-
-    _readonly = False
-
-    def __init__(self, tx):
-        NamespaceExtension.__init__(self)
-        d = self._d
-        for x_name in tx._x_names:
-            func = getattr(tx, x_name)
-            name = x_name[2:]
-            d[name] = func
-
-
-class TransactionChangeHandlers(NamespaceExtension):
-    """A namespace of field change handlers."""
-
-    __slots__ = NamespaceExtension.__slots__
-
-    _readonly = False
-
-    def __init__(self, tx):
-        NamespaceExtension.__init__(self)
-        d = self._d
-        for h_name in tx._h_names:
-            func = getattr(tx, h_name)
-            name = h_name[2:]
-            d[name] = func
-
-
-class TransactionSys(NamespaceExtension):
-
-    __slots__ = NamespaceExtension.__slots__ + ['_transaction']
-
-    def __init__(self, transaction):
-        NamespaceExtension.__init__(self)
-        self._transaction = transaction
-
-    @property
-    def changes(self):
-        return self._transaction._changes
-
-    @property
-    def current_field_map(self):
-        return self._transaction._field_map
-
-    @property
-    def executed(self):
-        return self._transaction._executed
-
-    @property
-    def extent_name(self):
-        if hasattr(self._transaction, '_extent_name'):
-            return self._transaction._extent_name
-
-    def field_map(self, *filters):
-        # Remove fields that should not be included.
-        new_fields = self._transaction._field_map.itervalues()
-        for filt in filters:
-            new_fields = [field for field in new_fields if filt(field)]
-        return FieldMap((field.name, field) for field in new_fields)
-
-    @property
-    def field_was_changed(self):
-        """True if at least one field was changed."""
-        return self._transaction._field_was_changed
-
-    @property
-    def requires_changes(self):
-        return getattr(self._transaction, '_requires_changes', False)
-
-    def summarize(self):
-        return summarize(self._transaction)
-
-
 # --------------------------------------------------------------------
-
-
-class Combination(Transaction):
-    """A transaction that consists of several sub-transactions."""
-
-    _label = u'Combination'
-
-    _populate_default_values = False
-    _restrict_subclasses = True
-
-    def __init__(self, transactions):
-        Transaction.__init__(self)
-        self._transactions = transactions
-
-    def _execute(self, db):
-        results = []
-        for tx in self._transactions:
-            results.append(db.execute(tx))
-        return results
 
 
 _Create_Standard = 0
@@ -386,10 +292,10 @@ class Delete(Transaction):
         Transaction.__init__(self)
         self._entity = entity
         self._rev = entity._rev
-        self.sys._set('count', entity.sys.count)
-        self.sys._set('links', entity.sys.links)
-        self.sys._set('old', entity)
-        field_map = entity.sys.field_map(not_fget)
+        self.s._set('count', entity.s.count)
+        self.s._set('links', entity.s.links)
+        self.s._set('old', entity)
+        field_map = entity.s.field_map(not_fget)
         self._initialize(field_map)
         self._update_all_fields('readonly', True)
         self._update_all_fields('required', False)
@@ -471,7 +377,7 @@ class Delete(Transaction):
         # DeleteRestrict from being raised by the database itself.
         referrers = set()
         for referrer, field_names in cascaders.iteritems():
-            field_map = referrer.sys.field_map(not_fget)
+            field_map = referrer.s.field_map(not_fget)
             field_dump_map = dict(field_map.dump_map())
             field_related_entity_map = dict(field_map.related_entity_map())
             new_dump_map = dict((name, UNASSIGNED) for name in field_names)
@@ -520,6 +426,29 @@ class Delete(Transaction):
         return None
 
 
+class DeleteSelected(Transaction):
+    """Delete a selection of entity instances."""
+
+    _label = u'Combination'
+
+    _populate_default_values = False
+    _restrict_subclasses = True
+
+    def __init__(self, selection):
+        Transaction.__init__(self)
+        self._selection = selection
+        self._setup()
+
+    def _setup(self):
+        """Override this in subclasses to customize a transaction."""
+        pass
+
+    def _execute(self, db):
+        for entity in self._selection:
+            if entity in entity._extent:
+                db.execute(entity.t.delete())
+
+
 class Update(Transaction):
     """Update an existing entity instance."""
 
@@ -535,12 +464,12 @@ class Update(Transaction):
     def __init__(self, _entity, **kw):
         Transaction.__init__(self)
         self._entity = _entity
-        self.sys._set('count', _entity.sys.count)
-        self.sys._set('links', _entity.sys.links)
-        self.sys._set('old', _entity)
+        self.s._set('count', _entity.s.count)
+        self.s._set('links', _entity.s.links)
+        self.s._set('old', _entity)
         self._oid = _entity._oid
         self._rev = _entity._rev
-        field_map = _entity.sys.field_map(not_fget)
+        field_map = _entity.s.field_map(not_fget)
         self._initialize(field_map)
         # Call change handlers to prepare fields based on stored
         # values.  Call them in order of field definition, so
@@ -619,6 +548,28 @@ class Update(Transaction):
 # --------------------------------------------------------------------
 
 
+class Combination(Transaction):
+    """A transaction that consists of several sub-transactions."""
+
+    _label = u'Combination'
+
+    _populate_default_values = False
+    _restrict_subclasses = True
+
+    def __init__(self, transactions):
+        Transaction.__init__(self)
+        self._transactions = transactions
+
+    def _execute(self, db):
+        results = []
+        for tx in self._transactions:
+            results.append(db.execute(tx))
+        return results
+
+
+# --------------------------------------------------------------------
+
+
 class Inverse(Transaction):
     """An inversion of an executed transaction."""
 
@@ -671,7 +622,7 @@ class _Populate(Transaction):
         self._extents = extents
         # Apply the priority.
         priority_extents = reversed(sorted(
-            (getattr(extent._EntityClass, priority_attr, 0), extent)
+            (getattr(extent.EntityClass, priority_attr, 0), extent)
             for extent in extents
             ))
         # Process data in order of priority.
@@ -698,8 +649,8 @@ class _Populate(Transaction):
         # data is specified.
         data = []
         data_attr = self._data_attr
-        if hasattr(extent._EntityClass, data_attr):
-            data = getattr(extent._EntityClass, data_attr)
+        if hasattr(extent.EntityClass, data_attr):
+            data = getattr(extent.EntityClass, data_attr)
         if callable(data):
             data = data(db)
         if not data:
@@ -871,7 +822,7 @@ def find_references(db, entity, traversed,
         return
     traversed.add(entity)
     entity_extent_name = entity._extent.name
-    for (e_name, f_name), others in entity.sys.links().iteritems():
+    for (e_name, f_name), others in entity.s.links().iteritems():
         extent = db.extent(e_name)
         field_class = extent.field_spec[f_name]
         on_delete_get = field_class.on_delete.get

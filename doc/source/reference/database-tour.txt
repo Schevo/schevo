@@ -438,17 +438,17 @@ methods`_ to get the `transaction method namespace`_ of that object:
      ...             ]
      ...     """); db = t.db
 
-     >>> db.t    #doctest: +ELLIPSIS
-     <schevo.namespace.DatabaseTransactions object ...
+     >>> db.t
+     <'t' namespace on <Database u'Schevo Database' :: V 1>>
 
      >>> db.Plant.t    #doctest: +ELLIPSIS
-     <schevo.extent.ExtentTransactions object ...
+     <'t' namespace on <Extent 'Plant' in <Database ...>>>
 
      >>> db.Plant[1].t    #doctest: +ELLIPSIS
-     <schevo.entity.EntityTransactions object ...
+     <'t' namespace on <Plant entity oid:1 rev:0>>
 
      >>> db.Plant[1].v.default().t    #doctest: +ELLIPSIS
-     <schevo.view.ViewTransactions object ...
+     <'t' namespace on <schevo.entity._DefaultView ...>>
 
      >>> t.done()
 
@@ -537,14 +537,14 @@ namespace:
      >>> method_name = 'create'
      >>> method = db.Plant.t[method_name]
      >>> method    #doctest: +ELLIPSIS
-     <extent method Plant.t_create ...
+     <extentclassmethod Plant.t_create ...
 
 You may also use the `__getattr__` protocol:
 
   .. sourcecode:: pycon
 
      >>> db.Plant.t.create    #doctest: +ELLIPSIS
-     <extent method Plant.t_create ...
+     <extentclassmethod Plant.t_create ...
 
      >>> db.Plant.t.create is db.Plant.t['create']
      True
@@ -790,7 +790,7 @@ the entity from that extent that has that OID:
   .. sourcecode:: pycon
 
      >>> jack = db.Person.findone(name='Jack')
-     >>> oid = jack.sys.oid
+     >>> oid = jack.s.oid
      >>> type(oid)
      <type 'int'>
      >>> person = db.Person[oid]

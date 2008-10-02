@@ -113,16 +113,24 @@ if 'options' in locals():
 
 
     options(
-        setup=setup_meta,
-        sphinx=Bunch(
-            docroot='doc',
-            builddir='build',
-            sourcedir='source',
+        cog=Bunch(
+            basdir='doc/source',
+            includedir='doc/source',
+            pattern='*.txt',
+            beginspec='<==',
+            endspec='==>',
+            endoutput='<==end==>',
         ),
         publish=Bunch(
             username='schevo',
             server='web5.webfaction.com',
             path='/home2/schevo/schevo_docs/schevo/%s' % branch_or_version,
+        ),
+        setup=setup_meta,
+        sphinx=Bunch(
+            docroot='doc',
+            builddir='build',
+            sourcedir='source',
         ),
     )
 
@@ -131,13 +139,24 @@ if 'options' in locals():
 
     if paver.doctools.has_sphinx:
         @task
+        @needs('paver.doctools.uncog')
         @needs('paver.doctools.html')
+        @needs('paver.doctools.cog')
+        def html():
+            pass
+
+        @task
+        @needs('paver.doctools.uncog')
+        @needs('paver.doctools.html')
+        @needs('paver.doctools.cog')
         def openhtml():
             index_file = path('doc/build/html/index.html')
             sh('open ' + index_file)
 
         @task
+        @needs('paver.doctools.uncog')
         @needs('paver.doctools.html')
+        @needs('paver.doctools.cog')
         @cmdopts([("username=", "u", "Username for remote server"),
                   ("server=", "s", "Server to publish to"),
                   ("path=", "p", "Path to publish to")])

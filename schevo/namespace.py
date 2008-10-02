@@ -4,10 +4,13 @@ For copyright, license, and warranty, see bottom of file.
 """
 
 import sys
+from schevo.lib import optimize
+
+from warnings import warn
+
 from schevo import base
 from schevo.fieldspec import FieldDefinition
 from schevo.label import label_from_name
-from schevo.lib import optimize
 
 
 # Global objects used during Schevo schema loading.
@@ -20,26 +23,60 @@ class SchemaDefinition(object):
     """Keeps track of information about a schema during import."""
 
     def __init__(self):
-        self.E = EntityClasses()
-        self.F = FieldClasses()
-        self.f = FieldConstructors()
-        self.Q = QueryClasses()
-        self.q = DatabaseQueries()
-        self.T = TransactionClasses()
-        self.t = DatabaseTransactions()
-        self.V = ViewClasses()
+        self.E = EntityClasses('E', self)
+        self.F = FieldClasses('F', self)
+        self.f = FieldConstructors('f', self)
+        self.Q = QueryClasses('Q', self)
+        self.q = DatabaseQueries('q', self)
+        self.T = TransactionClasses('T', self)
+        self.t = DatabaseTransactions('t', self)
+        self.V = ViewClasses('V', self)
         self.relationships = {}
+
+
+class namespaceproperty(object):
+
+    def __init__(self, name, cls=None, instance=None, deprecated=False):
+        self.name = name
+        self.cls_class = cls
+        self.instance_class = instance
+        self.deprecated = deprecated
+        self.prefixed_name_cls = '__' + name
+        self.prefixed_name_instance = '_' + name
+
+    def __get__(self, instance, owner):
+        if self.deprecated:
+            warning = "'sys' namespace is deprecated; use 's' instead."
+            warn(warning, DeprecationWarning, 2)
+        namespace = None
+        if instance is None and self.cls_class is not None:
+            # Create the class namespace if needed, then return it.
+            name = self.prefixed_name_cls
+            namespace = getattr(owner, name, None)
+            if namespace is None:
+                namespace = self.cls_class(self.name, owner)
+                setattr(owner, name, namespace)
+        elif instance is not None:
+            # Create the instance namespace if needed, then return it.
+            name = self.prefixed_name_instance
+            namespace = getattr(instance, name, None)
+            if namespace is None:
+                namespace = self.instance_class(self.name, instance)
+                setattr(instance, name, namespace)
+        return namespace
 
 
 class Fields(object):
     """A namespace that gives attribute access to an object's field
     instances."""
 
-    def __init__(self, obj):
-        self.__dict__['_obj'] = obj
+    def __init__(self, name, obj):
+        d = self.__dict__
+        d['_n'] = name
+        d['_i'] = obj
 
     def __delattr__(self, name):
-        f = self._obj._field_map
+        f = self._i._field_map
         if name not in f:
             raise AttributeError(name)
         del f[name]
@@ -47,21 +84,24 @@ class Fields(object):
     __delitem__ = __delattr__
 
     def __getattr__(self, name):
-        return self._obj._field_map[name]
+        return self._i._field_map[name]
 
     __getitem__ = __getattr__
 
     def __iter__(self):
-        return iter(self._obj._field_map)
+        return iter(self._i._field_map)
+
+    def __repr__(self):
+        return '<%r namespace on %r>' % (self._n, self._i)
 
     def __setattr__(self, name, value):
-        field_map = self._obj._field_map
+        field_map = self._i._field_map
         if name in field_map:
             raise AttributeError('%r already exists.' % name)
         if isinstance(value, FieldDefinition):
-            value = value.field(name=name, instance=self._obj)
+            value = value.field(name=name, instance=self._i)
         elif isinstance(value, base.Field):
-            value._instance = self._obj
+            value._instance = self._i
             if not value.label:
                 # Assign a label to the field based on the name.
                 value.label = label_from_name(name)
@@ -74,18 +114,24 @@ class Fields(object):
 
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
-        return sorted(self._obj._field_map.keys())
+        return sorted(self._i._field_map.keys())
 
 
 class NamespaceExtension(object):
     """A namespace extension with index syntax support."""
 
-    __slots__ = ['_d']
+    __slots__ = [
+        '_d',                         # Dictionary of stored key/value pairs.
+        '_i',                         # Instance or class attached to.
+        '_n',                         # Name of namespace.
+        ]
 
     _readonly = True
 
-    def __init__(self):
+    def __init__(self, name, instance):
         self._d = {}
+        self._n = name
+        self._i = instance
 
     def __getattr__(self, name):
         try:
@@ -101,6 +147,9 @@ class NamespaceExtension(object):
 
     def __len__(self):
         return len(self._d)
+
+    def __repr__(self):
+        return '<%r namespace on %r>' % (self._n, self._i)
 
     def __setattr__(self, name, value):
         if name in self.__slots__:

@@ -42,7 +42,7 @@ class BaseEvolveIntraVersion(CreatesDatabase):
         schema2 = schema1
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(bar='baz'))
-        foo_oid = foo.sys.oid
+        foo_oid = foo.s.oid
         self.sync(schema2)
         assert db.Foo[foo_oid].bar == 'baz'
 
@@ -73,7 +73,7 @@ class BaseEvolveIntraVersion(CreatesDatabase):
         """)
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(bar='baz'))
-        foo_oid = foo.sys.oid
+        foo_oid = foo.s.oid
         self.sync(schema2)
         foo = db.Foo[foo_oid]
         assert foo.bar == 'baz'
@@ -96,7 +96,7 @@ class BaseEvolveIntraVersion(CreatesDatabase):
         """)
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(name=u'baz'))
-        foo_oid = foo.sys.oid
+        foo_oid = foo.s.oid
         self.sync(schema2)
         foo = db.Foo[foo_oid]
         assert foo.name == u'baz'
@@ -118,7 +118,7 @@ class BaseEvolveIntraVersion(CreatesDatabase):
         """)
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(bar='baz', baz=12))
-        foo_oid = foo.sys.oid
+        foo_oid = foo.s.oid
         self.sync(schema2)
         foo = db.Foo[foo_oid]
         assert foo.bar == 'baz'
@@ -153,16 +153,16 @@ class BaseEvolveIntraVersion(CreatesDatabase):
         self.sync(schema1)
         bar = db.execute(db.Bar.t.create(bof='fob'))
         foo = db.execute(db.Foo.t.create(bar=bar, baz=12))
-        foo_oid = foo.sys.oid
-        bar_oid = bar.sys.oid
-        assert bar.sys.count() == 1
+        foo_oid = foo.s.oid
+        bar_oid = bar.s.oid
+        assert bar.s.count() == 1
         # Evolve.
         self.sync(schema2)
         foo = db.Foo[foo_oid]
         bar = db.Bar[bar_oid]
         assert foo.baz == 12
         raises(AttributeError, getattr, foo, 'bar')
-        assert bar.sys.count() == 0
+        assert bar.s.count() == 0
         # Attempt to update the entity.
         tx = foo.t.update()
         tx.baz = 5
@@ -178,7 +178,7 @@ class BaseEvolveIntraVersion(CreatesDatabase):
         tx.bar = bar
         db.execute(tx)
         assert foo.bar == bar
-        assert bar.sys.count() == 1
+        assert bar.s.count() == 1
 
     def test_add_extent(self):
         schema1 = fix("""
@@ -248,14 +248,14 @@ class BaseEvolveIntraVersion(CreatesDatabase):
         self.sync(schema1)
         bar = db.execute(db.Bar.t.create(baz=5))
         foo = db.execute(db.Foo.t.create(bar=bar))
-        assert bar.sys.count() == 1
-        bar_oid = bar.sys.oid
+        assert bar.s.count() == 1
+        bar_oid = bar.s.oid
         self.sync(schema2)
         bar = db.Bar[bar_oid]
-        assert bar.sys.count() == 0
+        assert bar.s.count() == 0
         self.sync(schema3)
         bar = db.Bar[bar_oid]
-        assert bar.sys.count() == 0
+        assert bar.s.count() == 0
         assert len(db.Foo) == 0
 
     def test_add_key(self):
@@ -365,7 +365,7 @@ class BaseEvolveInterVersion(CreatesDatabase):
         schema2 = schema1
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(bar='baz'))
-        foo_oid = foo.sys.oid
+        foo_oid = foo.s.oid
         try:
             self.evolve(schema2, version=3)
         except error.DatabaseVersionMismatch, e:
@@ -381,7 +381,7 @@ class BaseEvolveInterVersion(CreatesDatabase):
         """)
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(bar='baz'))
-        foo_oid = foo.sys.oid
+        foo_oid = foo.s.oid
         schema2 = schema1
         self.evolve(schema2, version=2)
         assert db.version == 2
@@ -423,7 +423,7 @@ class BaseEvolveInterVersion(CreatesDatabase):
         """)
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(bar='baz'))
-        foo_oid = foo.sys.oid
+        foo_oid = foo.s.oid
         self.evolve(schema2, version=2)
         foo = db.Foo[foo_oid]
         assert foo.bar == 'baz'
@@ -446,7 +446,7 @@ class BaseEvolveInterVersion(CreatesDatabase):
         """)
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(name=u'baz'))
-        foo_oid = foo.sys.oid
+        foo_oid = foo.s.oid
         self.evolve(schema2, version=2)
         foo = db.Foo[foo_oid]
         assert foo.name == u'baz'
@@ -468,7 +468,7 @@ class BaseEvolveInterVersion(CreatesDatabase):
         """)
         self.sync(schema1)
         foo = db.execute(db.Foo.t.create(bar='baz', baz=12))
-        foo_oid = foo.sys.oid
+        foo_oid = foo.s.oid
         self.evolve(schema2, version=2)
         foo = db.Foo[foo_oid]
         assert foo.bar == 'baz'
@@ -503,16 +503,16 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.sync(schema1)
         bar = db.execute(db.Bar.t.create(bof='fob'))
         foo = db.execute(db.Foo.t.create(bar=bar, baz=12))
-        foo_oid = foo.sys.oid
-        bar_oid = bar.sys.oid
-        assert bar.sys.count() == 1
+        foo_oid = foo.s.oid
+        bar_oid = bar.s.oid
+        assert bar.s.count() == 1
         # Evolve.
         self.evolve(schema2, version=2)
         foo = db.Foo[foo_oid]
         bar = db.Bar[bar_oid]
         assert foo.baz == 12
         raises(AttributeError, getattr, foo, 'bar')
-        assert bar.sys.count() == 0
+        assert bar.s.count() == 0
         # Attempt to update the entity.
         tx = foo.t.update()
         tx.baz = 5
@@ -528,7 +528,7 @@ class BaseEvolveInterVersion(CreatesDatabase):
         tx.bar = bar
         db.execute(tx)
         assert foo.bar == bar
-        assert bar.sys.count() == 1
+        assert bar.s.count() == 1
 
     def test_add_extent(self):
         schema1 = fix("""
@@ -601,14 +601,14 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.sync(schema1)
         bar = db.execute(db.Bar.t.create(baz=5))
         foo = db.execute(db.Foo.t.create(bar=bar))
-        assert bar.sys.count() == 1
-        bar_oid = bar.sys.oid
+        assert bar.s.count() == 1
+        bar_oid = bar.s.oid
         self.evolve(schema2, version=2)
         bar = db.Bar[bar_oid]
-        assert bar.sys.count() == 0
+        assert bar.s.count() == 0
         self.evolve(schema3, version=3)
         bar = db.Bar[bar_oid]
-        assert bar.sys.count() == 0
+        assert bar.s.count() == 0
         assert len(db.Foo) == 0
 
     def test_add_key(self):
@@ -695,8 +695,8 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.sync(schema1)
         e1 = db.execute(db.Foo.t.create(bar='abc'))
         e2 = db.execute(db.Foo.t.create(bar='def'))
-        e1_oid = e1.sys.oid
-        e2_oid = e2.sys.oid
+        e1_oid = e1.s.oid
+        e2_oid = e2.s.oid
         self.evolve(schema2, version=2)
         e1 = db.Foo[e1_oid]
         e2 = db.Foo[e2_oid]
@@ -715,8 +715,8 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.sync(schema1)
         e1 = db.execute(db.Foo.t.create(bar='abc'))
         e2 = db.execute(db.Foo.t.create(bar='def'))
-        e1_oid = e1.sys.oid
-        e2_oid = e2.sys.oid
+        e1_oid = e1.s.oid
+        e2_oid = e2.s.oid
         try:
             self.evolve(schema2, version=2)
         except error.FieldDoesNotExist, e:
@@ -740,8 +740,8 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.sync(schema1)
         e1 = db.execute(db.Foo.t.create(bar='abc'))
         e2 = db.execute(db.Foo.t.create(bar='def'))
-        e1_oid = e1.sys.oid
-        e2_oid = e2.sys.oid
+        e1_oid = e1.s.oid
+        e2_oid = e2.s.oid
         self.evolve(schema2, version=2)
         e1 = db.Foo[e1_oid]
         e2 = db.Foo[e2_oid]
@@ -761,8 +761,8 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.sync(schema1)
         e1 = db.execute(db.Foo.t.create(bar='abc'))
         e2 = db.execute(db.Foo.t.create(bar='def'))
-        e1_oid = e1.sys.oid
-        e2_oid = e2.sys.oid
+        e1_oid = e1.s.oid
+        e2_oid = e2.s.oid
         self.evolve(schema2, version=2)
         e1 = db.Foo[e1_oid]
         e2 = db.Foo[e2_oid]
@@ -782,8 +782,8 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.sync(schema1)
         e1 = db.execute(db.Foo.t.create(bar='abc'))
         e2 = db.execute(db.Foo.t.create(bar='def'))
-        e1_oid = e1.sys.oid
-        e2_oid = e2.sys.oid
+        e1_oid = e1.s.oid
+        e2_oid = e2.s.oid
         self.evolve(schema2, version=2)
         e1 = db.Baz[e1_oid]
         e2 = db.Baz[e2_oid]
@@ -804,8 +804,8 @@ class BaseEvolveInterVersion(CreatesDatabase):
         self.sync(schema1)
         e1 = db.execute(db.Foo.t.create(bar='abc'))
         e2 = db.execute(db.Foo.t.create(bar='def'))
-        e1_oid = e1.sys.oid
-        e2_oid = e2.sys.oid
+        e1_oid = e1.s.oid
+        e2_oid = e2.s.oid
         try:
             self.evolve(schema2, version=2)
         except error.ExtentDoesNotExist, e:
@@ -835,9 +835,9 @@ class BaseEvolveInterVersion(CreatesDatabase):
         e1 = db.execute(db.Foo.t.create(bar='123'))
         e2 = db.execute(db.Foo.t.create(bar='456'))
         e3 = db.execute(db.Foo.t.create(bar='abc'))
-        e1_oid = e1.sys.oid
-        e2_oid = e2.sys.oid
-        e3_oid = e3.sys.oid
+        e1_oid = e1.s.oid
+        e2_oid = e2.s.oid
+        e3_oid = e3.s.oid
         self.evolve(schema2, version=2)
         e1 = db.Foo[e1_oid]
         e2 = db.Foo[e2_oid]
@@ -869,9 +869,9 @@ class BaseEvolveInterVersion(CreatesDatabase):
         e1 = db.execute(db.Foo.t.create(bar='123'))
         e2 = db.execute(db.Foo.t.create(bar='456'))
         e3 = db.execute(db.Foo.t.create(bar='abc'))
-        e1_oid = e1.sys.oid
-        e2_oid = e2.sys.oid
-        e3_oid = e3.sys.oid
+        e1_oid = e1.s.oid
+        e2_oid = e2.s.oid
+        e3_oid = e3.s.oid
         raises(ValueError, self.evolve, schema2, version=2)
         # Database must be reopened after failed evolution.
         self.reopen()
@@ -898,8 +898,8 @@ class BaseEvolveInterVersion(CreatesDatabase):
         P, PPN, PN = db.extents()
         p1 = db.execute(P.t.create(name='Joe'))
         p2 = db.execute(P.t.create(name='Jane'))
-        p1_oid = p1.sys.oid
-        p2_oid = p2.sys.oid
+        p1_oid = p1.s.oid
+        p2_oid = p2.s.oid
         pn1 = db.execute(PN.t.create(number='555-1234'))
         pn2 = db.execute(PN.t.create(number='555-9876'))
         ppn1 = db.execute(PPN.t.create(person=p1, phone_number=pn1))
@@ -986,7 +986,7 @@ class BaseEvolveInterVersion(CreatesDatabase):
                 ]
         """)
         self.sync(schema1)
-        assert len(db.Socket[1].sys.links()) == 2
+        assert len(db.Socket[1].s.links()) == 2
         schema2 = fix("""
         class Location(E.Entity):
             name = f.string()
@@ -1014,8 +1014,8 @@ class BaseEvolveInterVersion(CreatesDatabase):
             _index(socket_b)
         """)
         self.evolve(schema2, version=2)
-        assert len(db.Socket[1].sys.links()) == 0
-        assert db.Socket[1].sys.count() == 0
+        assert len(db.Socket[1].s.links()) == 0
+        assert db.Socket[1].s.count() == 0
 
     def test_before_during_after(self):
         schema1 = fix("""

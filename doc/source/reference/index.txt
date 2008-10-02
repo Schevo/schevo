@@ -8,6 +8,7 @@
    command-line
    database-tour
    schema-definition
+   namespaces
    transaction-hook-methods
    database-usage
    glossary

@@ -178,7 +178,7 @@ class BaseLinks(CreatesSchema):
             expected_count = row[0]
             entity = row[1]
             call_args = row[2:]
-            assert entity.sys.count(*call_args) == expected_count
+            assert entity.s.count(*call_args) == expected_count
 
     def test_relationships(self):
         expected = {

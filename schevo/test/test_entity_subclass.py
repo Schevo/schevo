@@ -119,9 +119,9 @@ class BaseSubclassTransactionCorrectness(CreatesSchema):
 
     def test_tx_correctness(self):
         tx = db.First.t.create()
-        assert tx.sys.extent_name == 'First'
+        assert tx.s.extent_name == 'First'
         tx = db.Second.t.create()
-        assert tx.sys.extent_name == 'Second'
+        assert tx.s.extent_name == 'Second'
 
 
 class TestHiddenBases1(BaseHiddenBases):

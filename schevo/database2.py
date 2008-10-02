@@ -1314,12 +1314,17 @@ class Database(base.Database):
             self._schema_format_compatibility_check(schema)
             self.schema = schema
             self._schema_module = schema_module
-            # Expose database-level namespaces.
+            # Expose database-level namespaces and make the database
+            # the object that the namespace is associated with, for
+            # more effective use with repr().
             self.q = schema.q
+            self.q._i = self
             self.t = schema.t
+            self.t._i = self
             self.Q = schema.Q
+            self.Q._i = self
             # Create an extenders namespace.
-            self.x = DatabaseExtenders(self._schema_module)
+            self.x = DatabaseExtenders('x', self, self._schema_module)
             # If the schema has changed then sync with it.
             if sync_schema_changes:
                 # Update schema source stored in database.
@@ -1603,7 +1608,7 @@ class Database(base.Database):
             if typ in (CREATE, UPDATE):
                 EntityClass = entity_classes[extent_name]
                 entity = EntityClass(oid)
-                field_map = entity.sys.field_map(not_fget)
+                field_map = entity.s.field_map(not_fget)
                 for field in field_map.itervalues():
                     field.validate(field._value)
 
@@ -1832,8 +1837,8 @@ class DatabaseExtenders(NamespaceExtension):
 
     _readonly = False
 
-    def __init__(self, schema_module):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, instance, schema_module):
+        NamespaceExtension.__init__(self, name, instance)
         # Expose functions through this namespace.
         for name in dir(schema_module):
             # Extender functions always have x_ prefix.

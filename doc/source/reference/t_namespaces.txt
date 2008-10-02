@@ -1,0 +1,326 @@
+======================================
+ t namespaces and transaction methods
+======================================
+
+
+Introduction
+============
+
+The `t` namespace of an object stores its `transaction
+methods`.
+
+Inspect transaction methods to find out what sort of allowed
+transactions exist for an object. Call transaction methods to receive
+transaction objects that you may then manipulate and execute.
+
+
+Doctest setup
+=============
+
+This document also functions as a doctest::
+
+    >>> from schevo.label import label
+    >>> from schevo.schema import read
+    >>> from schevo.test import DocTest
+    >>> schema = read('doc.source.reference.schema_namespaces', 1)
+    >>> t = DocTest(schema=schema)
+    >>> db = t.db
+
+The doctest uses the following schema::
+
+    # <== include("reference/schema_namespaces/namespaces_001.py") ==>
+    # <==end==>
+
+
+Method types
+============
+
+Database methods
+----------------
+
+An open Schevo database has a `t` namespace.
+
+Default methods
+~~~~~~~~~~~~~~~
+
+Schevo does not provide any default transaction methods for databases.
+
+Defining
+~~~~~~~~
+
+When defining a database transaction method, follow these guidelines:
+
+- Accept no required arguments.
+
+- Accept optional positional or keyword arguments for programmatic
+  use.
+
+Accessing
+~~~~~~~~~
+
+Access the database's transaction methods using the database's `t`
+namespace::
+
+    >>> sorted(db.t)
+    ['create_random_frob']
+
+    >>> tx = db.t.create_random_frob()
+    >>> label(tx)
+    u'Create Random Frob'
+
+    >>> db.t.create_random_frob is db.t['create_random_frob']
+    True
+
+
+Extent methods
+--------------
+
+Each extent in a Schevo database has a `t` namespace.
+
+Default methods
+~~~~~~~~~~~~~~~
+
+Schevo provides extent transaction methods for performing a Create
+operation to create a new instance within that extent.
+
+Defining
+~~~~~~~~
+
+When defining an extent transaction method, follow these guidelines:
+
+- Decorate the method with the `@extentmethod` decorator, and accept
+  an extent as the first required positional argument for the method, or
+
+- Decorate the method with the `@extentclassmethod` decorator, and
+  accept an extent's associated entity class as the first required
+  positional argument for the method.
+
+- Accept optional positional or keyword arguments for programmatic
+  use.
+
+Accessing
+~~~~~~~~~
+
+Access an extent's transaction methods using the extent's `t`
+namespace::
+
+    >>> sorted(db.Frob.t)
+    ['create']
+
+    >>> from schevo.label import label
+    >>> label(db.Frob.t.create)
+    u'New'
+
+
+Instance methods
+----------------
+
+Each entity instance and view instance in a Schevo database has a `t`
+namespace.
+
+Default methods
+~~~~~~~~~~~~~~~
+
+Schevo provides instance transaction methods for performing Clone,
+Delete, and Update operations on an existing entity instance.
+
+Defining
+~~~~~~~~
+
+When defining an instance transaction method, follow these guidelines:
+
+- Accept `self` as the first required positional argument for the
+  method.
+
+- Accept optional positional or keyword arguments for programmatic
+  use.
+
+Accessing
+~~~~~~~~~
+
+Access an entity or view's instance transaction methods using the
+object's `t` namespace::
+
+    >>> frob1 = db.Frob.findone(name='Frob 1')
+    >>> sorted(frob1.t)
+    ['clone', 'delete', 'update']
+
+    >>> label(frob1.t.clone)
+    u'Clone'
+    >>> label(frob1.t.delete)
+    u'Delete'
+    >>> label(frob1.t.update)
+    u'Edit'
+
+
+Selection methods
+-----------------
+
+Each entity class and view class in a Schevo database has a `t`
+namespace.
+
+Schevo provides selection transaction methods for performing Delete
+Selected operations on sets of existing entity instances.
+
+Accessing
+~~~~~~~~~
+
+Access an entity or view class's selection transaction methods using
+the class's `t` namespace::
+
+    >>> FrobClass = db.Frob.EntityClass
+    >>> sorted(FrobClass.t)
+    ['delete_selected']
+
+Method inheritance
+~~~~~~~~~~~~~~~~~~
+
+Views do not automatically inherit an entity class's selection
+transaction methods::
+
+    >>> sorted(FrobClass.t)
+    ['delete_selected']
+    >>> ViewClass = type(frob1.v.default())
+    >>> sorted(ViewClass.t)
+    []
+
+Using Delete Selected transactions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create four random Frob instances for this example::
+
+    >>> frob_a = db.execute(db.t.create_random_frob())
+    >>> frob_b = db.execute(db.t.create_random_frob())
+    >>> frob_c = db.execute(db.t.create_random_frob())
+    >>> frob_d = db.execute(db.t.create_random_frob())
+
+Delete `frob_b` and `frob_d` by placing them in a selection and using
+the Delete Selected transaction::
+
+    >>> selection = [frob_b, frob_d]
+    >>> tx = FrobClass.t.delete_selected(selection)
+    >>> db.execute(tx)
+    >>> frob_a in db.Frob
+    True
+    >>> frob_b in db.Frob
+    False
+    >>> frob_c in db.Frob
+    True
+    >>> frob_d in db.Frob
+    False
+
+Defining
+~~~~~~~~
+
+When defining a selection transaction method, follow these guidelines:
+
+- Decorate the method with the `@selectionmethod` decorator.
+
+- Accept a class as the first required positional argument for the
+  method.
+
+- Accept a selection sequence as the second required positional
+  argument for the method.
+
+- Accept optional positional or keyword arguments for programmatic
+  use.
+
+
+Determining method type
+-----------------------
+
+Given a method, you can determine if it is an entity method, an extent
+method, or a selection method::
+
+    >>> from schevo.introspect import (
+    ...     isinstancemethod, isextentmethod, isselectionmethod
+    ...     )
+
+    >>> isinstancemethod(db.Frob.t.create)
+    False
+    >>> isextentmethod(db.Frob.t.create)
+    True
+    >>> isselectionmethod(db.Frob.t.create)
+    False
+
+    >>> isinstancemethod(frob1.t.update)
+    True
+    >>> isextentmethod(frob1.t.update)
+    False
+    >>> isselectionmethod(frob1.t.update)
+    False
+
+    >>> FrobClass = db.Frob.EntityClass
+    >>> isinstancemethod(FrobClass.t.delete_selected)
+    False
+    >>> isextentmethod(FrobClass.t.delete_selected)
+    False
+    >>> isselectionmethod(FrobClass.t.delete_selected)
+    True
+
+
+Finding a common type, and selection methods, for a sequence of objects
+=======================================================================
+
+Given a sequence of objects, you can find the common type of those
+objects with the `commontype` function::
+
+    >>> from schevo.introspect import commontype
+
+    >>> results = frob1.q.hole_details()()
+    >>> cls = commontype(results)
+    >>> cls.__name__
+    '_Detail'
+
+    >>> cls = commontype(db.Hole)
+    >>> cls.__name__
+    'Hole'
+
+If the series of objects is not homogeneously typed, `commontype` will
+return None::
+
+    >>> cls = commontype(list(db.Hole) + list(db.Thread))
+    >>> print cls
+    None
+
+Use the common type to find selection methods applicable to that type
+of object::
+
+    >>> cls = commontype(results)
+    >>> sorted(cls.t)
+    ['delete_selected_threads']
+
+
+Hiding methods
+==============
+
+Hiding the `t_create` extent method implies hiding the `t_clone`
+instance method. In the schema above, the `t_create` method is hidden
+in the `Hole` class::
+
+    >>> 'create' in db.Frob.t
+    True
+    >>> 'clone' in frob1.t
+    True
+
+    >>> hole = frob1.m.holes()[0]
+    >>> 'create' in db.Hole.t
+    False
+    >>> 'clone' in hole.t
+    False
+
+Hiding the `t_delete` instance method imples hiding the
+`t_delete_selected` selection method.  In the schema above, the
+`t_delete` method is hidden in the `Hole` class::
+
+    >>> FrobClass = db.Frob.EntityClass
+    >>> 'delete' in frob1.t
+    True
+    >>> 'delete_selected' in FrobClass.t
+    True
+
+    >>> 'delete' in hole.t
+    False
+    >>> HoleClass = type(hole)
+    >>> 'delete_selected' in HoleClass.t
+    False

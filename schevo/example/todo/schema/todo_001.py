@@ -21,7 +21,7 @@ class Gender(E.Entity):
 
     @f.integer(label=u'Person Count')
     def count(self):
-        return self.sys.count('Person', 'gender')
+        return self.s.count('Person', 'gender')
 
     _key(code)
     _key(name)

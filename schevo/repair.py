@@ -114,8 +114,8 @@ class OrphanLinkStructuresRepair(object):
                                 entity_map['link_count'] -= link_count
                         entity = db.extent(extent_name)[oid]
                         len_links = sum(
-                            len(v) for v in entity.sys.links().itervalues())
-                        assert len_links == entity.sys.count()
+                            len(v) for v in entity.s.links().itervalues())
+                        assert len_links == entity.s.count()
                 db._commit()
             except:
                 db._rollback()

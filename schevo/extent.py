@@ -7,10 +7,10 @@ import sys
 from schevo.lib import optimize
 
 from schevo import base
-from schevo.decorator import isextentmethod
 from schevo.entity import Entity
 from schevo.error import EntityDoesNotExist
 from schevo.error import FindoneFoundMoreThanOne
+from schevo.introspect import isextentmethod, isselectionmethod
 from schevo.namespace import NamespaceExtension
 from schevo.query import ResultsIterator, ResultsList
 
@@ -28,18 +28,18 @@ class Extent(base.Extent):
         # Public API.
         self.db = db
         self.default_key = EntityClass._default_key
+        self.EntityClass = EntityClass
         self.field_spec = EntityClass._field_spec
         self.id = id
         self.index_spec = EntityClass._index_spec
         self.initial = EntityClass._initial
         self.key_spec = EntityClass._key_spec
         self.name = name
-        self.f = ExtentFieldClasses(EntityClass)
-        self.q = ExtentQueries(EntityClass)
-        self.t = ExtentTransactions(EntityClass)
-        self.x = ExtentExtenders(EntityClass)
+        self.f = ExtentFieldClasses('f', self, EntityClass)
+        self.q = ExtentQueries('q', self, EntityClass)
+        self.t = ExtentTransactions('t', self, EntityClass)
+        self.x = ExtentExtenders('x', self, EntityClass)
         # Private variables.
-        self._EntityClass = EntityClass
         self._by = db._by_entity_oids
         self._enforce = db._enforce_index
         self._find = db._find_entity_oids
@@ -65,11 +65,11 @@ class Extent(base.Extent):
     def __getitem__(self, oid):
         if not self.db._extent_contains_oid(self.name, oid):
             raise EntityDoesNotExist(self.name, oid=oid)
-        return self._EntityClass(oid)
+        return self.EntityClass(oid)
 
     def __iter__(self):
         """Return an iterator of entities in order by OID."""
-        Entity = self._EntityClass
+        Entity = self.EntityClass
         oids = self._find(self.name)
         for oid in oids:
             try:
@@ -91,7 +91,7 @@ class Extent(base.Extent):
     def as_datalist(self):
         """Return sorted list of entity value tuples in a form
         suitable for initial or sample data in a schema."""
-        return sorted([entity.sys.as_data() for entity in self])
+        return sorted([entity.s.as_data() for entity in self])
 
     def as_unittest_code(self):
         """Return formatted string of entity value tuples in a form
@@ -105,7 +105,7 @@ class Extent(base.Extent):
 
     def by(self, *index_spec):
         """Return an iterator of entities sorted by index_spec."""
-        Entity = self._EntityClass
+        Entity = self.EntityClass
         oids = self._by(self.name, *index_spec)
         def generator():
             for oid in oids:
@@ -133,7 +133,7 @@ class Extent(base.Extent):
 
     def find(self, **criteria):
         """Return list of entities matching given field value(s)."""
-        Entity = self._EntityClass
+        Entity = self.EntityClass
         return ResultsList(
             Entity(oid) for oid in self._find(self.name, **criteria))
 
@@ -147,7 +147,7 @@ class Extent(base.Extent):
         results = self._find(self.name, **criteria)
         count = len(results)
         if count == 1:
-            return self._EntityClass(results[0])
+            return self.EntityClass(results[0])
         elif count == 0:
             return None
         else:
@@ -159,7 +159,7 @@ class Extent(base.Extent):
 
     @property
     def relationships(self):
-        return self._EntityClass._relationships
+        return self.EntityClass._relationships
 
     def relax_index(self, *index_spec):
         """Relax constraints on the specified index until a matching
@@ -180,8 +180,8 @@ class ExtentExtenders(NamespaceExtension):
 
     _readonly = False
 
-    def __init__(self, EntityClass):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, instance, EntityClass):
+        NamespaceExtension.__init__(self, name, instance)
         # Expose methods through this namespace.
         for name in dir(EntityClass):
             # Extender methods always have x_ prefix.
@@ -196,9 +196,11 @@ class ExtentExtenders(NamespaceExtension):
 
 class ExtentFieldClasses(object):
 
-    __slots__ = ['_extent']
+    __slots__ = ['_n', '_i', '_extent']
 
-    def __init__(self, extent):
+    def __init__(self, name, instance, extent):
+        self._n = name
+        self._i = instance
         self._extent = extent
 
     def __getattr__(self, name):
@@ -211,6 +213,9 @@ class ExtentFieldClasses(object):
     def __iter__(self):
         return iter(self._extent._field_spec)
 
+    def __repr__(self):
+        return '<%r namespace on %r>' % (self._n, self._i)
+
     def _getAttributeNames(self):
         """Return list of hidden attributes to extend introspection."""
         return sorted(iter(self))
@@ -221,8 +226,8 @@ class ExtentQueries(NamespaceExtension):
 
     __slots__ = NamespaceExtension.__slots__ + ['_E']
 
-    def __init__(self, EntityClass):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, instance, EntityClass):
+        NamespaceExtension.__init__(self, name, instance)
         self._E = EntityClass
         # Expose query methods through this namespace.
         for key in dir(EntityClass):
@@ -246,8 +251,8 @@ class ExtentTransactions(NamespaceExtension):
 
     __slots__ = NamespaceExtension.__slots__ + ['_E']
 
-    def __init__(self, EntityClass):
-        NamespaceExtension.__init__(self)
+    def __init__(self, name, instance, EntityClass):
+        NamespaceExtension.__init__(self, name, instance)
         self._E = EntityClass
         # Expose transaction methods through this namespace.
         for key in dir(EntityClass):
@@ -263,7 +268,10 @@ class ExtentTransactions(NamespaceExtension):
 
     def __iter__(self):
         return (k for k in self._d.iterkeys()
-                if k not in self._E._hidden_actions)
+                if (k not in self._E._hidden_actions
+                    and 't_' + k not in self._E._t_selectionmethod_names
+                    )
+                )
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.

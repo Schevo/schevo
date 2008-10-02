@@ -48,9 +48,9 @@ class BaseTransactionFieldReorder(CreatesSchema):
 
     def test_reorder_by_odict_reorder_method(self):
         tx = db.Something.t.create()
-        tx.sys.current_field_map.reorder(0, 'field3')
-        tx.sys.current_field_map.reorder(1, 'field2')
-        tx.sys.current_field_map.reorder(2, 'field1')
+        tx.s.current_field_map.reorder(0, 'field3')
+        tx.s.current_field_map.reorder(1, 'field2')
+        tx.s.current_field_map.reorder(2, 'field1')
         assert list(tx.f) == ['field3', 'field2', 'field1']
 
     def test_reorder_entity_field_by_place_before_or_place_after(self):

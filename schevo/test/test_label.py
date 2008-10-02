@@ -5,8 +5,8 @@ For copyright, license, and warranty, see bottom of file.
 
 from schevo.test import CreatesSchema, raises
 from schevo import base
-from schevo.entity import isextentmethod
 from schevo import error
+from schevo.introspect import isextentmethod
 from schevo import label
 from schevo import transaction
 
@@ -149,7 +149,7 @@ class BaseDecoration(CreatesSchema):
         name = f.string()
         @f.integer()
         def count(self):
-            return self.sys.count('Person', 'gender')
+            return self.s.count('Person', 'gender')
 
         _key(code)
         _key(name)

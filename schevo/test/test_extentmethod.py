@@ -3,7 +3,7 @@
 For copyright, license, and warranty, see bottom of file.
 """
 
-from schevo.decorator import isextentmethod
+from schevo.introspect import isextentmethod
 from schevo.test import CreatesSchema
 
 
@@ -22,7 +22,7 @@ class BaseExtentMethod(CreatesSchema):
             return cls
 
         def x_return_oid(self):
-            return self.sys.oid
+            return self.s.oid
     '''
 
     def test_extentmethod_is_passed_extent(self):

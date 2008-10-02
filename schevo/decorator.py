@@ -7,7 +7,53 @@ import sys
 from schevo.lib import optimize
 
 
-class extentmethod(object):
+class _labelable_classmethod(object):
+
+    _label = None
+    _marker = None
+
+    def __init__(self, fn):
+        self.fn = fn
+        setattr(fn, self.marker, True)
+        self._label = getattr(fn, '_label', None)
+
+    def first_arg(self, instance, owner):
+        return None
+
+    def __get__(self, instance, owner):
+        return self.labelable_callable(
+            self, owner, self.first_arg(instance, owner))
+
+    class labelable_callable(object):
+
+        def __init__(self, decorator, owner, firstarg):
+            self.decorator = decorator
+            self.owner = owner
+            self.firstarg = firstarg
+
+        def __call__(self, *args, **kw):
+            return self.decorator.fn(self.firstarg, *args, **kw)
+
+        def __repr__(self):
+            return '<%s %s.%s at 0x%x>' % (
+                self.decorator.__class__.__name__,
+                self.owner.__name__,
+                self.decorator.fn.__name__,
+                id(self),
+                )
+
+        # _label
+
+        def _get_label(self):
+            return self.decorator._label
+
+        def _set_label(self, value):
+            self.decorator._label = value
+
+        _label = property(_get_label, _set_label)
+
+
+class extentmethod(_labelable_classmethod):
     """Mark a method of an `Entity` class as an extent method.
 
     When a function `fn` is decorated as an `extentmethod`,
@@ -16,15 +62,13 @@ class extentmethod(object):
     *args, **kw)`.
     """
 
-    def __init__(self, fn):
-        self.fn = fn
-        fn._extentmethod = True
-        self._label = getattr(fn, '_label', None)
+    marker = '_extentmethod'
 
-    def __get__(self, instance, owner=None):
-        if owner is None:
-            owner = type(instance)
-        return _extentmethodcallable(self, owner, owner._extent)
+    class labelable_callable(_labelable_classmethod.labelable_callable):
+        _extentmethod = True
+
+    def first_arg(self, instance, owner):
+        return owner._extent
 
 
 class extentclassmethod(extentmethod):
@@ -37,42 +81,19 @@ class extentclassmethod(extentmethod):
     *args, **kw)`.
     """
 
-    def __get__(self, instance, owner=None):
-        if owner is None:
-            owner = type(instance)
-        return _extentmethodcallable(self, owner, owner)
+    def first_arg(self, instance, owner):
+        return owner
 
 
-class _extentmethodcallable(object):
+class selectionmethod(_labelable_classmethod):
 
-    _extentmethod = True
+    marker = '_selectionmethod'
 
-    def __init__(self, extentmethod, owner, firstarg):
-        self.extentmethod = extentmethod
-        self.owner = owner
-        self.firstarg = firstarg
+    class labelable_callable(_labelable_classmethod.labelable_callable):
+        _selectionmethod = True
 
-    def __call__(self, *args, **kw):
-        return self.extentmethod.fn(self.firstarg, *args, **kw)
-
-    def __repr__(self):
-        return '<extent method %s.%s at 0x%x>' % (
-            self.owner.__name__,
-            self.extentmethod.fn.__name__,
-            id(self),
-            )
-
-    def _get_label(self):
-        return self.extentmethod._label
-
-    def _set_label(self, value):
-        self.extentmethod._label = value
-
-    _label = property(_get_label, _set_label)
-
-
-def isextentmethod(fn):
-    return getattr(fn, '_extentmethod', False)
+    def first_arg(self, instance, owner):
+        return owner
 
 
 def with_label(label, plural=None):
