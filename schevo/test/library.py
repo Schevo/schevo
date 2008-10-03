@@ -123,6 +123,8 @@ from schevo.test import (
     test_field_entityset,
     test_field_entitysetset,
     test_field_maps,
+    test_field_metadata_changed,
+    test_find_algorithm,
     test_icon,
     test_label,
     test_links,
@@ -137,6 +139,7 @@ from schevo.test import (
     test_transaction_cdu_subclass,
     test_transaction_field_reorder,
     test_transaction_requires_changes,
+    test_valid_values_resolve,
     test_view,
     )
 
