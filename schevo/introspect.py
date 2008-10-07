@@ -9,6 +9,7 @@ from schevo.lib import optimize
 from inspect import ismethod as isinstancemethod
 
 __all__ = [
+    'commontype',
     'isextentmethod',
     'isinstancemethod',
     'isselectionmethod',
