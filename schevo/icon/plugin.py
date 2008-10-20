@@ -7,6 +7,7 @@ import glob
 import os
 
 from schevo.icon import DEFAULT_PNG
+from schevo.transaction import Combination
 
 
 def install(db, icon_path=None):
@@ -37,8 +38,7 @@ class Plugin(object):
         icon_path = str(icon_path)
         db = self.db
         mask = os.path.join(icon_path, '*.png')
-        # XXX: Roll this up in a transaction, and get some test coverage
-        # for it.
+        transactions = []
         for filename in glob.glob(mask):
             # Strip extension.
             name, ext = os.path.splitext(os.path.basename(filename))
@@ -47,15 +47,15 @@ class Plugin(object):
             png = f.read()
             f.close()
             # Store it in the SchevoIcon extent.
-            if not db.SchevoIcon.find(name=name):
-                existing = db.SchevoIcon.findone(name=name)
-                if existing is not None:
-                    if existing.data != png:
-                        tx = existing.t.update(data=png)
-                        db.execute(tx)
-                else:
-                    tx = db.SchevoIcon.t.create(name=name, data=png)
-                    db.execute(tx)
+            existing = db.SchevoIcon.findone(name=name)
+            if existing is not None:
+                if existing.data != png:
+                    tx = existing.t.update(data=png)
+                    transactions.append(tx)
+            else:
+                tx = db.SchevoIcon.t.create(name=name, data=png)
+                transactions.append(tx)
+        db.execute(Combination(transactions))
 
     def icon(self, name, use_default=True):
         icon = self.db.SchevoIcon.findone(name=name)
