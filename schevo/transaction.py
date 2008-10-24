@@ -426,10 +426,10 @@ class Delete(Transaction):
         return None
 
 
-class DeleteSelection(Transaction):
+class DeleteSelected(Transaction):
     """Delete a selection of entity instances."""
 
-    _label = u'Delete Selection'
+    _label = u'Delete Selected'
 
     _populate_default_values = False
     _restrict_subclasses = True

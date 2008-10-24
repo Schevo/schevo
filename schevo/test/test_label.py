@@ -402,6 +402,8 @@ class BaseDecoration(CreatesSchema):
         realm = db.execute(tx)
         assert label.label(realm.t.delete()) == 'Delete'
         assert label.label(realm.t.update()) == 'Edit'
+        assert label.label(
+            db.Realm.EntityClass.t.delete_selected([])) == 'Delete Selected'
         # Custom transactions have default labels generated from their
         # class name.
         tx = db.User.t.create_foo_and_bar()
@@ -427,6 +429,8 @@ class BaseDecoration(CreatesSchema):
         assert L == ['clone', 'delete', 'update']
         assert label.label(t.delete) == 'Delete'
         assert label.label(t.update) == 'Edit'
+        assert label.label(
+            db.Realm.EntityClass.t.delete_selected) == 'Delete Selected'
         # Transaction methods that aren't labeled are automatically
         # labeled.  Test for labels of custom extent transaction
         # methods.

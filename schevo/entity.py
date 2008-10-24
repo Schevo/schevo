@@ -21,7 +21,7 @@ from schevo.fieldspec import FieldMap, FieldSpecMap
 from schevo.introspect import (
     isextentmethod, isinstancemethod, isselectionmethod)
 from schevo.label import (
-    LabelMixin, label_from_name, plural_from_name, relabel)
+    label, LabelMixin, label_from_name, plural_from_name, relabel)
 import schevo.namespace
 from schevo.namespace import namespaceproperty
 from schevo import query
@@ -240,18 +240,19 @@ class EntityMeta(type):
             if hasattr(NewClass, '_init_class'):
                 NewClass._init_class()
             setattr(cls, name, NewClass)
-        # Special case for DeleteSelection.  It needs to be subclassed
+        # Special case for DeleteSelected.  It needs to be subclassed
         # so that its ._db is set properly, but it does not need the
         # field copying performed above.
-        if (isinstance(cls._DeleteSelection, type)
-            and issubclass(cls._DeleteSelection, transaction.DeleteSelection)
+        if (isinstance(cls._DeleteSelected, type)
+            and issubclass(cls._DeleteSelected, transaction.DeleteSelected)
             ):
-            NewClass = type(name, (cls._DeleteSelection,), {})
+            NewClass = type(name, (cls._DeleteSelected,), {})
             NewClass._EntityClass = cls
             NewClass._extent_name = class_name
             if hasattr(NewClass, '_init_class'):
                 NewClass._init_class()
-            cls._DeleteSelection = NewClass
+            relabel(NewClass, label(cls._DeleteSelected))
+            cls._DeleteSelected = NewClass
 
     def setup_views(cls, class_name, bases, class_dict, v_spec):
         # Create subclasses of any View class defined in a base class
@@ -510,7 +511,7 @@ class Entity(base.Entity, LabelMixin):
     @with_label(u'Delete Selected')
     def t_delete_selected(cls, selection):
         """Return a transaction to delete all entities in `selection`."""
-        tx = cls._DeleteSelection(selection)
+        tx = cls._DeleteSelected(selection)
         return tx
 
     @with_label(u'Generic Update')
@@ -548,7 +549,7 @@ class Entity(base.Entity, LabelMixin):
     class _Delete(transaction.Delete):
         pass
 
-    class _DeleteSelection(transaction.DeleteSelection):
+    class _DeleteSelected(transaction.DeleteSelected):
         pass
 
     class _Update(transaction.Update):
