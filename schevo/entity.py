@@ -240,6 +240,18 @@ class EntityMeta(type):
             if hasattr(NewClass, '_init_class'):
                 NewClass._init_class()
             setattr(cls, name, NewClass)
+        # Special case for DeleteSelection.  It needs to be subclassed
+        # so that its ._db is set properly, but it does not need the
+        # field copying performed above.
+        if (isinstance(cls._DeleteSelection, type)
+            and issubclass(cls._DeleteSelection, transaction.DeleteSelection)
+            ):
+            NewClass = type(name, (cls._DeleteSelection,), {})
+            NewClass._EntityClass = cls
+            NewClass._extent_name = class_name
+            if hasattr(NewClass, '_init_class'):
+                NewClass._init_class()
+            cls._DeleteSelection = NewClass
 
     def setup_views(cls, class_name, bases, class_dict, v_spec):
         # Create subclasses of any View class defined in a base class
@@ -536,17 +548,8 @@ class Entity(base.Entity, LabelMixin):
     class _Delete(transaction.Delete):
         pass
 
-    class _DeleteSelection(transaction.Transaction):
-
-        def __init__(self, selection):
-            transaction.Transaction.__init__(self)
-            self._combination = transaction.Combination([
-                entity.t.delete() for entity in selection
-                ])
-
-        def _execute(self, db):
-            db.execute(self._combination)
-            return None
+    class _DeleteSelection(transaction.DeleteSelection):
+        pass
 
     class _Update(transaction.Update):
         pass

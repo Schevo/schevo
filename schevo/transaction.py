@@ -426,17 +426,19 @@ class Delete(Transaction):
         return None
 
 
-class DeleteSelected(Transaction):
+class DeleteSelection(Transaction):
     """Delete a selection of entity instances."""
 
-    _label = u'Combination'
+    _label = u'Delete Selection'
 
     _populate_default_values = False
     _restrict_subclasses = True
 
     def __init__(self, selection):
         Transaction.__init__(self)
-        self._selection = selection
+        self._combination = Combination([
+            entity.t.delete() for entity in selection
+            ])
         self._setup()
 
     def _setup(self):
@@ -444,9 +446,8 @@ class DeleteSelected(Transaction):
         pass
 
     def _execute(self, db):
-        for entity in self._selection:
-            if entity in entity._extent:
-                db.execute(entity.t.delete())
+        db.execute(self._combination)
+        return None
 
 
 class Update(Transaction):
