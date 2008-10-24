@@ -999,6 +999,8 @@ class Boolean(Field):
     false_label = unicode(False)
     true_label = unicode(True)
     unassigned_label = None
+    false_description = u''
+    true_description = u''
 
     def __str__(self):
         v = self._value
