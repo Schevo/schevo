@@ -436,9 +436,7 @@ class DeleteSelection(Transaction):
 
     def __init__(self, selection):
         Transaction.__init__(self)
-        self._combination = Combination([
-            entity.t.delete() for entity in selection
-            ])
+        self._selection = selection
         self._setup()
 
     def _setup(self):
@@ -446,7 +444,10 @@ class DeleteSelection(Transaction):
         pass
 
     def _execute(self, db):
-        db.execute(self._combination)
+        combination = Combination([
+            entity.t.delete() for entity in self._selection
+            ])
+        db.execute(combination)
         return None
 
 
