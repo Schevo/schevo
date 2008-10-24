@@ -86,7 +86,7 @@ class Hole(E.Entity):
                 else:
                     self.to_hole = thread.hole_a
 
-        class _DeleteSelectedThreads(T.DeleteSelection):
+        class _DeleteSelectedThreads(T.DeleteSelected):
 
             def _setup(self):
                 self._selection = [
