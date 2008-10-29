@@ -667,11 +667,15 @@ class Path(String):
     the field.
 
     file_only: True if only a file path should be stored in the field.
+
+    path_must_exist: True if a user interface should only populate the
+    field with a path that exists.
     """
 
     data_type = unicode
     directory_only = False
     file_only = False
+    path_must_exist = False
 
 
 # --------------------------------------------------------------------
