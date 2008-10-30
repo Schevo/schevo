@@ -52,7 +52,7 @@ class Database(base.Database):
 
         - `backend`: The storage backend instance to use.
         """
-        self._sync_count = 0
+        self._reset_structures()
         self.backend = backend
         self._BTree = backend.BTree
         self._PDict = backend.PDict
@@ -61,11 +61,19 @@ class Database(base.Database):
         # Shortcuts to coarse-grained commit and rollback.
         self._commit = backend.commit
         self._rollback = backend.rollback
-        # Keep track of schema modules remembered.
-        self._remembered = []
         # Initialization.
         self._create_schevo_structures()
         self._commit()
+        # Shortcuts.
+        schevo = self._root['SCHEVO']
+        self._extent_name_id = schevo['extent_name_id']
+        self._extent_maps_by_id = schevo['extents']
+        self._update_extent_maps_by_name()
+
+    def _reset_structures(self):
+        self._sync_count = 0
+        # Keep track of schema modules remembered.
+        self._remembered = []
         # Index to extent instances assigned by _sync.
         self._extents = {}
         # Index to entity classes assigned by _sync.
@@ -73,13 +81,19 @@ class Database(base.Database):
         # Vars used in transaction processing.
         self._bulk_mode = False
         self._executing = []
-        # Shortcuts.
-        schevo = self._root['SCHEVO']
-        self._extent_name_id = schevo['extent_name_id']
-        self._extent_maps_by_id = schevo['extents']
-        self._update_extent_maps_by_name()
         # Plugin support.
         self._plugins = []
+        # Reset various attributes to None to remove possible
+        # references.
+        self.backend = None
+        self._BTree = None
+        self._PDict = None
+        self._PList = None
+        self._root = None
+        self._commit = None
+        self._rollback = None
+        self._extent_name_id = None
+        self._extent_maps_by_id = None
 
     def __repr__(self):
         return '<Database %r :: V %r>' % (self.label, self.version)
@@ -100,6 +114,7 @@ class Database(base.Database):
         remembered = self._remembered
         while remembered:
             module.forget(remembered.pop())
+        self._reset_structures()
 
     def execute(self, *transactions, **kw):
         """Execute transaction(s)."""

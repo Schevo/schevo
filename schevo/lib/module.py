@@ -19,8 +19,11 @@ MODULES = [] # List of modules remembered.
 
 
 def forget(module):
-    """Remove module from sys.modules"""
+    """Clear module contents, then remove module from sys.modules"""
     name = module.__name__
+    for key in dir(module):
+        if not (key.startswith('__') and key.endswith('__')):
+            delattr(module, key)
     if name in sys.modules:
         del sys.modules[name]
     if name in MODULES:
