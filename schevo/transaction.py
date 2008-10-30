@@ -444,10 +444,9 @@ class DeleteSelected(Transaction):
         pass
 
     def _execute(self, db):
-        combination = Combination([
-            entity.t.delete() for entity in self._selection
-            ])
-        db.execute(combination)
+        for entity in self._selection:
+            if entity in entity._extent:
+                db.execute(entity.t.delete())
         return None
 
 
