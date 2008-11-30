@@ -135,37 +135,40 @@ if 'options' in locals():
     )
 
 
-    import paver.doctools
+    try:
+        import paver.doctools
+    except ImportError:
+        pass
+    else:
+        if paver.doctools.has_sphinx:
+            @task
+            @needs('paver.doctools.uncog')
+            @needs('paver.doctools.html')
+            @needs('paver.doctools.cog')
+            def html():
+                pass
 
-    if paver.doctools.has_sphinx:
-        @task
-        @needs('paver.doctools.uncog')
-        @needs('paver.doctools.html')
-        @needs('paver.doctools.cog')
-        def html():
-            pass
+            @task
+            @needs('paver.doctools.uncog')
+            @needs('paver.doctools.html')
+            @needs('paver.doctools.cog')
+            def openhtml():
+                index_file = path('doc/build/html/index.html')
+                sh('open ' + index_file)
 
-        @task
-        @needs('paver.doctools.uncog')
-        @needs('paver.doctools.html')
-        @needs('paver.doctools.cog')
-        def openhtml():
-            index_file = path('doc/build/html/index.html')
-            sh('open ' + index_file)
-
-        @task
-        @needs('paver.doctools.uncog')
-        @needs('paver.doctools.html')
-        @needs('paver.doctools.cog')
-        @cmdopts([("username=", "u", "Username for remote server"),
-                  ("server=", "s", "Server to publish to"),
-                  ("path=", "p", "Path to publish to")])
-        def publish():
-            src_path = path('doc/build/html') / '.'
-            dest_path = path(options.path) / '.'
-            # First create the remote directory.
-            sh('ssh %s@%s "mkdir -p %s"'
-               % (options.username, options.server, options.path))
-            # Next use rsync to copy everything there.
-            sh('rsync -zav --delete %s %s@%s:%s'
-               % (src_path, options.username, options.server, dest_path))
+            @task
+            @needs('paver.doctools.uncog')
+            @needs('paver.doctools.html')
+            @needs('paver.doctools.cog')
+            @cmdopts([("username=", "u", "Username for remote server"),
+                      ("server=", "s", "Server to publish to"),
+                      ("path=", "p", "Path to publish to")])
+            def publish():
+                src_path = path('doc/build/html') / '.'
+                dest_path = path(options.path) / '.'
+                # First create the remote directory.
+                sh('ssh %s@%s "mkdir -p %s"'
+                   % (options.username, options.server, options.path))
+                # Next use rsync to copy everything there.
+                sh('rsync -zav --delete %s %s@%s:%s'
+                   % (src_path, options.username, options.server, dest_path))
