@@ -1,3 +1,0 @@
-Louie >= 1.1
-PasteScript >= 1.6.1.1
-SchevoDurus >= 3.1a1

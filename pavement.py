@@ -49,7 +49,7 @@ if 'options' in locals():
           Schevo-aware widgets and UI tools.
 
         You can also get the `latest development version
-        <http://github.com/gldnspud/schevo/tarball/master#egg=Schevo-dev>`__.
+        <http://github.com/gldnspud/schevo/zipball/master#egg=Schevo-dev>`__.
         """),
         classifiers=[
             'Development Status :: 4 - Beta',
@@ -73,10 +73,10 @@ if 'options' in locals():
         zip_safe=False,
         install_requires=[
             'Louie >= 1.1',
-            'PasteScript >= 1.6.1.1',
-            'SchevoDurus >= 3.1a1',
+            'PasteScript >= 1.7.3',
+            'SchevoDurus >= 3.1a2',
         ],
-        tests_require=['nose >= 0.10.1'],
+        tests_require=['nose >= 0.10.4'],
         test_suite='nose.collector',
         ext_modules=[
             Extension('schevo.store._s_persistent',
