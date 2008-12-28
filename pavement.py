@@ -66,7 +66,7 @@ if 'options' in locals():
         keywords='database dbms',
         author='Orbtech, L.L.C. and contributors',
         author_email='schevo@googlegroups.com',
-        url='http://schevo.org/',
+        url='http://www.schevo.org/',
         license='LGPL',
         packages=find_packages(exclude=['doc', 'tests']),
         include_package_data=True,
