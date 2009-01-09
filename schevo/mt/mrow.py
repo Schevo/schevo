@@ -160,6 +160,13 @@ class SubLock(object):
     def acquire(self):
         self.lock.acquire()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_args):
+        self.release()
+        return False
+
 
 class RLock(SubLock):
 
