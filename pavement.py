@@ -64,7 +64,7 @@ if 'options' in locals():
                 'Application Frameworks',
         ],
         keywords='database dbms',
-        author='Orbtech, L.L.C. and contributors',
+        author='ElevenCraft Inc.',
         author_email='schevo@googlegroups.com',
         url='http://www.schevo.org/',
         license='LGPL',

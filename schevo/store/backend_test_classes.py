@@ -233,15 +233,14 @@ class TestMethods_EvolvesSchemata(TestMethods_CreatesDatabase):
         return db
 
 
-# Copyright (C) 2001-2006 Orbtech, L.L.C.
+# Copyright (C) 2001-2009 ElevenCraft Inc.
 #
 # Schevo
 # http://schevo.org/
 #
-# Orbtech
-# 709 East Jackson Road
-# Saint Louis, MO  63119-4241
-# http://orbtech.com/
+# ElevenCraft Inc.
+# Bellingham, WA
+# http://11craft.com/
 #
 # This toolkit is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public

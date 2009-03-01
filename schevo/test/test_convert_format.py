@@ -208,14 +208,14 @@ class TestFormat1Format2ConversionComplex(CreatesSchema):
         assert bar4.gee == gee2
 
 
-# Copyright (C) 2001-2007 Orbtech, L.L.C.
+# Copyright (C) 2001-2009 ElevenCraft Inc.
 #
 # Schevo
 # http://schevo.org/
 #
-# Orbtech
-# Saint Louis, MO
-# http://orbtech.com/
+# ElevenCraft Inc.
+# Bellingham, WA
+# http://11craft.com/
 #
 # This toolkit is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public

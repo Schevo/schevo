@@ -36,7 +36,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'Schevo'
-copyright = '2008, Orbtech, L.L.C.'
+copyright = '2001-2009, ElevenCraft Inc.'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -158,7 +158,7 @@ htmlhelp_basename = 'Schevodoc'
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
   ('index', 'Schevo.tex', 'Schevo Documentation',
-   'Orbtech, L.L.C.', 'manual'),
+   'ElevenCraft Inc.', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
