@@ -183,7 +183,15 @@ class EntityMeta(type):
                         value = UNASSIGNED
                     field._value = value
                     field._restore(db)
-                    return field.get_immutable()
+                    value = field.get_immutable()
+                    # Transform value if a value transform function was
+                    # defined.
+                    transforms = self._value_transforms
+                    if transforms is not None:
+                        transform = transforms.get(field_name, None)
+                        if transform is not None:
+                            value = transform(value)
+                    return value
             setattr(cls, field_name, property(fget=get_field_value))
         cls._fget_fields = tuple(fget_fields)
 
@@ -323,7 +331,7 @@ class Entity(base.Entity, LabelMixin):
     __metaclass__ = EntityMeta
 
     __slots__ = LabelMixin.__slots__ + [
-        '_oid', '_f', '_m', '_q', '_s', '_t', '_v', '_x']
+        '_oid', '_value_transforms', '_f', '_m', '_q', '_s', '_t', '_v', '_x']
 
     # Namespaces.
     f = namespaceproperty('f', cls=entityns.EntityClassFields,
@@ -408,6 +416,7 @@ class Entity(base.Entity, LabelMixin):
 
     def __init__(self, oid):
         self._oid = oid
+        self._value_transforms = None
 
     def __cmp__(self, other):
         if other is UNASSIGNED:
