@@ -8,7 +8,8 @@ from textwrap import dedent
 from setuptools import Extension, find_packages
 
 
-VERSION = '3.1a2'
+VERSION = '3.1'
+DEVELOPMENT = True
 
 
 # Use branch name if git information is available; otherwise, use
@@ -17,15 +18,18 @@ try:
     git_head_path = path('.git/HEAD')
     contents = git_head_path.open('rU').readline().strip()
     name, value = contents.split()
-    branch_or_version = value.split('/')[-1]
-    branch_or_version = '%s-%s' % (VERSION, branch_or_version)
+    BRANCH = value.split('/')[-1]
+    VERSION += '-' + BRANCH
 except:
-    branch_or_version = VERSION
+    pass
+
+if DEVELOPMENT:
+    VERSION += '-dev'
 
 
 setup(
     name='Schevo',
-    version=branch_or_version,
+    version=VERSION,
     description='Next-generation DBMS',
     long_description=dedent("""
     Schevo is a next-generation DBMS that focuses on the following:
@@ -130,7 +134,7 @@ options(
     publish=Bunch(
         username='schevo',
         server='web7.webfaction.com',
-        path='/home2/schevo/schevo_docs/schevo/%s' % branch_or_version,
+        path='/home2/schevo/schevo_docs/schevo/%s' % VERSION,
     ),
     sphinx=Bunch(
         docroot='doc',
