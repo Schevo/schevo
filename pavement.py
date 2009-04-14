@@ -14,16 +14,16 @@ DEVELOPMENT = True
 
 # Use branch name if git information is available; otherwise, use
 # version number from setup_meta.
-try:
-    git_head_path = path('.git/HEAD')
-    contents = git_head_path.open('rU').readline().strip()
-    name, value = contents.split()
-    BRANCH = value.split('/')[-1]
-    VERSION += '-' + BRANCH
-except:
-    pass
-
 if DEVELOPMENT:
+    try:
+        git_head_path = path('.git/HEAD')
+        contents = git_head_path.open('rU').readline().strip()
+        name, value = contents.split()
+        BRANCH = value.split('/')[-1]
+        if BRANCH != 'master':
+            VERSION += '-' + BRANCH
+    except:
+        pass
     VERSION += '-dev'
 
 
