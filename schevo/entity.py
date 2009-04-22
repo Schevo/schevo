@@ -416,6 +416,18 @@ class Entity(base.Entity, LabelMixin):
 
     def __init__(self, oid):
         self._oid = oid
+        # XXX: This should also be documented somewhere else.
+        # Value transforms are used to assign specific field value
+        # transformation functions to an entity instance, so that when you
+        # retrieve a field value from the entity, the value is passed through
+        # the transformer before being given to client code.  This is useful
+        # for cases where an app wants to hook something like a unit
+        # converter into the entity but still retain the same API for
+        # getting field values from the entity.
+        # If set on an entity instance, _value_transforms should be a
+        # dictionary where keys are field names and values are functions that
+        # take one argument (the original field value) as input and return
+        # the transformed field value.
         self._value_transforms = None
 
     def __cmp__(self, other):
