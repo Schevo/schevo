@@ -76,8 +76,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: '
-            'GNU Library or Lesser General Public License (LGPL)',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Database :: Database Engines/Servers',
@@ -85,10 +84,10 @@ setup(
             'Application Frameworks',
     ],
     keywords='database dbms',
-    author='Orbtech, L.L.C. and contributors',
+    author='ElevenCraft Inc.',
     author_email='schevo@googlegroups.com',
     url='http://www.schevo.org/',
-    license='LGPL',
+    license='MIT',
     packages=find_packages(exclude=['doc', 'tests']),
     include_package_data=True,
     zip_safe=False,
@@ -197,7 +196,7 @@ else:
         import sphinx
         options.order('sphinx', add_rest=True)
         paths = _get_paths()
-        sphinxopts = ['', '-b', 'doctest', '-d', paths.doctrees, 
+        sphinxopts = ['', '-b', 'doctest', '-d', paths.doctrees,
             paths.srcdir, paths.htmldir]
         ret = dry(
             "sphinx-build %s" % (" ".join(sphinxopts),), sphinx.main, sphinxopts)

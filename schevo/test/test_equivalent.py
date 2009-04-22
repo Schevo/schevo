@@ -2,10 +2,10 @@
 
 NOTE: These do not test against the format 1 database engine, as
 schevo.database.equivalent is engine-agnostic and some of these tests
-depend on field types that may only be used in format 2 databases.
+depend on field types that may only be used in format 2 databases."""
 
-For copyright, license, and warranty, see bottom of file.
-"""
+# Copyright (c) 2001-2009 ElevenCraft Inc.
+# See LICENSE for details.
 
 from textwrap import dedent
 
@@ -729,27 +729,3 @@ class TestDataNotEquivalentEntity(BaseDataNotEquivalent):
                 (u"Faz1", ),
                 ]
         '''
-
-
-# Copyright (C) 2001-2007 Orbtech, L.L.C.
-#
-# Schevo
-# http://schevo.org/
-#
-# Orbtech
-# Saint Louis, MO
-# http://orbtech.com/
-#
-# This toolkit is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
-#
-# This toolkit is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with this library; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
