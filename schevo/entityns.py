@@ -54,17 +54,22 @@ class EntityClassFields(NamespaceExtension):
 
 class EntityFields(object):
 
-    __slots__ = ['_n', '_i']
+    __slots__ = ['_n', '_i', '_f']
 
     def __init__(self, name, instance):
         self._n = name
         self._i = instance
+        self._f = {}
 
     def __getattr__(self, name):
-        instance = self._i
-        FieldClass = instance._field_spec[name]
-        field = FieldClass(instance, getattr(instance, name))
-        return field
+        if name in self._f:
+            return self._f[name]
+        else:
+            instance = self._i
+            FieldClass = instance._field_spec[name]
+            field = FieldClass(instance, getattr(instance, name))
+            self._f[name] = field
+            return field
 
     __getitem__ = __getattr__
 
