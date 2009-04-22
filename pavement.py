@@ -94,7 +94,7 @@ setup(
     install_requires=[
         'Louie >= 1.1',
         'PasteScript >= 1.7.3',
-        'SchevoDurus >= 3.1a2',
+        'SchevoDurus >= 3.1-dev',
     ],
     tests_require=['nose >= 0.10.4'],
     test_suite='nose.collector',
