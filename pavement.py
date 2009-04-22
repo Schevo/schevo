@@ -76,8 +76,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Environment :: Console',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: '
-            'GNU Library or Lesser General Public License (LGPL)',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Database :: Database Engines/Servers',
@@ -88,7 +87,7 @@ setup(
     author='ElevenCraft Inc.',
     author_email='schevo@googlegroups.com',
     url='http://www.schevo.org/',
-    license='LGPL',
+    license='MIT',
     packages=find_packages(exclude=['doc', 'tests']),
     include_package_data=True,
     zip_safe=False,
