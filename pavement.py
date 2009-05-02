@@ -7,8 +7,10 @@ from textwrap import dedent
 
 from setuptools import Extension, find_packages
 
+from schevo.release import VERSION
 
-VERSION = '3.1'
+
+DOCVERSION = VERSION
 DEVELOPMENT = True
 
 
@@ -21,10 +23,10 @@ if DEVELOPMENT:
         name, value = contents.split()
         BRANCH = value.split('/')[-1]
         if BRANCH != 'master':
-            VERSION += '-' + BRANCH
+            DOCVERSION += '-' + BRANCH
     except:
         pass
-    VERSION += '-dev'
+    DOCVERSION += '-dev'
 
 
 setup(
@@ -133,7 +135,7 @@ options(
     publish=Bunch(
         username='schevo',
         server='web7.webfaction.com',
-        path='/home2/schevo/schevo_docs/schevo/%s' % VERSION,
+        path='/home2/schevo/schevo_docs/schevo/%s' % DOCVERSION,
     ),
     sphinx=Bunch(
         docroot='doc',
