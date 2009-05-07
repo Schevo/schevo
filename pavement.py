@@ -98,6 +98,9 @@ else:
         license='MIT',
         packages=find_packages(exclude=['doc', 'tests']),
         include_package_data=True,
+        package_data={
+            'schevo.test.icons': ['*.png'],
+        },
         zip_safe=False,
         install_requires=[
             'Louie >= 1.1',
