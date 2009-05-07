@@ -1,9 +1,13 @@
-*.egg-info
+*~
 *.pyc
 *.pyd
 *.pyo
-build
-dist
 *.so
-*~
+.installed.cfg
+
+*.egg-info
+bin
+build
+develop-eggs
+dist
 doc/build
