@@ -91,6 +91,9 @@ class Fields(object):
     def __iter__(self):
         return iter(self._i._field_map)
 
+    def __length_hint__(self):
+        return len(self._i._field_map)
+
     def __repr__(self):
         return '<%r namespace on %r>' % (self._n, self._i)
 
