@@ -452,7 +452,7 @@ Query results, at the minimum, must support iteration::
   >>> results = person_name()
   >>> i = iter(results)
   >>> i #doctest: +ELLIPSIS
-  <generator object at ...>
+  <generator object ...>
 
 To cache the query results, use whatever tools you like.  For example,
 you can get a list of results in order to retrieve the length or

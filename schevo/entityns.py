@@ -76,6 +76,9 @@ class EntityFields(object):
     def __iter__(self):
         return iter(self._i._field_spec)
 
+    def __length_hint__(self):
+        return len(self._i._field_spec)
+
     def __repr__(self):
         return '<%r namespace on %r>' % (self._n, self._i)
 
