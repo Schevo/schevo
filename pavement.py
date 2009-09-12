@@ -105,7 +105,7 @@ else:
         install_requires=[
             'Louie >= 1.1',
             'PasteScript >= 1.7.3',
-            'SchevoDurus == dev, >= 3.1b1dev-20090502',
+            'SchevoDurus == dev, >= 3.1b1dev-20090911',
         ],
         tests_require=['nose >= 0.10.4'],
         test_suite='nose.collector',
