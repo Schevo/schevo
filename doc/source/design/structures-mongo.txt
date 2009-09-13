@@ -1,0 +1,61 @@
+======================================================
+ Schevo Internal Database Structures (Mongo database)
+======================================================
+
+
+This document explains the data structures a Schevo database uses
+internally when using the Mongo DB backend.
+
+
+Structural overview
+===================
+
+At the root of a Mongo collection are some top-level objects:
+
+- Schevo identifier::
+
+    {'SCHEVO': true}
+
+- Optional database label::
+
+    {'label': <db-label:string>}
+
+- Database format::
+
+    {'format': 'mongo1'}
+
+- Schema version::
+
+    {'version': <schema-version:int>}
+
+- Schema source code::
+
+    {'schema_source': <schema-source:string>}
+
+- Extent and field information::
+
+    {'extent_name': <extent-name:string>,
+     'length': <extent-length:int>,
+     'fields': [{'field_id': <field-id:int>,
+                 'field_name': <field-name:string>,
+                 }, ...],
+     }
+
+- Entity and its fields::
+
+    {'extent': <extent:reference>,
+     'rev': <revision:int>,
+     'link_count': <link-count:int>,
+     'values': [{'field_id': <field-id:int>,
+                 'field_value': <field-value:object>,
+                 }, ...],
+     'related_entities': [{'field_id': <field-id:int>,
+                           'related': [<entity:reference>, ...]}],
+     }
+
+- Entity links::
+
+    {'link_to': <entity:reference>,
+     'link_from': <entity:reference>,
+     'field_id': <field-id:int>,
+     }
