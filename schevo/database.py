@@ -369,7 +369,8 @@ def open(filename, backend_name=None, backend_args=None):
     DatabaseClass = getattr(backend, 'DatabaseClass', None)
     if DatabaseClass is None:
         # Determine the version of the database.
-        schevo = backend.root['SCHEVO']
+        root = backend.get_root()
+        schevo = root['SCHEVO']
         format = schevo['format']
         # Determine database class based on format number.
         DatabaseClass = format_dbclass[format]
