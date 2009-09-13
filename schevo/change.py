@@ -6,68 +6,17 @@
 import sys
 from schevo.lib import optimize
 
-import louie
+try:
+    import louie
+except ImportError:
+    louie = None
+
 from schevo.signal import TransactionExecuted
 
 
 CREATE = 1
 DELETE = 2
 UPDATE = 3
-
-
-class _CriteriaSignal(louie.Signal):
-    """A special signal used internally by Distributors to associate
-    specific criteria with a unique object."""
-
-
-class Distributor(object):
-
-    def __init__(self, db, auto_distribute=False):
-        louie.connect(
-            self.transaction_executed, TransactionExecuted, sender=db)
-        self.auto_distribute = auto_distribute
-        self._changes = []
-        self._criteria_signals = {}
-
-    def distribute(self):
-        """Distribute changes to receivers."""
-        send = louie.send
-        c_s_get = self._criteria_signals.get
-        changes = normalize(self._changes)
-        for change in changes:
-            criteria_list = [
-                change,
-                tuple(change[:2]),
-                tuple(change[:1]),
-                (),
-                ]
-            for criteria in criteria_list:
-                signal = c_s_get(criteria, None)
-                if signal is not None:
-                    send(signal, change=change)
-        self._changes = []
-
-    def subscribe(self, receiver, *criteria):
-        """Start watching criteria, notifying a receiver."""
-        signal = self._criteria_signal(criteria)
-        louie.connect(receiver, signal)
-
-    def unsubscribe(self, receiver):
-        """Stop notifying a receiver about any criteria."""
-        for signal in self._criteria_signals.itervalues():
-            try:
-                louie.disconnect(receiver, signal)
-            except louie.error.DispatcherKeyError:
-                pass
-
-    def transaction_executed(self, transaction):
-        self._changes.extend(transaction._changes)
-        if self.auto_distribute:
-            self.distribute()
-
-    def _criteria_signal(self, criteria):
-        signal = self._criteria_signals.setdefault(criteria, _CriteriaSignal())
-        return signal
 
 
 def normalize(changes):
@@ -116,6 +65,64 @@ def summarize(tx):
     for ext, oid in updates:
         summary.updates.setdefault(ext, set()).add(oid)
     return summary
+
+
+
+if louie is not None:
+
+    class _CriteriaSignal(louie.Signal):
+        """A special signal used internally by Distributors to associate
+        specific criteria with a unique object."""
+
+    class Distributor(object):
+
+        def __init__(self, db, auto_distribute=False):
+            louie.connect(
+                self.transaction_executed, TransactionExecuted, sender=db)
+            self.auto_distribute = auto_distribute
+            self._changes = []
+            self._criteria_signals = {}
+
+        def distribute(self):
+            """Distribute changes to receivers."""
+            send = louie.send
+            c_s_get = self._criteria_signals.get
+            changes = normalize(self._changes)
+            for change in changes:
+                criteria_list = [
+                    change,
+                    tuple(change[:2]),
+                    tuple(change[:1]),
+                    (),
+                    ]
+                for criteria in criteria_list:
+                    signal = c_s_get(criteria, None)
+                    if signal is not None:
+                        send(signal, change=change)
+            self._changes = []
+
+        def subscribe(self, receiver, *criteria):
+            """Start watching criteria, notifying a receiver."""
+            signal = self._criteria_signal(criteria)
+            louie.connect(receiver, signal)
+
+        def unsubscribe(self, receiver):
+            """Stop notifying a receiver about any criteria."""
+            for signal in self._criteria_signals.itervalues():
+                try:
+                    louie.disconnect(receiver, signal)
+                except louie.error.DispatcherKeyError:
+                    pass
+
+        def transaction_executed(self, transaction):
+            self._changes.extend(transaction._changes)
+            if self.auto_distribute:
+                self.distribute()
+
+        def _criteria_signal(self, criteria):
+            signal = self._criteria_signals.setdefault(
+                criteria, _CriteriaSignal())
+            return signal
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
