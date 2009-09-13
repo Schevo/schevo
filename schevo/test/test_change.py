@@ -3,14 +3,19 @@
 # Copyright (c) 2001-2009 ElevenCraft Inc.
 # See LICENSE for details.
 
-import louie
-
-from schevo.change import CREATE, DELETE, UPDATE, Distributor, normalize
+from schevo.change import CREATE, DELETE, UPDATE, normalize
 from schevo.constant import UNASSIGNED
 from schevo import error
 from schevo.signal import TransactionExecuted
 from schevo.test import CreatesSchema, raises
 from schevo.transaction import Transaction
+
+try:
+    import louie
+except ImportError:
+    louie = None
+else:
+    from schevo.change import Distributor
 
 
 BODY = '''
@@ -333,136 +338,138 @@ class BaseExecuteNotification(CreatesSchema):
         def __call__(self, transaction):
             self.received.append(transaction)
 
-    def test_notification(self):
-        louie.reset()
-        User = db.User
-        subscriber = self.Subscriber()
-        louie.connect(subscriber, TransactionExecuted)
-        # Execute a transaction before telling the database to
-        # dispatch messages.
-        tx = User.t.create(name='foo')
-        db.execute(tx)
-        assert tx not in subscriber.received
-        # Turn on dispatching and execute another.
-        db.dispatch = True
-        tx = User.t.create(name='bar')
-        db.execute(tx)
-        assert tx in subscriber.received
+    if louie is not None:
+        def test_notification(self):
+            louie.reset()
+            User = db.User
+            subscriber = self.Subscriber()
+            louie.connect(subscriber, TransactionExecuted)
+            # Execute a transaction before telling the database to
+            # dispatch messages.
+            tx = User.t.create(name='foo')
+            db.execute(tx)
+            assert tx not in subscriber.received
+            # Turn on dispatching and execute another.
+            db.dispatch = True
+            tx = User.t.create(name='bar')
+            db.execute(tx)
+            assert tx in subscriber.received
 
 
-class BaseDistributor(CreatesSchema):
-    """Given a list of changes made by transaction(s) and a mapping of
-    change notification criteria to objects that are interested in
-    changes matching each criteria, a Distributor object will notify
-    those interested objects of only those changes that they are
-    interested in.
+if louie is not None:
+    class BaseDistributor(CreatesSchema):
+        """Given a list of changes made by transaction(s) and a mapping of
+        change notification criteria to objects that are interested in
+        changes matching each criteria, a Distributor object will notify
+        those interested objects of only those changes that they are
+        interested in.
 
-    The criteria may be totally general to receive notifications about
-    all changes, or may specify a type of change, a type of change and
-    an extent name, or a type of change and an extent name and an
-    entity OID.
+        The criteria may be totally general to receive notifications about
+        all changes, or may specify a type of change, a type of change and
+        an extent name, or a type of change and an extent name and an
+        entity OID.
 
-    Listening objects must have a `changes_made(changes)` callable
-    attribute in order to receive notifications.
-    """
+        Listening objects must have a `changes_made(changes)` callable
+        attribute in order to receive notifications.
+        """
 
-    body = BODY
+        body = BODY
 
-    class Watcher(object):
+        class Watcher(object):
 
-        def __init__(self):
-            self.received = []
+            def __init__(self):
+                self.received = []
 
-        def __call__(self, change):
-            self.received.append(change)
+            def __call__(self, change):
+                self.received.append(change)
 
-    def setUp(self):
-        CreatesSchema.setUp(self)
-        louie.reset()
-        db.dispatch = True
-        dist = self.dist = Distributor(db)
+        def setUp(self):
+            CreatesSchema.setUp(self)
+            louie.reset()
+            db.dispatch = True
+            dist = self.dist = Distributor(db)
 
-    def test_receive_all(self):
-        watcher = self.Watcher()
-        self.dist.subscribe(watcher)
-        tx = db.User.t.create(name='foo')
-        user = db.execute(tx)
-        oid = user.s.oid
-        self.dist.distribute()
-        tx = user.t.delete()
-        db.execute(tx)
-        self.dist.distribute()
-        assert list(watcher.received) == [
-            (CREATE, 'User', oid),
-            (DELETE, 'User', oid),
-            ]
+        def test_receive_all(self):
+            watcher = self.Watcher()
+            self.dist.subscribe(watcher)
+            tx = db.User.t.create(name='foo')
+            user = db.execute(tx)
+            oid = user.s.oid
+            self.dist.distribute()
+            tx = user.t.delete()
+            db.execute(tx)
+            self.dist.distribute()
+            assert list(watcher.received) == [
+                (CREATE, 'User', oid),
+                (DELETE, 'User', oid),
+                ]
 
-    def test_receive_all_normalized(self):
-        watcher = self.Watcher()
-        self.dist.subscribe(watcher)
-        tx = db.User.t.create(name='foo')
-        user = db.execute(tx)
-        oid = user.s.oid
-        tx = user.t.delete()
-        db.execute(tx)
-        self.dist.distribute()
-        assert list(watcher.received) == [
-            ]
+        def test_receive_all_normalized(self):
+            watcher = self.Watcher()
+            self.dist.subscribe(watcher)
+            tx = db.User.t.create(name='foo')
+            user = db.execute(tx)
+            oid = user.s.oid
+            tx = user.t.delete()
+            db.execute(tx)
+            self.dist.distribute()
+            assert list(watcher.received) == [
+                ]
 
-    def test_receive_all_unsubscribe(self):
-        watcher = self.Watcher()
-        self.dist.subscribe(watcher)
-        tx = db.User.t.create(name='foo')
-        user = db.execute(tx)
-        oid = user.s.oid
-        self.dist.distribute()
-        self.dist.unsubscribe(watcher)
-        tx = user.t.delete()
-        db.execute(tx)
-        self.dist.distribute()
-        assert list(watcher.received) == [
-            (CREATE, 'User', oid),
-            ]
+        def test_receive_all_unsubscribe(self):
+            watcher = self.Watcher()
+            self.dist.subscribe(watcher)
+            tx = db.User.t.create(name='foo')
+            user = db.execute(tx)
+            oid = user.s.oid
+            self.dist.distribute()
+            self.dist.unsubscribe(watcher)
+            tx = user.t.delete()
+            db.execute(tx)
+            self.dist.distribute()
+            assert list(watcher.received) == [
+                (CREATE, 'User', oid),
+                ]
 
-    def test_receive_specific(self):
-        watcher = self.Watcher()
-        self.dist.subscribe(watcher, DELETE)
-        tx = db.User.t.create(name='foo')
-        user = db.execute(tx)
-        oid = user.s.oid
-        self.dist.distribute()
-        tx = user.t.delete()
-        db.execute(tx)
-        self.dist.distribute()
-        assert list(watcher.received) == [
-            (DELETE, 'User', oid),
-            ]
+        def test_receive_specific(self):
+            watcher = self.Watcher()
+            self.dist.subscribe(watcher, DELETE)
+            tx = db.User.t.create(name='foo')
+            user = db.execute(tx)
+            oid = user.s.oid
+            self.dist.distribute()
+            tx = user.t.delete()
+            db.execute(tx)
+            self.dist.distribute()
+            assert list(watcher.received) == [
+                (DELETE, 'User', oid),
+                ]
 
-    def test_receive_specific_normalized(self):
-        watcher = self.Watcher()
-        self.dist.subscribe(watcher, DELETE)
-        tx = db.User.t.create(name='foo')
-        user = db.execute(tx)
-        oid = user.s.oid
-        tx = user.t.delete()
-        db.execute(tx)
-        self.dist.distribute()
-        assert list(watcher.received) == [
-            ]
+        def test_receive_specific_normalized(self):
+            watcher = self.Watcher()
+            self.dist.subscribe(watcher, DELETE)
+            tx = db.User.t.create(name='foo')
+            user = db.execute(tx)
+            oid = user.s.oid
+            tx = user.t.delete()
+            db.execute(tx)
+            self.dist.distribute()
+            assert list(watcher.received) == [
+                ]
 
-    def test_receive_all_autodistribute(self):
-        self.dist.auto_distribute = True
-        watcher = self.Watcher()
-        self.dist.subscribe(watcher)
-        tx = db.User.t.create(name='foo')
-        user = db.execute(tx)
-        oid = user.s.oid
-        tx = user.t.delete()
-        db.execute(tx)
-        assert list(watcher.received) == [
-            (CREATE, 'User', oid),
-            (DELETE, 'User', oid),
-            ]
+        def test_receive_all_autodistribute(self):
+            self.dist.auto_distribute = True
+            watcher = self.Watcher()
+            self.dist.subscribe(watcher)
+            tx = db.User.t.create(name='foo')
+            user = db.execute(tx)
+            oid = user.s.oid
+            tx = user.t.delete()
+            db.execute(tx)
+            assert list(watcher.received) == [
+                (CREATE, 'User', oid),
+                (DELETE, 'User', oid),
+                ]
 
 
 class TestChangeset1(BaseChangeset):
@@ -493,15 +500,16 @@ class TestExecuteNotification2(BaseExecuteNotification):
     format = 2
 
 
-class TestDistributor1(BaseDistributor):
+if louie is not None:
+    class TestDistributor1(BaseDistributor):
 
-    include = True
+        include = True
 
-    format = 1
+        format = 1
 
 
-class TestDistributor2(BaseDistributor):
+    class TestDistributor2(BaseDistributor):
 
-    include = True
+        include = True
 
-    format = 2
+        format = 2

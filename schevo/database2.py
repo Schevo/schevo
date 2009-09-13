@@ -9,7 +9,15 @@ from schevo.lib import optimize
 import os
 import random
 
-import louie
+try:
+    import louie
+except ImportError:
+    # Dummy module.
+    class louie(object):
+        @staticmethod
+        def send(*args, **kw):
+            pass
+
 
 from schevo import base
 from schevo import change
