@@ -212,13 +212,12 @@ def create(filename, backend_name, backend_args={},
     """
     backend = new_backend(filename, backend_name, backend_args)
     # Make sure the database doesn't already exist.
-    root = backend.get_root()
-    if 'SCHEVO' in root:
+    if backend.has_db:
         backend.close()
         raise DatabaseAlreadyExists(filename)
     # Continue creating the new database.
-    Database = format_dbclass[format]
-    db = Database(backend)
+    DatabaseClass = getattr(backend, 'DatabaseClass', format_dbclass[format])
+    db = DatabaseClass(backend)
     db._sync(
         schema_source=schema_source,
         schema_version=schema_version,
@@ -364,17 +363,18 @@ def open(filename, backend_name=None, backend_args=None):
     """
     backend = new_backend(filename, backend_name, backend_args)
     # Make sure the database already exists.
-    root = backend.get_root()
-    if 'SCHEVO' not in root:
+    if not backend.has_db:
         backend.close()
         raise DatabaseDoesNotExist(filename)
-    # Determine the version of the database.
-    schevo = root['SCHEVO']
-    format = schevo['format']
-    # Determine database class based on format number.
-    Database = format_dbclass[format]
+    DatabaseClass = getattr(backend, 'DatabaseClass', None)
+    if DatabaseClass is None:
+        # Determine the version of the database.
+        schevo = backend.root['SCHEVO']
+        format = schevo['format']
+        # Determine database class based on format number.
+        DatabaseClass = format_dbclass[format]
     # Create the Database instance.
-    db = Database(backend)
+    db = DatabaseClass(backend)
     db._sync()
     # Install icon support and finalize opening of database.
     icon.install(db)

@@ -29,9 +29,7 @@ else:
 
 
 def test_backends_dict():
-    """Durus and schevo.store backends are always present after Schevo
-    is installed."""
-    assert 'durus' in backends
+    """Built-in backend is always present after Schevo is installed."""
     assert 'schevo.store' in backends
 
 

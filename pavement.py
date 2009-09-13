@@ -126,6 +126,7 @@ else:
 
         [schevo.backend]
         schevo.store = schevo.store.backend:SchevoStoreBackend
+        mongo = schevo.mongo:MongoBackend
 
         [schevo.schevo_command]
         backends = schevo.script.backends:start

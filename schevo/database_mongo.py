@@ -19,7 +19,7 @@ except ImportError:
             pass
 
 
-# from schevo import base
+from schevo import base
 # from schevo import change
 # from schevo.change import CREATE, UPDATE, DELETE
 # from schevo.constant import UNASSIGNED
@@ -30,12 +30,12 @@ except ImportError:
 # from schevo.field import Entity as EntityField
 # from schevo.field import not_fget
 # from schevo.lib import module
-# from schevo.mt.dummy import dummy_lock
-# from schevo.namespace import NamespaceExtension
+from schevo.mt.dummy import dummy_lock
+from schevo.namespace import NamespaceExtension
 # from schevo.placeholder import Placeholder
 # import schevo.schema
 # from schevo.signal import TransactionExecuted
-# from schevo.trace import log
+from schevo.trace import log
 # from schevo.transaction import (
 #     CallableWrapper, Combination, Initialize, Populate, Transaction)
 
@@ -51,12 +51,13 @@ class Database(base.Database):
     read_lock = dummy_lock
     write_lock = dummy_lock
 
-    def __init__(self, collection):
+    def __init__(self, backend):
         """Create a database.
 
-        - `collection`: The Mongo collection to use for the database.
+        - `backend`: The MongoBackend to use for the database.
         """
-        self.collection = collection
+        self.backend = backend
+        self._col = backend._collection
 #         self._BTree = backend.BTree
 #         self._PDict = backend.PDict
 #         self._PList = backend.PList
@@ -64,10 +65,10 @@ class Database(base.Database):
 #         # Shortcuts to coarse-grained commit and rollback.
 #         self._commit = backend.commit
 #         self._rollback = backend.rollback
-#         # Keep track of schema modules remembered.
-#         self._remembered = []
+        # Keep track of schema modules remembered.
+        self._remembered = []
 #         # Initialization.
-#         self._create_schevo_structures()
+        self._create_schevo_structures()
 #         self._commit()
 #         # Index to extent instances assigned by _sync.
 #         self._extents = {}
@@ -81,8 +82,8 @@ class Database(base.Database):
 #         self._extent_name_id = schevo['extent_name_id']
 #         self._extent_maps_by_id = schevo['extents']
 #         self._update_extent_maps_by_name()
-#         # Plugin support.
-#         self._plugins = []
+        # Plugin support.
+        self._plugins = []
 
     def __repr__(self):
         return '<Database %r :: V %r>' % (self.label, self.version)
@@ -218,6 +219,8 @@ class Database(base.Database):
 
     def extent_names(self):
         """Return a sorted list of extent names."""
+        return []
+        # XXX
         return sorted(self._extent_maps_by_name.keys())
 
     def extents(self):
@@ -256,6 +259,8 @@ class Database(base.Database):
             return SCHEVO['label']
 
     def _set_label(self, new_label):
+        return
+        # XXX
         if self._executing:
             raise error.DatabaseExecutingTransaction(
                 'Cannot change database label while executing a transaction.')
@@ -1105,6 +1110,14 @@ class Database(base.Database):
 
     def _create_schevo_structures(self):
         """Create or update Schevo structures in the database."""
+        col = self._col
+        if col.find_one({'SCHEVO': True}) is None:
+            col.save({'SCHEVO': True})
+            col.save({'format': 'mongo1'})
+            col.save({'version': 0})
+            col.save({'schema_source': None})
+        return
+        # XXX
         root = self._root
         PDict = self._PDict
         if 'SCHEVO' not in root:
@@ -1265,6 +1278,8 @@ class Database(base.Database):
         - `evolving`: True if the synchronization is occuring during a
           database evolution.
         """
+        return
+        # XXX
         self._sync_count += 1
         sync_schema_changes = True
         locked = False
