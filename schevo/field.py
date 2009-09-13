@@ -6,7 +6,7 @@
 from schevo.lib import optimize
 
 import datetime
-import md5
+import hashlib
 import random
 import string
 import sys
@@ -607,7 +607,7 @@ class HashedValue(Field):
             salt = ''
             for x in xrange(12):
                 salt += chr(random.randrange(0, 256))
-        md = md5.md5()
+        md = hashlib.md5()
         md.update(salt)
         md.update(value)
         digest = md.digest()
