@@ -103,11 +103,14 @@ else:
         },
         zip_safe=False,
         install_requires=[
-            'Louie >= 1.1',
             'PasteScript >= 1.7.3',
-            'SchevoDurus == dev, >= 3.1b1dev-20090502',
         ],
-        tests_require=['nose >= 0.10.4'],
+        extras_require={
+            'notifications': ['Louie >= 1.1'],
+            'durus': ['SchevoDurus == dev, >= 3.1b1dev-20090911'],
+            'mongo': ['pymongo'],
+        },
+        tests_require=['nose >= 0.11.1'],
         test_suite='nose.collector',
         ext_modules=[
             Extension('schevo.store._s_persistent',
