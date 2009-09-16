@@ -82,8 +82,10 @@ class Create(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 1:
-            parser.error('Please specify DBFILE.')
-        db_filename = args[0]
+            print 'DBFILE not given; using backend args to create database.'
+            db_filename = None
+        else:
+            db_filename = args[0]
         # Process paths.  Start with app_path option and populate
         # schema_path and icon_path based on it if it is set, then use
         # icon_path and schema_path options to override.
@@ -101,7 +103,9 @@ class Create(Command):
             parser.error('Please specify either the --app or --schema option.')
         # Delete the database file if one exists.
         if options.delete_existing_database:
-            if os.path.isfile(db_filename):
+            if db_filename is None:
+                print 'DBFILE not given; will not delete existing database.'
+            elif os.path.isfile(db_filename):
                 print 'Deleting existing file:', db_filename
                 os.remove(db_filename)
         # Use a default backend if one was not specified on the
@@ -110,10 +114,12 @@ class Create(Command):
             options.backend_name = os.environ.get(
                 'SCHEVO_DEFAULT_BACKEND', 'durus')
         # Create the database.
-        if os.path.isfile(db_filename):
-            parser.error(
-                'Use "schevo db update" or "schevo db evolve" commands to '
-                'update or evolve an existing database.')
+        if db_filename is not None:
+            if os.path.isfile(db_filename):
+                print 'ERROR: Database already exists.'
+                print 'Use "schevo db update" or "schevo db evolve" commands to'
+                print 'update or evolve an existing database.'
+                return 1
         final_version = options.schema_version.lower()
         if final_version != 'latest':
             try:
@@ -141,13 +147,19 @@ class Create(Command):
         print 'Creating new database at version %r.' % evolve_from_version
         schema_source = schevo.schema.read(
             schema_path, version=evolve_from_version)
-        db = schevo.database.create(
-            filename=db_filename,
-            backend_name=options.backend_name,
-            backend_args=options.backend_args,
-            schema_source=schema_source,
-            schema_version=evolve_from_version,
-            )
+        try:
+            db = schevo.database.create(
+                filename=db_filename,
+                backend_name=options.backend_name,
+                backend_args=options.backend_args,
+                schema_source=schema_source,
+                schema_version=evolve_from_version,
+                )
+        except schevo.error.DatabaseAlreadyExists:
+            print 'ERROR: Database already exists.'
+            print 'Use "schevo db update" or "schevo db evolve" commands to'
+            print 'update or evolve an existing database.'
+            return 1
         # Evolve if necessary.
         if final_version > evolve_from_version:
             print 'Evolving database...'

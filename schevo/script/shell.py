@@ -35,11 +35,15 @@ class Shell(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 1:
-            print 'DBFILE must be specified.'
-            return 1
-        db_filename = args[0]
+            print 'DBFILE not given; using backend args to create database.'
+            db_filename = None
+        else:
+            db_filename = args[0]
         # Open the database.
-        print 'Opened database', db_filename
+        if db_filename is not None:
+            print 'Using database', db_filename
+        else:
+            print 'Using database', options.backend_args
         db = schevo.database.open(
             filename=db_filename,
             backend_name=options.backend_name,
@@ -50,6 +54,7 @@ class Shell(Command):
             __name__='schevo-shell',
             db=db,
             )
+        print '"db" installed in namespace.'
         # sys.argv can clobber the shell if we're not careful.
         old_argv = sys.argv
         sys.argv = sys.argv[0:1]

@@ -330,11 +330,12 @@ def new_backend(filename, backend_name=None, backend_args=None):
     - `backend_args`: (optional) Arguments to pass to the backend.
     """
     from schevo.backend import backends
+    additional_args = {}
     if backend_name:
         # Determine backend class by name.
         BackendClass = backends[backend_name]
         additional_args = {}
-    else:
+    elif filename is not None:
         # In absence of name, determine backend class by file.
         BackendClass = None
         for BC in backends.itervalues():
@@ -343,6 +344,9 @@ def new_backend(filename, backend_name=None, backend_args=None):
                 BackendClass = BC
                 usable, additional_args = usable
                 break
+    else:
+        # In absense of filename, assume durus backend.
+        BackendClass = backends['durus']
     if BackendClass is None:
         raise IOError('No suitable backends found for %r' % filename)
     # Convert backend args to a dictionary.
