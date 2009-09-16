@@ -5,13 +5,15 @@
 
 import pkg_resources
 
-from paste.script import templates
+try:
+    from paste.script import templates
+except ImportError:
+    pass
+else:
+    class SchevoTemplate(templates.Template):
 
-
-class SchevoTemplate(templates.Template):
-
-    egg_plugins = ['Schevo']
-    _template_dir = pkg_resources.resource_filename(
-        pkg_resources.Requirement.parse('Schevo'),
-        'schevo/templates/schevo')
-    summary = 'Schevo application template.'
+        egg_plugins = ['Schevo']
+        _template_dir = pkg_resources.resource_filename(
+            pkg_resources.Requirement.parse('Schevo'),
+            'schevo/templates/schevo')
+        summary = 'Schevo application template.'
