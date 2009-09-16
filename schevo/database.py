@@ -329,13 +329,17 @@ def new_backend(url, backend_args=None):
         from schevo.backend import backends
         usable = False
         for backend_name, backend_class in backends.iteritems():
-            usable = backend_class.usable_by_backend(url)
-            if usable:
-                usable, additional_args = usable
-                backend_args.update(additional_args)
-                # Convert to proper URL form.
-                url = '%s:///%s' % (backend_name, url)
-                break
+            try:
+                usable = backend_class.usable_by_backend(url)
+            except IOError:
+                usable = False
+            else:
+                if usable:
+                    usable, additional_args = usable
+                    backend_args.update(additional_args)
+                    # Convert to proper URL form.
+                    url = '%s:///%s' % (backend_name, url)
+                    break
         if not usable:
             raise IOError('No suitable backends found for %r' % url)
     # Convert to URL object.
