@@ -62,9 +62,11 @@ class Database(base.Database):
         """
         self._sync_count = 0
         self.backend = backend
+        # Aliases to classes in the backend.
         self._BTree = backend.BTree
         self._PDict = backend.PDict
         self._PList = backend.PList
+        self._conflict_exceptions = getattr(backend, 'conflict_exceptions', ())
         self._root = backend.get_root()
         # Shortcuts to coarse-grained commit and rollback.
         self._commit = backend.commit
@@ -111,6 +113,22 @@ class Database(base.Database):
 
     def execute(self, *transactions, **kw):
         """Execute transaction(s)."""
+        if self._executing:
+            # Pass-through outer transactions.
+            return self._execute(*transactions, **kw)
+        else:
+            # Try outer transactions up to 10 times if conflicts occur.
+            remaining_attempts = 10
+            while remaining_attempts > 0:
+                try:
+                    return self._execute(*transactions, **kw)
+                except self._conflict_exceptions:
+                    remaining_attempts -= 1
+                    for tx in transactions:
+                        tx._executing = False
+            raise error.BackendConflictError()
+
+    def _execute(self, *transactions, **kw):
         strict = kw.get('strict', True)
         executing = self._executing
         if len(transactions) == 0:

@@ -12,6 +12,10 @@ class Restricted(RuntimeError):
     """The attempted operation was restricted."""
 
 
+class BackendConflictError(RuntimeError):
+    """Transaction could not be executed; too many backend conflict errors."""
+
+
 class DatabaseAlreadyExists(RuntimeError):
     """The database already exists."""
 
