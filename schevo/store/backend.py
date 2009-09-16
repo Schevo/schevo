@@ -5,6 +5,7 @@
 
 import os
 import sys
+from StringIO import StringIO
 
 from schevo import database
 from schevo.error import DatabaseFileLocked
@@ -22,13 +23,21 @@ from schevo.store.connection import Connection
 
 class SchevoStoreBackend(object):
 
+    DEFAULT_CACHE_SIZE = 100000
+
     description = 'Built-in backend, based on Durus 3.4'
     backend_args_help = """
-    cache_size=SIZE
+    Use "schevostore:///:memory:" for an in-memory database.
+
+    cache_size=%(DEFAULT_CACHE_SIZE)i (int)
         Set the size of the in-memory object cache to SIZE, which is an
         integer specifying the maximum number of objects to keep in the
         cache.
-    """
+
+    fp=None (file-like object)
+        Optional file object to use instead of an actual file in the
+        filesystem.
+    """ % locals()
 
     __test__ = False
 
@@ -40,37 +49,18 @@ class SchevoStoreBackend(object):
     TestMethods_CreatesSchema = TestMethods_CreatesSchema
     TestMethods_EvolvesSchemata = TestMethods_EvolvesSchemata
 
-    def __init__(self, filename, fp=None, cache_size=100000):
-        """Create a new `SchevoStoreBackend` instance.
-
-        - `filename`: Name of file to open with this backend. If
-          `None`, the backend will expect that you passed in a value
-          for `fp` instead.
-        - `fp`: (optional) File-like object to use instead of an
-          actual file in the filesystem.
-        - `cache_size`: Maximum number of objects to keep in the
-          in-memory object cache.
-        """
-        self._filename = filename
-        self._fp = fp
-        self._cache_size = cache_size
-        self._is_open = False
+    def __init__(self,
+                 database,
+                 fp=None,
+                 cache_size=DEFAULT_CACHE_SIZE,
+                 ):
+        self.database = database
+        if database == ':memory:' and fp is None:
+            fp = StringIO()
+        self.fp = fp
+        self.cache_size = cache_size
+        self.is_open = False
         self.open()
-
-    @classmethod
-    def args_from_string(cls, s):
-        """Return a dictionary of keyword arguments based on a string given
-        to a command-line tool."""
-        kw = {}
-        if s is not None:
-            for arg in (p.strip() for p in s.split(',')):
-                name, value = (p2.strip() for p2 in arg.split('='))
-                if name == 'cache_size':
-                    kw[name] = int(value)
-                else:
-                    raise KeyError(
-                        '%s is not a valid name for backend args' % name)
-        return kw
 
     @classmethod
     def usable_by_backend(cls, filename):
@@ -104,7 +94,7 @@ class SchevoStoreBackend(object):
         """Close the underlying storage (and the connection if
         needed)."""
         self.storage.close()
-        self._is_open = False
+        self.is_open = False
 
     def get_root(self):
         """Return the backend's `root` object."""
@@ -116,13 +106,13 @@ class SchevoStoreBackend(object):
 
     def open(self):
         """Open the underlying storage based on initial arguments."""
-        if not self._is_open:
+        if not self.is_open:
             try:
-                self.storage = FileStorage(self._filename, fp=self._fp)
+                self.storage = FileStorage(self.database, fp=self.fp)
             except RuntimeError:
                 raise DatabaseFileLocked()
-            self.conn = Connection(self.storage, cache_size=self._cache_size)
-            self._is_open = True
+            self.conn = Connection(self.storage, cache_size=self.cache_size)
+            self.is_open = True
 
     def pack(self):
         """Pack the underlying storage."""

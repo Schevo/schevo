@@ -11,9 +11,9 @@ from schevo.script.command import Command
 from schevo.script import opt
 
 usage = """\
-schevo db convert [options] DBFILE
+schevo db convert [options] URL
 
-DBFILE: The database file to convert to a new format."""
+URL: The database file to convert to a new format."""
 
 
 def _parser():
@@ -37,20 +37,15 @@ class Format(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 1:
-            parser.error('Please specify DBFILE.')
-        db_filename = args[0]
+            parser.error('Please specify URL.')
+        url = args[0]
         format = options.format
         if format is not None:
             format = int(format)
-            print 'Converting %r to format %r...' % (db_filename, format)
+            print 'Converting %r to format %r...' % (url, format)
         else:
-            print 'Converting %r to latest format...' % db_filename
-        schevo.database.convert_format(
-            filename=db_filename,
-            backend_name=options.backend_name,
-            backend_args=options.backend_args,
-            format=format,
-            )
+            print 'Converting %r to latest format...' % url
+        schevo.database.convert_format(url, format=format)
         print 'Conversion complete.'
 
 

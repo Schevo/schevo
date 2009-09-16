@@ -11,10 +11,10 @@ from schevo.script.command import Command
 from schevo.script import opt
 
 usage = """\
-schevo shell [options] DBFILE
+schevo shell [options] URL
 
-DBFILE: The database file to open.  The database will be present as
-the 'db' variable in the shell.
+URL: URL of the database file to open.  The database will be present
+as the 'db' variable in the shell.
 
 If IPython is available, it will be used automatically."""
 
@@ -35,20 +35,11 @@ class Shell(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 1:
-            print 'DBFILE not given; using backend args to create database.'
-            db_filename = None
-        else:
-            db_filename = args[0]
+            parser.error('Please specify URL.')
+        url = args[0]
         # Open the database.
-        if db_filename is not None:
-            print 'Using database', db_filename
-        else:
-            print 'Using database', options.backend_args
-        db = schevo.database.open(
-            filename=db_filename,
-            backend_name=options.backend_name,
-            backend_args=options.backend_args,
-            )
+        print 'Using database', url
+        db = schevo.database.open(url)
         # Set up environment.
         locals = dict(
             __name__='schevo-shell',

@@ -8,17 +8,17 @@ import os
 import schevo.database
 import schevo.icon
 import schevo.schema
-
 from schevo.script.command import Command
 from schevo.script import opt
 from schevo.store.connection import Connection
 from schevo.store.file_storage import FileStorage
+import schevo.url
 
 
 usage = """\
-schevo db inject [options] DBFILE
+schevo db inject [options] URL
 
-DBFILE: The database file to inject a schema into.
+URL: URL of the database to inject a schema into.
 
 THIS IS A DANGEROUS COMMAND and should only be used when absolutely
 necessary.  When injecting a new schema into a database, it should not
@@ -26,7 +26,7 @@ have any changes that alter the semantics of the schema.
 
 Either --app or --schema must be given at a minimum.
 
-This command will determine the schema version from DBFILE, then load
+This command will determine the schema version from URL, then load
 that version of the schema from the given schema package."""
 
 
@@ -56,10 +56,8 @@ class Inject(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 1:
-            parser.error('Please specify DBFILE.')
-        db_filename = args[0]
-        if not os.path.isfile(db_filename):
-            parser.error('Please specify a DBFILE that exists.')
+            parser.error('Please specify URL.')
+        url = args[0]
         # Process paths.  Start with app_path option and populate
         # schema_path and icon_path based on it if it is set, then use
         # icon_path and schema_path options to override.
@@ -83,17 +81,18 @@ class Inject(Command):
             schema_path = os.path.join(app_path, 'schema')
         if options.schema_path:
             schema_path = path(options.schema_path)
-        # Inspect the database file to get its schema version.
-        fs = FileStorage(db_filename)
-        schema_version = Connection(fs).get_root()['SCHEVO']['version']
-        fs.close()
+        # Inspect the database storage, without opening it, to get its
+        # schema version.
+        url_obj = schevo.url.make_url(url)
+        backend_class = url_obj.backend_class()
+        backend = backend_class(**url_obj.translate_connect_args())
+        schema_version = backend.get_root()['SCHEVO']['version']
+        backend.close()
         print 'Database is at version %i.' % schema_version
         # Inject the schema.
         schema_source = schevo.schema.read(schema_path, version=schema_version)
         schevo.database.inject(
-            filename=db_filename,
-            backend_name=options.backend_name,
-            backend_args=options.backend_args,
+            url,
             schema_source=schema_source,
             version=schema_version,
             )

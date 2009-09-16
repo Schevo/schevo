@@ -16,6 +16,7 @@ from schevo.label import relabel
 from schevo.store.connection import Connection
 from schevo.store.file_storage import FileStorage
 from schevo.trace import log
+from schevo.url import make_url
 
 
 format_dbclass = {
@@ -33,17 +34,15 @@ format_converter = {
     }
 
 
-def convert_format(filename, backend_name=None, backend_args={}, format=None):
+def convert_format(url, backend_args={}, format=None):
     """Convert database to a new internal structure format.
 
-    - `filename`: Filename of the database to convert.
-    - `backend_name`: (optional) Name of the backend to use when
-      opening the database.
-    - `backend_args`: (optional) Arguments to pass to the backend.
+    - `url`: URL of the database to convert.
+    - `backend_args`: (optional) Additional arguments to pass to the backend.
     - `format`: (optional) Format to convert internal structure to.
       If not given, the most recent format available will be used.
     """
-    backend = new_backend(filename, backend_name, backend_args)
+    backend = new_backend(url, backend_args)
     # Check the format of the database.
     root = backend.get_root()
     # XXX: Better error checking might be handy.
@@ -66,45 +65,42 @@ def convert_format(filename, backend_name=None, backend_args={}, format=None):
     backend.close()
 
 
-def copy(src_filename, dest_filename, dest_backend_name, dest_backend_args={}):
+def copy(src_url, dest_url, src_backend_args={}, dest_backend_args={}):
     """Copy internal structures verbatim from a source database to a
     new destination database.
 
     To see progress of the copy operation, turn on tracing as
     described in `schevo.trace`
 
-    - `src_filename`: Filename of the source database.  Schevo must be
-      able to open the source database using backend autodetection,
-      and by using default backend arguments.
-    - `dest_filename`: Filename of the destination database. This file
+    - `src_url`: URL of the source database.
+    - `dest_url`: URL of the destination database. This database
       may exist if it is in the format used by the destination
       backend, but must not already contain a Schevo database.
-    - `dest_backend_name`: Name of the backend to use when creating
-      the destination database.
-    - `dest_backend_args`: (optional) Arguments to pass to the
-      backend.
+    - `src_backend_args`: (optional) Additional arguments to pass to
+      the source backend.
+    - `dest_backend_args`: (optional) Additional arguments to pass to the
+      destination backend.
     """
-    src_backend = new_backend(src_filename)
+    src_backend = new_backend(src_url, src_backend_args)
     # Make sure the source backend is in the proper format.
-    assert log(1, 'Checking source', src_filename)
+    assert log(1, 'Checking source', src_url)
     src_root = src_backend.get_root()
     if 'SCHEVO' not in src_root:
         src_backend.close()
-        raise DatabaseDoesNotExist(src_filename)
+        raise DatabaseDoesNotExist(src_url)
     current_format = src_root['SCHEVO']['format']
     required_format = 2
     if current_format != required_format:
         src_backend.close()
         raise DatabaseFormatMismatch(current_format, required_format)
     # Make sure the destination backend does not have a database.
-    assert log(1, 'Checking destination', src_filename)
-    dest_backend = new_backend(
-        dest_filename, dest_backend_name, dest_backend_args)
+    assert log(1, 'Checking destination', dest_url)
+    dest_backend = new_backend(dest_url, dest_backend_args)
     dest_root = dest_backend.get_root()
     if 'SCHEVO' in dest_root:
         src_backend.close()
         dest_backend.close()
-        raise DatabaseAlreadyExists(dest_filename)
+        raise DatabaseAlreadyExists(dest_url)
     assert log(1, 'Start copying structures.')
     d_btree = dest_backend.BTree
     d_pdict = dest_backend.PDict
@@ -190,15 +186,13 @@ def copy(src_filename, dest_filename, dest_backend_name, dest_backend_args={}):
     dest_backend.close()
 
 
-def create(filename, backend_name, backend_args={},
+def create(url, backend_args={},
            schema_source=None, schema_version=None, initialize=True,
            format=None, label=u'Schevo Database'):
     """Create a new database and return it.
 
-    - `filename`: Filename of the new database.
-    - `backend_name`: Name of the backend to use when creating the
-      database.
-    - `backend_args`: (optional) Arguments to pass to the backend.
+    - `url`: URL of the new database.
+    - `backend_args`: (optional) Additional arguments to pass to the backend.
     - `schema_source`: (optional) Schema source code to synchronize
       the new database with. If `None` is given, the database will
       exist but will contain no extents.
@@ -210,12 +204,12 @@ def create(filename, backend_name, backend_args={},
       `None` is given, the latest format will be used.
     - `label`: (optional) The label to give the new database.
     """
-    backend = new_backend(filename, backend_name, backend_args)
+    backend = new_backend(url, backend_args)
     # Make sure the database doesn't already exist.
     root = backend.get_root()
     if 'SCHEVO' in root:
         backend.close()
-        raise DatabaseAlreadyExists(filename)
+        raise DatabaseAlreadyExists(url)
     # Continue creating the new database.
     Database = format_dbclass[format]
     db = Database(backend)
@@ -288,8 +282,7 @@ def evolve(db, schema_source, version):
     db._evolve(schema_source, version)
 
 
-def inject(filename, schema_source, version,
-           backend_name=None, backend_args=None):
+def inject(url, schema_source, version, backend_args=None):
     """Inject a new schema and schema version into a database
     file. DANGEROUS!
 
@@ -301,16 +294,14 @@ def inject(filename, schema_source, version,
     structures** to reflect changes between the database's current schema and
     that provided in the `schema_source` argument.
 
-    - `filename`: Filename of database to inject new schema into.
+    - `url`: URL of database to inject new schema into.
     - `schema_source`: The new schema source to inject into the
       database.
     - `version`: The new version number of the database schema to
       inject.
-    - `backend_name`: (optional) Name of the backend to use when
-      opening the database, if auto-detection is not desired.
-    - `backend_args`: (optional) Arguments to pass to the backend.
+    - `backend_args`: (optional) Additional arguments to pass to the backend.
     """
-    backend = new_backend(filename, backend_name, backend_args)
+    backend = new_backend(url, backend_args)
     root = backend.get_root()
     schevo = root['SCHEVO']
     schevo['schema_source'] = schema_source
@@ -319,59 +310,53 @@ def inject(filename, schema_source, version,
     backend.close()
 
 
-def new_backend(filename, backend_name=None, backend_args=None):
+def new_backend(url, backend_args=None):
     """Return a new database backend instance for a file.
 
-    - `filename`: Name of the file to open with the backend.
-    - `backend_name`: Name of the backend to use.  If the file already
-      exists and `None` is given, then the backend is auto-detected if
-      possible, or an exception is raised.  If the file does not
-      already exist and `None` is given, an exception is raised.
-    - `backend_args`: (optional) Arguments to pass to the backend.
+    - `url`: URL of the database to open with the backend.  If given
+      as just a filename, and the file already exists, then the
+      backend is auto-detected if possible, or an exception is raised.
+      If the file does not already exist and `None` is given, an
+      exception is raised.
+    - `backend_args`: (optional) Additional arguments to pass to the backend.
     """
-    from schevo.backend import backends
-    additional_args = {}
-    if backend_name:
-        # Determine backend class by name.
-        BackendClass = backends[backend_name]
-        additional_args = {}
-    elif filename is not None:
-        # In absence of name, determine backend class by file.
-        BackendClass = None
-        for BC in backends.itervalues():
-            usable = BC.usable_by_backend(filename)
-            if usable:
-                BackendClass = BC
-                usable, additional_args = usable
-                break
-    else:
-        # In absense of filename, assume durus backend.
-        BackendClass = backends['durus']
-    if BackendClass is None:
-        raise IOError('No suitable backends found for %r' % filename)
-    # Convert backend args to a dictionary.
     if backend_args is None:
         backend_args = {}
-    elif isinstance(backend_args, basestring):
-        backend_args = BackendClass.args_from_string(backend_args)
-    backend_args.update(additional_args)
-    return BackendClass(filename, **backend_args)
+    else:
+        backend_args = backend_args.copy()
+    if '://' not in url:
+        # Assume filename, try to find backend.
+        from schevo.backend import backends
+        usable = False
+        for backend_name, backend_class in backends.iteritems():
+            usable = backend_class.usable_by_backend(url)
+            if usable:
+                usable, additional_args = usable
+                backend_args.update(additional_args)
+                # Convert to proper URL form.
+                url = '%s:///%s' % (backend_name, url)
+                break
+        if not usable:
+            raise IOError('No suitable backends found for %r' % url)
+    # Convert to URL object.
+    url = make_url(url)
+    # Convert backend args to a dictionary.
+    backend_args.update(url.translate_connect_args())
+    return url.backend_class()(**backend_args)
 
 
-def open(filename, backend_name=None, backend_args=None):
+def open(url, backend_args=None):
     """Open an existing database and return it.
 
-    - `filename`: Name of the file containing the database.
-    - `backend_name`: (optional) Name of the backend to use if
-      auto-detection is not desired.
-    - `backend_args`: (optional) Arguments to pass to the backend.
+    - `url`: URL of the database to open.
+    - `backend_args`: (optional) Additional arguments to pass to the backend.
     """
-    backend = new_backend(filename, backend_name, backend_args)
+    backend = new_backend(url, backend_args)
     # Make sure the database already exists.
     root = backend.get_root()
     if 'SCHEVO' not in root:
         backend.close()
-        raise DatabaseDoesNotExist(filename)
+        raise DatabaseDoesNotExist(url)
     # Determine the version of the database.
     schevo = root['SCHEVO']
     format = schevo['format']

@@ -13,9 +13,9 @@ from schevo.script.path import package_path
 
 
 usage = """\
-schevo db compare DBFILE1 DBFILE2
+schevo db compare URL1 URL2
 
-DBFILE1, DBFILE2: The database files to compare.
+URL1, URL2: URLs of databases to compare.
 """
 
 
@@ -35,24 +35,12 @@ class Compare(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 2:
-            parser.error('Please specify DBFILE1 and DBFILE2.')
-        db_filename1, db_filename2 = args
+            parser.error('Please specify URL1 and URL2.')
+        url1, url2 = args
         # Open the databases.
-        if not os.path.isfile(db_filename1):
-            parser.error('DBFILE1 must be an existing database.')
-        if not os.path.isfile(db_filename2):
-            parser.error('DBFILE2 must be an existing database.')
         print 'Opening databases...'
-        db1 = schevo.database.open(
-            filename=db_filename1,
-            backend_name=options.backend_name,
-            backend_args=options.backend_args,
-            )
-        db2 = schevo.database.open(
-            db_filename2,
-            backend_name=options.backend_name,
-            backend_args=options.backend_args,
-            )
+        db1 = schevo.database.open(url1)
+        db2 = schevo.database.open(url2)
         # Compare them.
         is_equivalent = schevo.database.equivalent(db1, db2)
         # Done.

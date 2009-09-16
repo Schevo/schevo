@@ -19,19 +19,19 @@ class BackendConflictError(RuntimeError):
 class DatabaseAlreadyExists(RuntimeError):
     """The database already exists."""
 
-    def __init__(self, filename):
-        message = 'Schevo database already in file %r.' % filename
+    def __init__(self, url):
+        message = 'Schevo database already at %r.' % url
         RuntimeError.__init__(self, message)
-        self.filename = filename
+        self.url = url
 
 
 class DatabaseDoesNotExist(RuntimeError):
     """The database does not exist."""
 
-    def __init__(self, filename):
-        message = 'Schevo database not found in file %r.' % filename
+    def __init__(self, url):
+        message = 'Schevo database not found at %r.' % url
         RuntimeError.__init__(self, message)
-        self.filename = filename
+        self.url = url
 
 
 class DatabaseExecutingTransaction(RuntimeError):

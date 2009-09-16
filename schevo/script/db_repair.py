@@ -14,9 +14,9 @@ from schevo.script import opt
 
 
 usage = """\
-schevo db repair [options] DBFILE
+schevo db repair [options] URL
 
-DBFILE: The database file to check (and repair if requested).
+URL: URL of the database file to check (and repair if requested).
 """
 
 
@@ -42,17 +42,11 @@ class Repair(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 1:
-            parser.error('Please specify DBFILE.')
-        db_filename = args[0]
+            parser.error('Please specify URL.')
+        url = args[0]
         # Open the database.
-        if not os.path.isfile(db_filename):
-            parser.error('DBFILE must be an existing database.')
         print 'Opening database...'
-        db = schevo.database.open(
-            filename=db_filename,
-            backend_name=options.backend_name,
-            backend_args=options.backend_args,
-            )
+        db = schevo.database.open(url)
         print
         print 'Label:', label(db)
         print 'Version:', db.version
@@ -60,7 +54,7 @@ class Repair(Command):
         print
         print 'Checking for needed repairs...'
         print
-        repairs = schevo.repair.repairs_needed(db, db_filename)
+        repairs = schevo.repair.repairs_needed(db, url)
         db.close()
         if len(repairs) == 0:
             print 'No repairs needed.'
@@ -84,9 +78,9 @@ class Repair(Command):
         print
         print 'Re-checking for needed repairs...'
         print
-        db = schevo.database.open(db_filename)
+        db = schevo.database.open(url)
         repairs_with_certainty = [
-            r for r in schevo.repair.repairs_needed(db, db_filename)
+            r for r in schevo.repair.repairs_needed(db, url)
             if r.is_needed_certainty == True
             ]
         db.close()

@@ -15,9 +15,9 @@ from schevo.script import opt
 from schevo.script.path import package_path
 
 usage = """\
-schevo db evolve [options] DBFILE VERSION
+schevo db evolve [options] URL VERSION
 
-DBFILE: The database file to evolve.
+URL: URL of the database to evolve.
 
 VERSION: The version of the schema to evolve to.  The database will be
 evolved as many times as necessary to reach the version specified.
@@ -59,8 +59,8 @@ class Evolve(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 2:
-            parser.error('Please specify both DBFILE and VERSION.')
-        db_filename, final_version = args
+            parser.error('Please specify both URL and VERSION.')
+        url, final_version = args
         final_version = final_version.lower()
         if final_version != 'latest':
             try:
@@ -83,13 +83,7 @@ class Evolve(Command):
         if schema_path is None:
             parser.error('Please specify either the --app or --schema option.')
         # Open the database.
-        if not os.path.isfile(db_filename):
-            parser.error('DBFILE must be an existing database.')
-        db = schevo.database.open(
-            filename=db_filename,
-            backend_name=options.backend_name,
-            backend_args=options.backend_args,
-            )
+        db = schevo.database.open(url)
         print 'Current database version is %i.' % db.version
         if final_version == 'latest':
             final_version = schevo.schema.latest_version(schema_path)

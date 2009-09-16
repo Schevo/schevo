@@ -8,8 +8,6 @@
 
 import re, cgi, sys, urllib
 
-import schevo.backend
-
 
 class URL(object):
     """
@@ -84,10 +82,11 @@ class URL(object):
             self.database == other.database and \
             self.query == other.query
 
-    def get_backend(self):
+    def backend_class(self):
         """Return the Schevo database backend class corresponding to
         this URL's driver name.
         """
+        import schevo.backend
         return schevo.backend.backends[self.backend_name]
 
     def translate_connect_args(self, **kw):

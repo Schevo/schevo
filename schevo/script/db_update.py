@@ -16,9 +16,9 @@ from schevo.script.path import package_path
 
 
 usage = """\
-schevo db update [options] DBFILE
+schevo db update [options] URL
 
-DBFILE: The database file to update.
+URL: URL of the database file to update.
 
 At a minimum, either the --app or the --schema option must be specified.
 """
@@ -61,8 +61,8 @@ class Update(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 1:
-            parser.error('Please specify DBFILE.')
-        db_filename = args[0]
+            parser.error('Please specify URL.')
+        url = args[0]
         # Process paths.  Start with app_path option and populate
         # schema_path and icon_path based on it if it is set, then use
         # icon_path and schema_path options to override.
@@ -79,14 +79,8 @@ class Update(Command):
         if schema_path is None:
             parser.error('Please specify either the --app or --schema option.')
         # Open the database.
-        if not os.path.isfile(db_filename):
-            parser.error('DBFILE must be an existing database.')
         print 'Opening database...'
-        db = schevo.database.open(
-            filename=db_filename,
-            backend_name=options.backend_name,
-            backend_args=options.backend_args,
-            )
+        db = schevo.database.open(url)
         print 'Current database version is %i.' % db.version
         try:
             schema_source = schevo.schema.read(schema_path, version=db.version)

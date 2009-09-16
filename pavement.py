@@ -124,7 +124,7 @@ else:
         schevo = schevo.template:SchevoTemplate
 
         [schevo.backend]
-        schevo.store = schevo.store.backend:SchevoStoreBackend
+        schevostore = schevo.store.backend:SchevoStoreBackend
 
         [schevo.schevo_command]
         backends = schevo.script.backends:start

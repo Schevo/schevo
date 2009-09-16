@@ -7,12 +7,12 @@ import inspect
 import os
 import sys
 
-from schevo.backend import backends
 from schevo import database
 from schevo.lib import module
 import schevo.schema
 import schevo.trace
 from schevo.script.path import package_path
+from schevo.url import make_url
 
 from textwrap import dedent
 from StringIO import StringIO
@@ -23,10 +23,7 @@ from schevo.schema import *
 schevo.schema.prep(locals())
 """
 
-DEFAULT_BACKEND_NAME = 'schevo.store'
-
-DEFAULT_BACKEND_ARGS = dict()
-
+DEFAULT_BACKEND_URL = 'schevostore:///:memory:'
 DEFAULT_FORMAT = 2
 
 
@@ -89,8 +86,7 @@ class CreatesDatabase(BaseTest):
     - `backend_convert_format(test_object, suffix, format)`
     """
 
-    backend_name = DEFAULT_BACKEND_NAME
-    backend_args = DEFAULT_BACKEND_ARGS
+    backend_url = DEFAULT_BACKEND_URL
     format = DEFAULT_FORMAT
 
     def setUp(self):
@@ -110,7 +106,8 @@ class CreatesDatabase(BaseTest):
     @property
     def backend_class(self):
         """Return the appropriate backend class for this type of test."""
-        return backends[self.backend_name].TestMethods_CreatesDatabase
+        return make_url(
+            self.backend_url).backend_class().TestMethods_CreatesDatabase
 
     def check_entities(self, extent):
         """Check string, unicode, and programmer representations of entities
@@ -235,7 +232,8 @@ class CreatesSchema(CreatesDatabase):
 
     @property
     def backend_class(self):
-        return backends[self.backend_name].TestMethods_CreatesSchema
+        return make_url(
+            self.backend_url).backend_class().TestMethods_CreatesSchema
 
     def _open(self, suffix=''):
         format = self.format
@@ -327,7 +325,8 @@ class EvolvesSchemata(CreatesDatabase):
 
     @property
     def backend_class(self):
-        return backends[self.backend_name].TestMethods_EvolvesSchemata
+        return make_url(
+            self.backend_url).backend_class().TestMethods_EvolvesSchemata
 
     def _open(self):
         db = self.backend_class.backend_open(self)
@@ -360,7 +359,7 @@ class EvolvesSchemata(CreatesDatabase):
 
 class DocTest(CreatesSchema):
     """Doctest-helping test class with intra-version evolution support
-    only.  Uses the schevo.store backend.
+    only.  Uses the schevostore backend.
 
     Call directly to override body for one test::
 
@@ -436,7 +435,7 @@ class DocTest(CreatesSchema):
 
 class DocTestEvolve(EvolvesSchemata):
     """Doctest-helping test class with inter-version evolution support.
-    Uses the schevo.store backend.
+    Uses the schevostore backend.
 
     Specify a location to read schemata from, a version to start from,
     and optionally whether or not to skip evolution (default is True).
@@ -519,22 +518,16 @@ class ComparesDatabases(object):
             # Read schema version N.
             schema_N = schevo.schema.read(location, N)
             # Create a database directly at version N.
-            fp_direct = StringIO()
             db_direct = database.create(
-                filename=None,
-                backend_name='schevo.store',
-                backend_args=dict(fp=fp_direct, cache_size=100000),
+                'schevostore:///:memory:',
                 schema_source=schema_N,
                 schema_version=N,
                 )
             # Read schema version N - 1.
             schema_N1 = schevo.schema.read(location, N - 1)
             # Create a database at version N - 1.
-            fp_evolved = StringIO()
             db_evolved = database.create(
-                filename=None,
-                backend_name='schevo.store',
-                backend_args=dict(fp=fp_evolved, cache_size=100000),
+                'schevostore:///:memory:',
                 schema_source=schema_N1,
                 schema_version=N - 1,
                 )

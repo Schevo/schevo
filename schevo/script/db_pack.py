@@ -12,9 +12,9 @@ from schevo.script import opt
 from schevo.script.path import package_path
 
 usage = """\
-schevo db pack DBFILE
+schevo db pack URL
 
-DBFILE: The database file to pack.
+URL: URL of the database to pack.
 """
 
 
@@ -26,7 +26,7 @@ def _parser():
 class Pack(Command):
 
     name = 'Pack Database'
-    description = 'Pack an existing database.'
+    description = 'Pack an existing database to reclaim unused space.'
 
     def main(self, arg0, args):
         print
@@ -34,16 +34,10 @@ class Pack(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 1:
-            parser.error('Please specify DBFILE.')
-        db_filename = args[0]
+            parser.error('Please specify URL.')
+        url = args[0]
         # Open the database.
-        if not os.path.isfile(db_filename):
-            parser.error('DBFILE must be an existing database.')
-        db = schevo.database.open(
-            filename=db_filename,
-            backend_name=options.backend_name,
-            backend_args=options.backend_args,
-            )
+        db = schevo.database.open(url)
         # Pack the database.
         print 'Packing the database...'
         db.pack()

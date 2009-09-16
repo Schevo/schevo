@@ -16,9 +16,9 @@ from schevo.script.path import package_path
 
 
 usage = """\
-schevo db create [options] DBFILE
+schevo db create [options] URL
 
-DBFILE: The database file to create.
+URL: URL of the database file to create.
 
 At a minimum, either the --app or the --schema option must be specified.
 """
@@ -62,12 +62,6 @@ def _parser():
                  metavar='VERSION',
                  default='latest',
                  )
-    p.add_option('-x', '--delete',
-                 dest='delete_existing_database',
-                 help='Delete existing database file if one exists.',
-                 action='store_true',
-                 default=False,
-                 )
     return p
 
 
@@ -82,10 +76,8 @@ class Create(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 1:
-            print 'DBFILE not given; using backend args to create database.'
-            db_filename = None
-        else:
-            db_filename = args[0]
+            parser.error('Please specify URL.')
+        url = args[0]
         # Process paths.  Start with app_path option and populate
         # schema_path and icon_path based on it if it is set, then use
         # icon_path and schema_path options to override.
@@ -101,25 +93,11 @@ class Create(Command):
             schema_path = package_path(options.schema_path)
         if schema_path is None:
             parser.error('Please specify either the --app or --schema option.')
-        # Delete the database file if one exists.
-        if options.delete_existing_database:
-            if db_filename is None:
-                print 'DBFILE not given; will not delete existing database.'
-            elif os.path.isfile(db_filename):
-                print 'Deleting existing file:', db_filename
-                os.remove(db_filename)
         # Use a default backend if one was not specified on the
         # command-line.
-        if options.backend_name is None:
-            options.backend_name = os.environ.get(
-                'SCHEVO_DEFAULT_BACKEND', 'durus')
+        if '://' not in url:
+            url = 'durus:///%s' % url
         # Create the database.
-        if db_filename is not None:
-            if os.path.isfile(db_filename):
-                print 'ERROR: Database already exists.'
-                print 'Use "schevo db update" or "schevo db evolve" commands to'
-                print 'update or evolve an existing database.'
-                return 1
         final_version = options.schema_version.lower()
         if final_version != 'latest':
             try:
@@ -149,9 +127,7 @@ class Create(Command):
             schema_path, version=evolve_from_version)
         try:
             db = schevo.database.create(
-                filename=db_filename,
-                backend_name=options.backend_name,
-                backend_args=options.backend_args,
+                url,
                 schema_source=schema_source,
                 schema_version=evolve_from_version,
                 )

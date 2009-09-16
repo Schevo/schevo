@@ -11,14 +11,11 @@ from schevo.script.command import Command
 from schevo.script import opt
 
 usage = """\
-schevo db copy [options] SRCFILE DESTFILE
+schevo db copy [options] SRCURL DESTURL
 
-SRCFILE: The database file to copy the internal structures from.
+SRCURL: The database to copy the internal structures from.
 
-DESTFILE: The empty file to copy internal structures to.
-
-Backend options given apply to DESTFILE. The backend for SRCFILE is
-determined automatically."""
+DESTURL: The empty database to copy internal structures to."""
 
 
 def _parser():
@@ -37,15 +34,10 @@ class Copy(Command):
         parser = _parser()
         options, args = parser.parse_args(list(args))
         if len(args) != 2:
-            parser.error('Please specify SRCFILE and DESTFILE.')
-        src_filename, dest_filename = args
-        print 'Copying %r to %r...' % (src_filename, dest_filename)
-        schevo.database.copy(
-            src_filename=src_filename,
-            dest_filename=dest_filename,
-            dest_backend_name=options.backend_name,
-            dest_backend_args=options.backend_args,
-            )
+            parser.error('Please specify SRCURL and DESTURL.')
+        src_url, dest_url = args
+        print 'Copying %r to %r...' % (src_url, dest_url)
+        schevo.database.copy(src_url, dest_url)
         print 'Copy complete.'
 
 

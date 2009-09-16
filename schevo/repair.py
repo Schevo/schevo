@@ -9,7 +9,7 @@ from schevo.lib import optimize
 import schevo.database
 
 
-def repairs_needed(db, db_filename):
+def repairs_needed(db, url):
     """Return a list of repair types that should be performed in order to
     repair the given database."""
     needed = []
@@ -17,7 +17,7 @@ def repairs_needed(db, db_filename):
         EntityFieldIdsRepair,
         OrphanLinkStructuresRepair,
         ]:
-        repair = repair_type(db, db_filename)
+        repair = repair_type(db, url)
         if repair.is_needed:
             needed.append(repair)
     return needed
@@ -28,15 +28,15 @@ class EntityFieldIdsRepair(object):
     description = 'Remove entity_field_ids extraneous field IDs. (No data loss)'
     is_needed_certainty = True
 
-    def __init__(self, db, db_filename):
+    def __init__(self, db, url):
         self.db = db
-        self.db_filename = db_filename
+        self.url = url
         self._determine_if_needed()
 
     def perform(self):
         # Database starts out closed.
-        db_filename = self.db_filename
-        db = schevo.database.open(db_filename)
+        url = self.url
+        db = schevo.database.open(url)
         try:
             try:
                 items = self._extents_extraneous.items()
@@ -90,14 +90,14 @@ class OrphanLinkStructuresRepair(object):
     is_needed = True
     is_needed_certainty = False
 
-    def __init__(self, db, db_filename):
+    def __init__(self, db, url):
         self.db = db
-        self.db_filename = db_filename
+        self.url = url
 
     def perform(self):
         # Database starts out closed.
-        db_filename = self.db_filename
-        db = schevo.database.open(db_filename)
+        url = self.url
+        db = schevo.database.open(url)
         try:
             try:
                 extent_id_name = db._extent_id_name
