@@ -103,7 +103,7 @@ else:
         },
         zip_safe=False,
         install_requires=[
-            'SchevoDurus == dev, >= 3.1b1dev-20090911',
+            'SchevoDurus == dev, >= 3.1.0dev-20090919',
         ],
         extras_require={
             'notifications': ['Louie >= 1.1'],
