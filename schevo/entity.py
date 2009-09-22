@@ -469,7 +469,7 @@ class Entity(base.Entity, LabelMixin):
             return '<%s entity oid:%i rev:%i>' % (extent.name, oid, rev)
 
     def __str__(self):
-        return str(unicode(self))
+        return str(unicode(self).encode('utf8'))
 
     def __unicode__(self):
         key = self._default_key
