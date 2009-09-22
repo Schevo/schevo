@@ -321,16 +321,12 @@ class Database(database2.Database):
                     related_entities[field_name] = frozenset()
         return related_entities
 
-    def _find_entity_oids(self, extent_name, *criteria):
-        """Return list of entity OIDs matching given field value(s)."""
-        assert log(1, extent_name, criteria)
+    def _find_entity_oids_single_extent_field_equality(
+        self, extent_name, criteria
+        ):
         extent_map = self._extent_map(extent_name)
         entity_maps = extent_map['entities']
         EntityClass = self._entity_classes[extent_name]
-        if not criteria:
-            # Return all of them.
-            assert log(2, 'Return all oids.')
-            return list(entity_maps.keys())
         extent_name_id = self._extent_name_id
         indices = extent_map['indices']
         normalized_index_map = extent_map['normalized_index_map']
@@ -339,9 +335,8 @@ class Database(database2.Database):
         # Convert from field_name:value to field_id:value.
         field_id_value = {}
         field_spec = EntityClass._field_spec
-        for criterion in criteria:
-            field_name = criterion.field.name
-            value = criterion.value
+        for field_class, value in criteria.iteritems():
+            field_name = field_class.name
             try:
                 field_id = field_name_id[field_name]
             except KeyError:

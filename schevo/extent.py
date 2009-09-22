@@ -73,7 +73,7 @@ class Extent(base.Extent):
     def __iter__(self):
         """Return an iterator of entities in order by OID."""
         Entity = self.EntityClass
-        oids = self._find(self.name)
+        oids = self._find(self.name, None)
         for oid in oids:
             try:
                 entity = Entity(oid)
@@ -90,6 +90,23 @@ class Extent(base.Extent):
 
     def __repr__(self):
         return '<Extent %r in %r>' % (self.name, self.db)
+
+    def _scrub_criteria(self, criteria, equality_criteria):
+        # Convert equality_criteria to criteria.
+        if len(equality_criteria) > 0:
+            criteria = list(criteria) # tuple to list so we can append
+            for key, value in equality_criteria.iteritems():
+                criteria.append(self.f[key] == value)
+        # Multiple criteria are AND-ed together.
+        if len(criteria) > 1:
+            criterion = criteria[0]
+            for c in criteria[1:]:
+                criterion &= c
+        elif len(criteria) == 1:
+            criterion = criteria[0]
+        else:
+            criterion = None
+        return criterion
 
     def as_datalist(self):
         """Return sorted list of entity value tuples in a form
@@ -126,16 +143,9 @@ class Extent(base.Extent):
 
     def count(self, *criteria, **equality_criteria):
         """Return count of entities matching given field value(s)."""
-        # Validate criteria.
-        for criterion in criteria:
-            assert criterion.field._extent is self
-        # Convert equality_criteria to criteria.
-        if len(equality_criteria) > 0:
-            criteria = list(criteria)
-            for key, value in equality_criteria.iteritems():
-                criteria.append(self.f[key] == value)
+        criterion = self._scrub_criteria(criteria, equality_criteria)
         # Find count.
-        return len(self._find(self.name, **criteria))
+        return len(self._find(self.name, criterion))
 
     def enforce_index(self, *index_spec):
         """Validate and begin enforcing constraints on the specified
@@ -145,44 +155,23 @@ class Extent(base.Extent):
 
     def find(self, *criteria, **equality_criteria):
         """Return list of entities matching given field value(s)."""
-        # Validate criteria.
-        for criterion in criteria:
-            assert criterion.field._extent is self
-        # Convert equality_criteria to criteria.
-        if len(equality_criteria) > 0:
-            criteria = list(criteria)
-            for key, value in equality_criteria.iteritems():
-                criteria.append(self.f[key] == value)
+        criterion = self._scrub_criteria(criteria, equality_criteria)
         # Get OIDs from database and return entity instances.
         Entity = self.EntityClass
         return ResultsList(
-            Entity(oid) for oid in self._find(self.name, *criteria))
+            Entity(oid) for oid in self._find(self.name, criterion))
 
     def find_oids(self, *criteria, **equality_criteria):
         """Return list of OIDs matching given field value(s)."""
-        # Validate criteria.
-        for criterion in criteria:
-            assert criterion.field._extent is self
-        # Convert equality_criteria to criteria.
-        if len(equality_criteria) > 0:
-            criteria = list(criteria)
-            for key, value in equality_criteria.iteritems():
-                criteria.append(self.f[key] == value)
+        criterion = self._scrub_criteria(criteria, equality_criteria)
         # XXX: Needs unit test.
-        return self._find(self.name, *criteria)
+        return self._find(self.name, criterion)
 
     def findone(self, *criteria, **equality_criteria):
         """Return single entity matching given field value(s)."""
-        # Validate criteria.
-        for criterion in criteria:
-            assert criterion.field._extent is self
-        # Convert equality_criteria to criteria.
-        if len(equality_criteria) > 0:
-            criteria = list(criteria)
-            for key, value in equality_criteria.iteritems():
-                criteria.append(self.f[key] == value)
+        criterion = self._scrub_criteria(criteria, equality_criteria)
         # Find all OIDs.
-        results = self._find(self.name, *criteria)
+        results = self._find(self.name, criterion)
         # Check length and return value or raise error.
         count = len(results)
         if count == 1:

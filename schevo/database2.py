@@ -743,16 +743,35 @@ class Database(base.Database):
         extent_map = self._extent_map(extent_name)
         return extent_map['next_oid']
 
-    def _find_entity_oids(self, extent_name, *criteria):
+    def _find_entity_oids(self, extent_name, criterion):
         """Return list of entity OIDs matching given field value(s)."""
-        assert log(1, extent_name, criteria)
+        assert log(1, extent_name, criterion)
+        extent_map = self._extent_map(extent_name)
+        entity_maps = extent_map['entities']
+        # No criterion: return all entities.
+        if criterion is None:
+            assert log(2, 'Return all oids.')
+            return list(entity_maps.keys())
+        # Equality intersection: use optimized lookup.
+        try:
+            criteria = criterion.single_extent_field_equality_criteria()
+        except ValueError:
+            pass
+        else:
+            extent_names = frozenset(key._extent for key in criteria)
+            if len(extent_names) > 1:
+                raise ValueError('Must use fields from same extent.')
+            return self._find_entity_oids_single_extent_field_equality(
+                extent_name, criteria)
+        # XXX: More complex: needs implementation.
+        raise ValueError('Criterion too complex.')
+
+    def _find_entity_oids_single_extent_field_equality(
+        self, extent_name, criteria
+        ):
         extent_map = self._extent_map(extent_name)
         entity_maps = extent_map['entities']
         EntityClass = self._entity_classes[extent_name]
-        if not criteria:
-            # Return all of them.
-            assert log(2, 'Return all oids.')
-            return list(entity_maps.keys())
         extent_name_id = self._extent_name_id
         indices = extent_map['indices']
         normalized_index_map = extent_map['normalized_index_map']
@@ -762,8 +781,8 @@ class Database(base.Database):
         field_id_value = {}
         field_name_value = {}
         field_spec = EntityClass._field_spec
-        for criterion in criteria:
-            field_name = criterion.field.name
+        for field_class, value in criteria.iteritems():
+            field_name = field_class.name
             try:
                 field_id = field_name_id[field_name]
             except KeyError:
@@ -774,7 +793,7 @@ class Database(base.Database):
             class TemporaryField(FieldClass):
                 readonly = False
             field = TemporaryField(None)
-            field.set(criterion.value)
+            field.set(value)
             value = field._dump()
             field_id_value[field_id] = value
             field_name_value[field_name] = value

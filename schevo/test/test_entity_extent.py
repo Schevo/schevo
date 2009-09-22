@@ -654,7 +654,7 @@ class BaseEntityExtent(CreatesSchema):
         assert results[0] == user1 or results[0] == user2
         assert results[1] == user1 or results[1] == user2
         # Find based on two fields.
-        results = extent.find(extent.f.age == 20, extent.f.name == 'foo2')
+        results = extent.find((extent.f.age == 20) & (extent.f.name == 'foo2'))
         assert len(results) == 1
         assert results[0] == user1
         # Find based on an entity field.
@@ -712,8 +712,8 @@ class BaseEntityExtent(CreatesSchema):
         assert result == user2
         extent = db.Foo
         foo = db.execute(extent.t.create(name='foo'))
-        result = extent.findone(extent.f.name == 'foo',
-                                extent.f.user == UNASSIGNED)
+        result = extent.findone((extent.f.name == 'foo')
+                                & (extent.f.user == UNASSIGNED))
         assert result == foo
 
     def test_findone_date_datetime(self):

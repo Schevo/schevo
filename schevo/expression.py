@@ -6,13 +6,38 @@
 import sys
 from schevo.lib import optimize
 
+from operator import and_, eq
+
+from schevo.base import Field
+
 
 class Expression(object):
 
-    def __init__(self, field, op, value):
-        self.field = field
+    def __init__(self, left, op, right):
+        self.left = left
         self.op = op
-        self.value = value
+        self.right = right
+
+    def __and__(left, right):
+        return Expression(left, and_, right)
+
+    def single_extent_field_equality_criteria(self):
+        if (isinstance(self.left, type)
+            and issubclass(self.left, Field)
+            and self.op == eq
+            and not isinstance(self.right, (Expression, Field))
+            ):
+            return {self.left: self.right}
+        elif (isinstance(self.left, Expression)
+            and self.op == and_
+            and isinstance(self.right, Expression)
+            ):
+            criteria = self.left.single_extent_field_equality_criteria()
+            criteria.update(self.right.single_extent_field_equality_criteria())
+            return criteria
+        else:
+            raise ValueError(
+                'Not a single-extent, field equality intersection criteria.')
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
