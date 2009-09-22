@@ -5,6 +5,7 @@ $Id: utest_connection.py 28275 2006-04-28 17:44:20Z dbinger $
 
 import os
 import sys
+from time import sleep
 
 from schevo.store.connection import Connection, touch_every_reference
 from schevo.store.error import ConflictError
@@ -14,9 +15,7 @@ from schevo.store.persistent import ConnectionBase, PersistentBase
 from schevo.store.storage import get_reference_index, get_census
 from schevo.store.storage import gen_referring_oid_record, Storage
 from schevo.store.utils import p64
-from popen2 import popen4
 from schevo.test import raises
-from time import sleep
 
 
 class TestConnection(object):

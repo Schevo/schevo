@@ -7,6 +7,7 @@ import unittest
 
 import datetime
 import sys
+import warnings
 
 from schevo.constant import UNASSIGNED
 from schevo import field
@@ -538,61 +539,50 @@ class TestHashedPassword(object):
 
 class TestDeprecatedFields(object):
 
-    def showwarning(self, message, category, filename, lineno, file=None):
-        self.last_lineno = lineno
-        self.last_message = str(message)
-
-    def setUp(self):
-        # Change `showwarning` to record deprecation warnings
-        # somewhere other than stderr, so we can test for deprecation
-        # warnings programmatically.
-        import warnings
-        self.old_showwarning = warnings.showwarning
-        warnings.showwarning = self.showwarning
-        self.warnings = warnings
-
-    def tearDown(self):
-        # Replace `showwarning` with the original.
-        import warnings
-        warnings.showwarning = self.old_showwarning
-        del self.warnings
-
     def test_blob(self):
         body = '''
             class Foo(E.Entity):
-        
                 blob = f.blob()
             '''
-        t = DocTest(body)
-        assert self.last_message.startswith("'blob' is a deprecated")
-        assert self.last_lineno == 6
+        with warnings.catch_warnings(record=True) as w:
+            t = DocTest(body)
+            assert len(w) == 1
+            assert w[-1].category is DeprecationWarning
+            assert str(w[-1].message).startswith("'blob' is a deprecated")
+            assert w[-1].lineno == 5
 
     def test_memo(self):
         body = '''
             class Foo(E.Entity):
-        
                 memo = f.memo()
             '''
-        t = DocTest(body)
-        assert self.last_message.startswith("'memo' is a deprecated")
-        assert self.last_lineno == 6
+        with warnings.catch_warnings(record=True) as w:
+            t = DocTest(body)
+            assert len(w) == 1
+            assert w[-1].category is DeprecationWarning
+            assert str(w[-1].message).startswith("'memo' is a deprecated")
+            assert w[-1].lineno == 5
 
     def test_password(self):
         body = '''
             class Foo(E.Entity):
-        
                 password = f.password()
             '''
-        t = DocTest(body)
-        assert self.last_message.startswith("'password' is a deprecated")
-        assert self.last_lineno == 6
+        with warnings.catch_warnings(record=True) as w:
+            t = DocTest(body)
+            assert len(w) == 1
+            assert w[-1].category is DeprecationWarning
+            assert str(w[-1].message).startswith("'password' is a deprecated")
+            assert w[-1].lineno == 5
 
     def test_unicode(self):
         body = '''
             class Foo(E.Entity):
-        
                 name = f.unicode()
             '''
-        t = DocTest(body)
-        assert self.last_message.startswith("'unicode' is a deprecated")
-        assert self.last_lineno == 6
+        with warnings.catch_warnings(record=True) as w:
+            t = DocTest(body)
+            assert len(w) == 1
+            assert w[-1].category is DeprecationWarning
+            assert str(w[-1].message).startswith("'unicode' is a deprecated")
+            assert w[-1].lineno == 5
