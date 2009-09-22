@@ -46,6 +46,9 @@ class Extent(base.Extent):
         self._label = EntityClass._label
         self._plural = EntityClass._plural
         self._relax = db._relax_index
+        # Attach extent to each field class.
+        for field_name, field_class in self.field_spec.iteritems():
+            field_class._extent = self
 
     def __cmp__(self, other):
         if other.__class__ is self.__class__:
@@ -121,8 +124,17 @@ class Extent(base.Extent):
         """Return a list of OIDs sorted by index_spec."""
         return self._by(self.name, *index_spec)
 
-    def count(self, **criteria):
+    def count(self, *criteria, **equality_criteria):
         """Return count of entities matching given field value(s)."""
+        # Validate criteria.
+        for criterion in criteria:
+            assert criterion.field._extent is self
+        # Convert equality_criteria to criteria.
+        if len(equality_criteria) > 0:
+            criteria = list(criteria)
+            for key, value in equality_criteria.iteritems():
+                criteria.append(self.f[key] == value)
+        # Find count.
         return len(self._find(self.name, **criteria))
 
     def enforce_index(self, *index_spec):
@@ -131,20 +143,47 @@ class Extent(base.Extent):
         transaction."""
         self._enforce(self.name, *index_spec)
 
-    def find(self, **criteria):
+    def find(self, *criteria, **equality_criteria):
         """Return list of entities matching given field value(s)."""
+        # Validate criteria.
+        for criterion in criteria:
+            assert criterion.field._extent is self
+        # Convert equality_criteria to criteria.
+        if len(equality_criteria) > 0:
+            criteria = list(criteria)
+            for key, value in equality_criteria.iteritems():
+                criteria.append(self.f[key] == value)
+        # Get OIDs from database and return entity instances.
         Entity = self.EntityClass
         return ResultsList(
-            Entity(oid) for oid in self._find(self.name, **criteria))
+            Entity(oid) for oid in self._find(self.name, *criteria))
 
-    def find_oids(self, **criteria):
+    def find_oids(self, *criteria, **equality_criteria):
         """Return list of OIDs matching given field value(s)."""
+        # Validate criteria.
+        for criterion in criteria:
+            assert criterion.field._extent is self
+        # Convert equality_criteria to criteria.
+        if len(equality_criteria) > 0:
+            criteria = list(criteria)
+            for key, value in equality_criteria.iteritems():
+                criteria.append(self.f[key] == value)
         # XXX: Needs unit test.
-        return self._find(self.name, **criteria)
+        return self._find(self.name, *criteria)
 
-    def findone(self, **criteria):
+    def findone(self, *criteria, **equality_criteria):
         """Return single entity matching given field value(s)."""
-        results = self._find(self.name, **criteria)
+        # Validate criteria.
+        for criterion in criteria:
+            assert criterion.field._extent is self
+        # Convert equality_criteria to criteria.
+        if len(equality_criteria) > 0:
+            criteria = list(criteria)
+            for key, value in equality_criteria.iteritems():
+                criteria.append(self.f[key] == value)
+        # Find all OIDs.
+        results = self._find(self.name, *criteria)
+        # Check length and return value or raise error.
         count = len(results)
         if count == 1:
             return self.EntityClass(results[0])

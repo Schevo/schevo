@@ -6,6 +6,7 @@
 import sys
 from schevo.lib import optimize
 
+import operator
 import os
 import random
 
@@ -742,7 +743,7 @@ class Database(base.Database):
         extent_map = self._extent_map(extent_name)
         return extent_map['next_oid']
 
-    def _find_entity_oids(self, extent_name, **criteria):
+    def _find_entity_oids(self, extent_name, *criteria):
         """Return list of entity OIDs matching given field value(s)."""
         assert log(1, extent_name, criteria)
         extent_map = self._extent_map(extent_name)
@@ -759,8 +760,10 @@ class Database(base.Database):
         field_name_id = extent_map['field_name_id']
         # Convert from field_name:value to field_id:value.
         field_id_value = {}
+        field_name_value = {}
         field_spec = EntityClass._field_spec
-        for field_name, value in criteria.iteritems():
+        for criterion in criteria:
+            field_name = criterion.field.name
             try:
                 field_id = field_name_id[field_name]
             except KeyError:
@@ -771,9 +774,10 @@ class Database(base.Database):
             class TemporaryField(FieldClass):
                 readonly = False
             field = TemporaryField(None)
-            field.set(value)
+            field.set(criterion.value)
             value = field._dump()
             field_id_value[field_id] = value
+            field_name_value[field_name] = value
         # Get results, using indexes and shortcuts where possible.
         results = []
         field_ids = tuple(sorted(field_id_value))
@@ -783,7 +787,7 @@ class Database(base.Database):
         if len_field_ids == 1:
             field_id = field_ids[0]
             field_name = field_id_name[field_id]
-            value = criteria[field_name]
+            value = field_name_value[field_name]
             if isinstance(value, Entity):
                 # We can take advantage of entity links.
                 entity_map = self._entity_map(value._extent.name, value._oid)

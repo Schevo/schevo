@@ -321,7 +321,7 @@ class Database(database2.Database):
                     related_entities[field_name] = frozenset()
         return related_entities
 
-    def _find_entity_oids(self, extent_name, **criteria):
+    def _find_entity_oids(self, extent_name, *criteria):
         """Return list of entity OIDs matching given field value(s)."""
         assert log(1, extent_name, criteria)
         extent_map = self._extent_map(extent_name)
@@ -339,7 +339,9 @@ class Database(database2.Database):
         # Convert from field_name:value to field_id:value.
         field_id_value = {}
         field_spec = EntityClass._field_spec
-        for field_name, value in criteria.iteritems():
+        for criterion in criteria:
+            field_name = criterion.field.name
+            value = criterion.value
             try:
                 field_id = field_name_id[field_name]
             except KeyError:

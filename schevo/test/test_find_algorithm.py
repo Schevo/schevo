@@ -49,7 +49,7 @@ class BaseFindAlgorithm(EvolvesSchemata):
     def test_find_brute_force_treats_missing_field_values_as_UNASSIGNED(self):
         # This will fail if the database engine doesn't treat missing
         # field values as UNASSIGNED.
-        assert db.Foo.find(baz='abc') == []
+        assert db.Foo.find(db.Foo.f.baz == 'abc') == []
 
 
 class TestFindAlgorithm1(BaseFindAlgorithm):
