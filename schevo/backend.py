@@ -32,7 +32,8 @@ def test_backends_dict():
     """Durus and schevo.store backends are always present after Schevo
     is installed."""
     assert 'durus' in backends
-    assert 'schevo.store' in backends
+    assert 'duruses' in backends
+    assert 'schevostore' in backends
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
