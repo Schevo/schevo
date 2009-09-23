@@ -14,6 +14,11 @@ class BaseExpression(CreatesSchema):
             carrots = f.integer()
             apples = f.integer()
             broccoli = f.integer()
+
+        class PetCombo(E.Entity):
+
+            cats = f.integer()
+            dogs = f.integer()
         """
 
     def test_single_extent_field_equality_criteria(self):
@@ -46,6 +51,12 @@ class BaseExpression(CreatesSchema):
             (db.FoodCombo.f.carrots == 1)
             & (db.FoodCombo.f.apples != 2)
             & (db.FoodCombo.f.broccoli < 3)
+            )
+        assert raises(
+            ValueError, criteria.single_extent_field_equality_criteria)
+        criteria = (
+            (db.FoodCombo.f.carrots == 1)
+            & (db.PetCombo.f.cats == 2)
             )
         assert raises(
             ValueError, criteria.single_extent_field_equality_criteria)

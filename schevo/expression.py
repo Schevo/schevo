@@ -34,10 +34,13 @@ class Expression(object):
             ):
             criteria = self.left.single_extent_field_equality_criteria()
             criteria.update(self.right.single_extent_field_equality_criteria())
+            if len(frozenset(key._extent for key in criteria)) > 1:
+                raise ValueError(
+                    'Not a single-extent field equality intersection criteria.')
             return criteria
         else:
             raise ValueError(
-                'Not a single-extent, field equality intersection criteria.')
+                'Not a single-extent field equality intersection criteria.')
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
