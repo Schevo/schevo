@@ -6,6 +6,8 @@
 import sys
 from schevo.lib import optimize
 
+import threading
+
 # from schevo import database1
 from schevo import database2
 from schevo.error import (
@@ -372,6 +374,25 @@ def open(url, backend_args=None):
     # Install icon support and finalize opening of database.
     icon.install(db)
     return db
+
+
+class ScopedOpener(object):
+    """Open connections to a database on a threadlocal basis.
+
+    - `url`: URL of the database to open.
+    - `backend_args`: (optional) Additional arguments to pass to the
+      backend.
+    """
+    def __init__(self, url, backend_args=None):
+        self.url = url
+        self.backend_args = backend_args
+        self.registry = threading.local()
+
+    @property
+    def db(self):
+        if not hasattr(self.registry, 'db'):
+            self.registry.db = open(self.url, self.backend_args)
+        return self.registry.db
 
 
 optimize.bind_all(sys.modules[__name__])  # Last line of module.
