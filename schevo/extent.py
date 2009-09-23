@@ -46,6 +46,9 @@ class Extent(base.Extent):
         self._label = EntityClass._label
         self._plural = EntityClass._plural
         self._relax = db._relax_index
+        # Attach extent to each field class.
+        for field_name, field_class in self.field_spec.iteritems():
+            field_class._extent = self
 
     def __cmp__(self, other):
         if other.__class__ is self.__class__:
@@ -70,7 +73,7 @@ class Extent(base.Extent):
     def __iter__(self):
         """Return an iterator of entities in order by OID."""
         Entity = self.EntityClass
-        oids = self._find(self.name)
+        oids = self._find(self.name, None)
         for oid in oids:
             try:
                 entity = Entity(oid)
@@ -87,6 +90,23 @@ class Extent(base.Extent):
 
     def __repr__(self):
         return '<Extent %r in %r>' % (self.name, self.db)
+
+    def _scrub_criteria(self, criteria, equality_criteria):
+        # Convert equality_criteria to criteria.
+        if len(equality_criteria) > 0:
+            criteria = list(criteria) # tuple to list so we can append
+            for key, value in equality_criteria.iteritems():
+                criteria.append(self.f[key] == value)
+        # Multiple criteria are AND-ed together.
+        if len(criteria) > 1:
+            criterion = criteria[0]
+            for c in criteria[1:]:
+                criterion &= c
+        elif len(criteria) == 1:
+            criterion = criteria[0]
+        else:
+            criterion = None
+        return criterion
 
     def as_datalist(self):
         """Return sorted list of entity value tuples in a form
@@ -121,9 +141,11 @@ class Extent(base.Extent):
         """Return a list of OIDs sorted by index_spec."""
         return self._by(self.name, *index_spec)
 
-    def count(self, **criteria):
+    def count(self, *criteria, **equality_criteria):
         """Return count of entities matching given field value(s)."""
-        return len(self._find(self.name, **criteria))
+        criterion = self._scrub_criteria(criteria, equality_criteria)
+        # Find count.
+        return len(self._find(self.name, criterion))
 
     def enforce_index(self, *index_spec):
         """Validate and begin enforcing constraints on the specified
@@ -131,20 +153,26 @@ class Extent(base.Extent):
         transaction."""
         self._enforce(self.name, *index_spec)
 
-    def find(self, **criteria):
+    def find(self, *criteria, **equality_criteria):
         """Return list of entities matching given field value(s)."""
+        criterion = self._scrub_criteria(criteria, equality_criteria)
+        # Get OIDs from database and return entity instances.
         Entity = self.EntityClass
         return ResultsList(
-            Entity(oid) for oid in self._find(self.name, **criteria))
+            Entity(oid) for oid in self._find(self.name, criterion))
 
-    def find_oids(self, **criteria):
+    def find_oids(self, *criteria, **equality_criteria):
         """Return list of OIDs matching given field value(s)."""
+        criterion = self._scrub_criteria(criteria, equality_criteria)
         # XXX: Needs unit test.
-        return self._find(self.name, **criteria)
+        return self._find(self.name, criterion)
 
-    def findone(self, **criteria):
+    def findone(self, *criteria, **equality_criteria):
         """Return single entity matching given field value(s)."""
-        results = self._find(self.name, **criteria)
+        criterion = self._scrub_criteria(criteria, equality_criteria)
+        # Find all OIDs.
+        results = self._find(self.name, criterion)
+        # Check length and return value or raise error.
         count = len(results)
         if count == 1:
             return self.EntityClass(results[0])

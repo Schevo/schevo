@@ -106,11 +106,11 @@ class BaseView(CreatesSchema):
         assert ea_view.f.float.readonly
 
 
-class TestView1(BaseView):
+# class TestView1(BaseView):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestView2(BaseView):

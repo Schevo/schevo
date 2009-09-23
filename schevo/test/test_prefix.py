@@ -17,20 +17,20 @@ if tests_path not in sys.path:
 
 
 class BaseAlternatePrefixGood(EvolvesSchemata):
-    
+
     schemata = 'testschema_prefix_good'
-    
+
     schema_version = 1
-    
+
     def test(self):
         assert db.extent_names() == ['Bar']
 
 
-class TestAlternatePrefixGood1(BaseAlternatePrefixGood):
+# class TestAlternatePrefixGood1(BaseAlternatePrefixGood):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestAlternatePrefixGood2(BaseAlternatePrefixGood):

@@ -61,11 +61,11 @@ class BaseRelaxIndex(CreatesSchema):
         assert foo2.name == 'foo1'
 
 
-class TestRelaxIndex1(BaseRelaxIndex):
+# class TestRelaxIndex1(BaseRelaxIndex):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestRelaxIndex2(BaseRelaxIndex):

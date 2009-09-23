@@ -27,11 +27,11 @@ class BaseDatabaseNamespaces(CreatesSchema):
         assert foo.bar == 'baz'
 
 
-class TestDatabaseNamespaces1(BaseDatabaseNamespaces):
+# class TestDatabaseNamespaces1(BaseDatabaseNamespaces):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestDatabaseNamespaces2(BaseDatabaseNamespaces):

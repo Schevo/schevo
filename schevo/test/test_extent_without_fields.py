@@ -51,11 +51,11 @@ class BaseExtentWithoutFields(CreatesSchema):
         assert entity.calc == entity.s.oid
 
 
-class TestExtentWithoutFields1(BaseExtentWithoutFields):
+# class TestExtentWithoutFields1(BaseExtentWithoutFields):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestExtentWithoutFields2(BaseExtentWithoutFields):

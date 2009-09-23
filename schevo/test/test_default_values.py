@@ -40,11 +40,11 @@ class BaseDefaultValues(CreatesSchema):
             assert charlie.gamma == gamma
 
 
-class TestDefaultValues1(BaseDefaultValues):
+# class TestDefaultValues1(BaseDefaultValues):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestDefaultValues2(BaseDefaultValues):

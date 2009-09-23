@@ -124,11 +124,11 @@ class BaseSubclassTransactionCorrectness(CreatesSchema):
         assert tx.s.extent_name == 'Second'
 
 
-class TestHiddenBases1(BaseHiddenBases):
+# class TestHiddenBases1(BaseHiddenBases):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestHiddenBases2(BaseHiddenBases):
@@ -138,11 +138,11 @@ class TestHiddenBases2(BaseHiddenBases):
     format = 2
 
 
-class TestSameNameSubclasses1(BaseSameNameSubclasses):
+# class TestSameNameSubclasses1(BaseSameNameSubclasses):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestSameNameSubclasses2(BaseSameNameSubclasses):
@@ -152,11 +152,11 @@ class TestSameNameSubclasses2(BaseSameNameSubclasses):
     format = 2
 
 
-class TestSubclassTransactionCorrectness1(BaseSubclassTransactionCorrectness):
+# class TestSubclassTransactionCorrectness1(BaseSubclassTransactionCorrectness):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestSubclassTransactionCorrectness2(BaseSubclassTransactionCorrectness):

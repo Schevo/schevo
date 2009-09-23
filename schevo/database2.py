@@ -6,6 +6,7 @@
 import sys
 from schevo.lib import optimize
 
+import operator
 import os
 import random
 
@@ -26,6 +27,7 @@ from schevo.constant import UNASSIGNED
 from schevo.counter import schema_counter
 from schevo import error
 from schevo.entity import Entity
+from schevo.expression import Expression
 from schevo.extent import Extent
 from schevo.field import Entity as EntityField
 from schevo.field import not_fget
@@ -742,16 +744,87 @@ class Database(base.Database):
         extent_map = self._extent_map(extent_name)
         return extent_map['next_oid']
 
-    def _find_entity_oids(self, extent_name, **criteria):
-        """Return list of entity OIDs matching given field value(s)."""
-        assert log(1, extent_name, criteria)
+    def _find_entity_oids(self, extent_name, criterion):
+        """Return sequence of entity OIDs matching given field value(s)."""
+        assert log(1, extent_name, criterion)
+        extent_map = self._extent_map(extent_name)
+        entity_maps = extent_map['entities']
+        # No criterion: return all entities.
+        if criterion is None:
+            assert log(2, 'Return all oids.')
+            return list(entity_maps.keys())
+        # Equality intersection: use optimized lookup.
+        try:
+            criteria = criterion.single_extent_field_equality_criteria()
+        except ValueError:
+            pass
+        else:
+            extent_names = frozenset(key._extent for key in criteria)
+            if len(extent_names) > 1:
+                raise ValueError('Must use fields from same extent.')
+            return self._find_entity_oids_field_equality(
+                extent_name, criteria)
+        # More complex lookup.
+        return self._find_entity_oids_general_criterion(extent_name, criterion)
+
+    def _find_entity_oids_general_criterion(self, extent_name, criterion):
+        if (isinstance(criterion.left, Expression)
+            and isinstance(criterion.right, Expression)
+            ):
+            left_oids = self._find_entity_oids_general_criterion(
+                extent_name, criterion.left)
+            right_oids = self._find_entity_oids_general_criterion(
+                extent_name, criterion.right)
+            return criterion.op(left_oids, right_oids)
+        elif (isinstance(criterion.left, type)
+              and issubclass(criterion.left, base.Field)
+              ):
+            return self._find_entity_oids_field_criterion(
+                extent_name, criterion)
+        else:
+            raise ValueError('Cannot evaluate criterion', criterion)
+
+    def _find_entity_oids_field_criterion(self, extent_name, criterion):
+        extent_map = self._extent_map(extent_name)
+        entity_maps = extent_map['entities']
+        FieldClass, value, op = criterion.left, criterion.right, criterion.op
+        # Make sure extent name matches.
+        if FieldClass._extent.name != extent_name:
+            raise ValueError(
+                'Criterion extent does not match query extent.', criterion)
+        # Optimize for equality and inequality.
+        if op == operator.eq:
+            return set(self._find_entity_oids_field_equality(
+                extent_name, {FieldClass: value}))
+        if op == operator.ne:
+            all = entity_maps.keys()
+            matching = self._find_entity_oids_field_equality(
+                extent_name, {FieldClass: value})
+            return set(all) - set(matching)
+        # Create a writable field to convert the value and get its
+        # _dump'd representation.
+        field_id = extent_map['field_name_id'][FieldClass.name]
+        EntityClass = self._entity_classes[extent_name]
+        FieldClass = EntityClass._field_spec[FieldClass.name]
+        class TemporaryField(FieldClass):
+            readonly = False
+        field = TemporaryField(None)
+        field.set(value)
+        value = field._dump()
+        # Additional operators.
+        # XXX: Brute force for now.
+        if op in (operator.lt, operator.le, operator.gt, operator.ge):
+            results = []
+            append = results.append
+            for oid, entity_map in entity_maps.iteritems():
+                if op(entity_map['fields'].get(field_id, UNASSIGNED), value):
+                    append(oid)
+            return set(results)
+
+    def _find_entity_oids_field_equality(self, extent_name, criteria):
         extent_map = self._extent_map(extent_name)
         entity_maps = extent_map['entities']
         EntityClass = self._entity_classes[extent_name]
-        if not criteria:
-            # Return all of them.
-            assert log(2, 'Return all oids.')
-            return list(entity_maps.keys())
         extent_name_id = self._extent_name_id
         indices = extent_map['indices']
         normalized_index_map = extent_map['normalized_index_map']
@@ -759,21 +832,22 @@ class Database(base.Database):
         field_name_id = extent_map['field_name_id']
         # Convert from field_name:value to field_id:value.
         field_id_value = {}
-        field_spec = EntityClass._field_spec
-        for field_name, value in criteria.iteritems():
+        field_name_value = {}
+        for field_class, value in criteria.iteritems():
+            field_name = field_class.name
             try:
                 field_id = field_name_id[field_name]
             except KeyError:
                 raise error.FieldDoesNotExist(extent_name, field_name)
             # Create a writable field to convert the value and get its
             # _dump'd representation.
-            FieldClass = field_spec[field_name]
-            class TemporaryField(FieldClass):
+            class TemporaryField(field_class):
                 readonly = False
             field = TemporaryField(None)
             field.set(value)
             value = field._dump()
             field_id_value[field_id] = value
+            field_name_value[field_name] = value
         # Get results, using indexes and shortcuts where possible.
         results = []
         field_ids = tuple(sorted(field_id_value))
@@ -783,7 +857,7 @@ class Database(base.Database):
         if len_field_ids == 1:
             field_id = field_ids[0]
             field_name = field_id_name[field_id]
-            value = criteria[field_name]
+            value = field_name_value[field_name]
             if isinstance(value, Entity):
                 # We can take advantage of entity links.
                 entity_map = self._entity_map(value._extent.name, value._oid)

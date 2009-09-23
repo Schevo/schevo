@@ -1174,11 +1174,11 @@ class BaseEvolvesSchemataSkip(EvolvesSchemata):
         assert names == expected
 
 
-class TestEvolveIntraVersion1(BaseEvolveIntraVersion):
+# class TestEvolveIntraVersion1(BaseEvolveIntraVersion):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestEvolveIntraVersion2(BaseEvolveIntraVersion):
@@ -1188,11 +1188,11 @@ class TestEvolveIntraVersion2(BaseEvolveIntraVersion):
     format = 2
 
 
-class TestEvolveInterVersion1(BaseEvolveInterVersion):
+# class TestEvolveInterVersion1(BaseEvolveInterVersion):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestEvolveInterVersion2(BaseEvolveInterVersion):
@@ -1202,11 +1202,11 @@ class TestEvolveInterVersion2(BaseEvolveInterVersion):
     format = 2
 
 
-class TestEvolvesSchemataNoSkip1(BaseEvolvesSchemataNoSkip):
+# class TestEvolvesSchemataNoSkip1(BaseEvolvesSchemataNoSkip):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestEvolvesSchemataNoSkip2(BaseEvolvesSchemataNoSkip):
@@ -1216,11 +1216,11 @@ class TestEvolvesSchemataNoSkip2(BaseEvolvesSchemataNoSkip):
     format = 2
 
 
-class TestEvolvesSchemataSkip1(BaseEvolvesSchemataSkip):
+# class TestEvolvesSchemataSkip1(BaseEvolvesSchemataSkip):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestEvolvesSchemataSkip2(BaseEvolvesSchemataSkip):

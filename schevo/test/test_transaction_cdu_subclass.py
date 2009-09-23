@@ -88,11 +88,11 @@ class BaseTransactionCDUSubclass(CreatesSchema):
         assert tx.x.after == True
 
 
-class TestTransactionCDUSubclass1(BaseTransactionCDUSubclass):
+# class TestTransactionCDUSubclass1(BaseTransactionCDUSubclass):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestTransactionCDUSubclass2(BaseTransactionCDUSubclass):

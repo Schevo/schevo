@@ -49,11 +49,11 @@ class BaseFieldMetadataChanged(CreatesSchema):
         assert tx.f.bar.metadata_changed == False
 
 
-class TestFieldMetadataChanged1(BaseFieldMetadataChanged):
+# class TestFieldMetadataChanged1(BaseFieldMetadataChanged):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestFieldMetadataChanged2(BaseFieldMetadataChanged):

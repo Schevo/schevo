@@ -106,11 +106,11 @@ class BaseEntity(CreatesSchema):
         assert foo2_id not in entity_field_ids
 
 
-class TestEntity1(BaseEntity):
+# class TestEntity1(BaseEntity):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestEntity2(BaseEntity):

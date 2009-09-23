@@ -221,11 +221,11 @@ class BaseQuery(CreatesSchema):
             assert e.field_name == 'integer'
 
 
-class TestQuery1(BaseQuery):
+# class TestQuery1(BaseQuery):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestQuery2(BaseQuery):

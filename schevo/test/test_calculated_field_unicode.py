@@ -41,11 +41,11 @@ class BaseCalculatedUnicode(CreatesSchema):
         assert unicode(thing_view.f.calc_password) == u'(Encrypted)'
 
 
-class TestCalculatedUnicode1(BaseCalculatedUnicode):
+# class TestCalculatedUnicode1(BaseCalculatedUnicode):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestCalculatedUnicode2(BaseCalculatedUnicode):

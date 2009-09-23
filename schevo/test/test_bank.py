@@ -164,11 +164,11 @@ class BaseBank(CreatesSchema):
         assert raises(Exception, db.execute, tx)
 
 
-class TestBank1(BaseBank):
+# class TestBank1(BaseBank):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestBank2(BaseBank):

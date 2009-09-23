@@ -210,7 +210,7 @@ class FindoneFoundMoreThanOne(Exception):
             )
         Exception.__init__(self, message)
         self.extent_name = extent_name
-        self.criteria = criteria.copy()
+        self.criteria = criteria[:]
 
 
 class IndexDoesNotExist(Exception):

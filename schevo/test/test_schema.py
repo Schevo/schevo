@@ -208,11 +208,11 @@ class BaseSchema(CreatesSchema):
             assert sorted(e.overlapping_specs) == [('bar',)]
 
 
-class TestSchema1(BaseSchema):
+# class TestSchema1(BaseSchema):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestSchema2(BaseSchema):

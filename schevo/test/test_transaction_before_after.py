@@ -41,7 +41,7 @@ class BaseTransactionBeforeAfter(CreatesSchema):
 
             def _after_execute(self, db):
                 assert self.x.bar == 12
-    
+
     '''
 
     def test(self):
@@ -56,11 +56,11 @@ class BaseTransactionBeforeAfter(CreatesSchema):
         assert tx.x.bar == 12
 
 
-class TestTransactionBeforeAfter1(BaseTransactionBeforeAfter):
+# class TestTransactionBeforeAfter1(BaseTransactionBeforeAfter):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestTransactionBeforeAfter2(BaseTransactionBeforeAfter):

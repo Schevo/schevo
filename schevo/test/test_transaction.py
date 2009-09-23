@@ -1234,30 +1234,30 @@ class BaseTransaction(CreatesSchema):
         assert tx.x.arbitrary == 6
 
 
-class TestTransaction1(BaseTransaction):
+# class TestTransaction1(BaseTransaction):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
-    def internal_update_entities_1(self, expected):
-        person_entity = db.Person.findone(name='Some person')
-        root = db._root
-        schevo = root['SCHEVO']
-        extent_name_id = schevo['extent_name_id']
-        extents = schevo['extents']
-        Gender_extent_id = extent_name_id['Gender']
-        Person_extent_id = extent_name_id['Person']
-        Gender_extent = extents[Gender_extent_id]
-        Person_extent = extents[Person_extent_id]
-        Gender_field_name_id = Gender_extent['field_name_id']
-        Person_field_name_id = Person_extent['field_name_id']
-        # Check for p.gender having correct field values.
-        p = Person_extent['entities'][person_entity.s.oid]
-        p_fields = p['fields']
-        Person_gender_field_id = Person_field_name_id['gender']
-        p_gender = p_fields[Person_gender_field_id]
-        assert p_gender == (Gender_extent_id, expected.s.oid)
+#     def internal_update_entities_1(self, expected):
+#         person_entity = db.Person.findone(name='Some person')
+#         root = db._root
+#         schevo = root['SCHEVO']
+#         extent_name_id = schevo['extent_name_id']
+#         extents = schevo['extents']
+#         Gender_extent_id = extent_name_id['Gender']
+#         Person_extent_id = extent_name_id['Person']
+#         Gender_extent = extents[Gender_extent_id]
+#         Person_extent = extents[Person_extent_id]
+#         Gender_field_name_id = Gender_extent['field_name_id']
+#         Person_field_name_id = Person_extent['field_name_id']
+#         # Check for p.gender having correct field values.
+#         p = Person_extent['entities'][person_entity.s.oid]
+#         p_fields = p['fields']
+#         Person_gender_field_id = Person_field_name_id['gender']
+#         p_gender = p_fields[Person_gender_field_id]
+#         assert p_gender == (Gender_extent_id, expected.s.oid)
 
 
 class TestTransaction2(BaseTransaction):

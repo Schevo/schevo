@@ -126,15 +126,15 @@ class BaseDatabase(CreatesDatabase):
         assert oid2 == oid + 1
 
 
-class TestDatabase1(BaseDatabase):
+# class TestDatabase1(BaseDatabase):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
-    def test_format_1(self):
-        """A newly-created database will be in database format version 1."""
-        assert self.db.format == 1
+#     def test_format_1(self):
+#         """A newly-created database will be in database format version 1."""
+#         assert self.db.format == 1
 
 
 class TestDatabase2(BaseDatabase):

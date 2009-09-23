@@ -48,11 +48,11 @@ class BaseTransactionRequireChanges(CreatesSchema):
         assert a.foo == 1
 
 
-class TestTransactionRequireChanges1(BaseTransactionRequireChanges):
+# class TestTransactionRequireChanges1(BaseTransactionRequireChanges):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestTransactionRequireChanges2(BaseTransactionRequireChanges):
