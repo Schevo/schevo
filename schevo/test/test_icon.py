@@ -47,11 +47,11 @@ class BaseFsIconMap(CreatesSchema):
         assert loopsegment_png == DEFAULT_PNG
 
 
-class TestFsIconMap1(BaseFsIconMap):
+# class TestFsIconMap1(BaseFsIconMap):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestFsIconMap2(BaseFsIconMap):

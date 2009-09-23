@@ -62,11 +62,11 @@ class BaseExpression(CreatesSchema):
             ValueError, criteria.single_extent_field_equality_criteria)
 
 
-class TestExpression1(BaseExpression):
+# class TestExpression1(BaseExpression):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestExpression2(BaseExpression):

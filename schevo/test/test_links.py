@@ -200,11 +200,11 @@ class BaseLinks(CreatesSchema):
             assert rset == eset
 
 
-class TestLinks1(BaseLinks):
+# class TestLinks1(BaseLinks):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestLinks2(BaseLinks):

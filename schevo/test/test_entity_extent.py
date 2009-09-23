@@ -865,11 +865,11 @@ class BaseEntityExtent(CreatesSchema):
         assert extent_names == expected
 
 
-class TestEntityExtent1(BaseEntityExtent):
+# class TestEntityExtent1(BaseEntityExtent):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestEntityExtent2(BaseEntityExtent):

@@ -509,11 +509,11 @@ class BaseDatabaseDecoration(CreatesSchema):
                db.execute, tx)
 
 
-class TestDecoration1(BaseDecoration):
+# class TestDecoration1(BaseDecoration):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestDecoration2(BaseDecoration):
@@ -523,11 +523,11 @@ class TestDecoration2(BaseDecoration):
     format = 2
 
 
-class TestDatabaseDecoration1(BaseDatabaseDecoration):
+# class TestDatabaseDecoration1(BaseDatabaseDecoration):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestDatabaseDecoration2(BaseDatabaseDecoration):

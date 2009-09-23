@@ -44,11 +44,12 @@ class BaseExtentMethod(CreatesSchema):
         assert not isextentmethod(hotel.x.return_oid)
         assert not isextentmethod(db.schema.E['Hotel'].x_return_oid)
 
-class TestExtentMethod1(BaseExtentMethod):
 
-    include = True
+# class TestExtentMethod1(BaseExtentMethod):
 
-    format = 1
+#     include = True
+
+#     format = 1
 
 
 class TestExtentMethod2(BaseExtentMethod):

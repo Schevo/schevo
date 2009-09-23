@@ -472,11 +472,11 @@ if louie is not None:
                 ]
 
 
-class TestChangeset1(BaseChangeset):
+# class TestChangeset1(BaseChangeset):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestChangeset2(BaseChangeset):
@@ -486,11 +486,11 @@ class TestChangeset2(BaseChangeset):
     format = 2
 
 
-class TestExecuteNotification1(BaseExecuteNotification):
+# class TestExecuteNotification1(BaseExecuteNotification):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestExecuteNotification2(BaseExecuteNotification):
@@ -501,11 +501,11 @@ class TestExecuteNotification2(BaseExecuteNotification):
 
 
 if louie is not None:
-    class TestDistributor1(BaseDistributor):
+#     class TestDistributor1(BaseDistributor):
 
-        include = True
+#         include = True
 
-        format = 1
+#         format = 1
 
 
     class TestDistributor2(BaseDistributor):

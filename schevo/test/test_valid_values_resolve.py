@@ -101,11 +101,11 @@ class BaseValidValuesResolve(CreatesSchema):
         bad = db.execute(db.Bad.t.create(bar=bar_789))
 
 
-class TestValidValuesResolve1(BaseValidValuesResolve):
+# class TestValidValuesResolve1(BaseValidValuesResolve):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestValidValuesResolve2(BaseValidValuesResolve):

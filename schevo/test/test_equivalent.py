@@ -695,7 +695,7 @@ class TestDataNotEquivalentEntity(BaseDataNotEquivalent):
             name = f.string()
 
             _key(name)
-            
+
             _initial = [
                 (u"Faz1", ),
                 (u"Faz2", ),
@@ -722,7 +722,7 @@ class TestDataNotEquivalentEntity(BaseDataNotEquivalent):
             name = f.string()
 
             _key(name)
-            
+
             _initial = [
                 (u"Faz2", ),
                 (u"Faz3", ),

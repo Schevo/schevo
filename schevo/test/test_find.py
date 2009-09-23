@@ -63,11 +63,11 @@ class BaseFind(CreatesSchema):
         assert count(f.people != 5) == 6
 
 
-class TestFind1(BaseFind):
+# class TestFind1(BaseFind):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestFind2(BaseFind):

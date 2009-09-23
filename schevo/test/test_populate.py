@@ -248,11 +248,11 @@ class BasePopulateHidden(CreatesSchema):
         assert db.Foo[2].bof == 5.6
 
 
-class TestPopulateSimple1(BasePopulateSimple):
+# class TestPopulateSimple1(BasePopulateSimple):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestPopulateSimple2(BasePopulateSimple):
@@ -262,11 +262,11 @@ class TestPopulateSimple2(BasePopulateSimple):
     format = 2
 
 
-class TestPopulateComplex1(BasePopulateComplex):
+# class TestPopulateComplex1(BasePopulateComplex):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestPopulateComplex2(BasePopulateComplex):
@@ -276,11 +276,11 @@ class TestPopulateComplex2(BasePopulateComplex):
     format = 2
 
 
-class TestPopulateHidden1(BasePopulateHidden):
+# class TestPopulateHidden1(BasePopulateHidden):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestPopulateHidden2(BasePopulateHidden):

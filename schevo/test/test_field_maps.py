@@ -93,11 +93,11 @@ class BaseFieldMaps(CreatesSchema):
         assert expected == keys
 
 
-class TestFieldMaps1(BaseFieldMaps):
+# class TestFieldMaps1(BaseFieldMaps):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestFieldMaps2(BaseFieldMaps):

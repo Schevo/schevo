@@ -6,7 +6,7 @@
 import sys
 from schevo.lib import optimize
 
-from schevo import database1
+# from schevo import database1
 from schevo import database2
 from schevo.error import (
     DatabaseAlreadyExists, DatabaseDoesNotExist, DatabaseFormatMismatch)
@@ -24,7 +24,7 @@ format_dbclass = {
     None: database2.Database,
 
     # Format-specific database classes.
-    1: database1.Database,
+#     1: database1.Database,
     2: database2.Database,
     }
 

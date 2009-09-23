@@ -52,11 +52,11 @@ class BaseFindAlgorithm(EvolvesSchemata):
         assert db.Foo.find(db.Foo.f.baz == 'abc') == []
 
 
-class TestFindAlgorithm1(BaseFindAlgorithm):
+# class TestFindAlgorithm1(BaseFindAlgorithm):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestFindAlgorithm2(BaseFindAlgorithm):

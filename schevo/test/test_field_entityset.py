@@ -230,41 +230,41 @@ class TestFieldEntitySet2(BaseFieldEntitySet):
     format = 2
 
 
-class TestFieldEntitySet1(BaseTest):
-    """This tests for failure, since EntitySet is not allowed in
-    format 1 databases.
+# class TestFieldEntitySet1(BaseTest):
+#     """This tests for failure, since EntitySet is not allowed in
+#     format 1 databases.
 
-    Create a schema that contains an EntitySet field::
+#     Create a schema that contains an EntitySet field::
 
-        >>> body = '''
-        ...     class Foo(E.Entity):
-        ...
-        ...         name = f.string()
-        ...
-        ...         _key(name)
-        ...
-        ...     class Bar(E.Entity):
-        ...
-        ...         foo_set = f.entity_set('Foo')
-        ...
-        ...     class Bof(E.Entity):
-        ...
-        ...         name = f.string()
-        ...
-        ...         _key(name)
-        ...     '''
+#         >>> body = '''
+#         ...     class Foo(E.Entity):
+#         ...
+#         ...         name = f.string()
+#         ...
+#         ...         _key(name)
+#         ...
+#         ...     class Bar(E.Entity):
+#         ...
+#         ...         foo_set = f.entity_set('Foo')
+#         ...
+#         ...     class Bof(E.Entity):
+#         ...
+#         ...         name = f.string()
+#         ...
+#         ...         _key(name)
+#         ...     '''
 
-    Creating a format 2 database using the schema works fine::
+#     Creating a format 2 database using the schema works fine::
 
-        >>> from schevo.test import DocTest
-        >>> t = DocTest(body, format=2)
+#         >>> from schevo.test import DocTest
+#         >>> t = DocTest(body, format=2)
 
-    However, creating a format 1 database using the schema results in the
-    database engine raising an UnsupportedFieldType error::
+#     However, creating a format 1 database using the schema results in the
+#     database engine raising an UnsupportedFieldType error::
 
-        >>> t = DocTest(body, format=1) #doctest: +ELLIPSIS
-        Traceback (most recent call last):
-          ...
-        UnsupportedFieldType: ...
+#         >>> t = DocTest(body, format=1) #doctest: +ELLIPSIS
+#         Traceback (most recent call last):
+#           ...
+#         UnsupportedFieldType: ...
 
-    """
+#     """

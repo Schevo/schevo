@@ -71,11 +71,11 @@ class BaseTransactionFieldReorder(CreatesSchema):
         assert list(tx.f) == ['field1', 'field3', 'field2']
 
 
-class TestTransactionFieldReorder1(BaseTransactionFieldReorder):
+# class TestTransactionFieldReorder1(BaseTransactionFieldReorder):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestTransactionFieldReorder2(BaseTransactionFieldReorder):

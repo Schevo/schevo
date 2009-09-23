@@ -27,11 +27,11 @@ class BaseOverride(CreatesSchema):
         assert result == expected
 
 
-class TestOverride1(BaseOverride):
+# class TestOverride1(BaseOverride):
 
-    include = True
+#     include = True
 
-    format = 1
+#     format = 1
 
 
 class TestOverride2(BaseOverride):
