@@ -102,20 +102,20 @@ class FieldMeta(type):
     def __eq__(self, other):
         return Expression(self, operator.eq, other)
 
-#     def __ne__(self, other):
-#         return Expression(self, operator.ne, other)
+    def __ne__(self, other):
+        return Expression(self, operator.ne, other)
 
-#     def __lt__(self, other):
-#         return Expression(self, operator.lt, other)
+    def __lt__(self, other):
+        return Expression(self, operator.lt, other)
 
-#     def __le__(self, other):
-#         return Expression(self, operator.le, other)
+    def __le__(self, other):
+        return Expression(self, operator.le, other)
 
-#     def __gt__(self, other):
-#         return Expression(self, operator.gt, other)
+    def __gt__(self, other):
+        return Expression(self, operator.gt, other)
 
-#     def __ge__(self, other):
-#         return Expression(self, operator.ge, other)
+    def __ge__(self, other):
+        return Expression(self, operator.ge, other)
 
 
 class Field(base.Field):

@@ -6,7 +6,7 @@
 import sys
 from schevo.lib import optimize
 
-from operator import and_, eq
+from operator import and_, eq, or_
 
 from schevo.base import Field
 
@@ -20,6 +20,9 @@ class Expression(object):
 
     def __and__(left, right):
         return Expression(left, and_, right)
+
+    def __or__(left, right):
+        return Expression(left, or_, right)
 
     def single_extent_field_equality_criteria(self):
         if (isinstance(self.left, type)
