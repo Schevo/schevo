@@ -32,7 +32,7 @@ def test_backends_dict():
     """Durus and schevo.store backends are always present after Schevo
     is installed."""
     assert 'durus' in backends
-    assert 'duruses' in backends
+    assert 'xdserver' in backends
     assert 'schevostore' in backends
 
 
