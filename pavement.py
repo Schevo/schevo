@@ -139,38 +139,33 @@ else:
         pass
 
 
-    try:
-        import paver.doctools
-    except ImportError:
+    @task
+    @needs(['paver.doctools.cog', 'paver.doctools.html', 'paver.doctools.uncog'])
+    def html():
         pass
-    else:
-        @task
-        @needs(['paver.doctools.cog', 'paver.doctools.html', 'paver.doctools.uncog'])
-        def html():
-            pass
 
 
-        @task
-        @needs('html')
-        def docs():
-            import webbrowser
-            index_file = path('doc/build/html/index.html')
-            webbrowser.open('file://' + index_file.abspath())
+    @task
+    @needs('html')
+    def docs():
+        import webbrowser
+        index_file = path('doc/build/html/index.html')
+        webbrowser.open('file://' + index_file.abspath())
 
 
-        @task
-        def doctests():
-            from paver.doctools import _get_paths
-            import sphinx
-            options.order('sphinx', add_rest=True)
-            paths = _get_paths()
-            sphinxopts = ['', '-b', 'doctest', '-d', paths.doctrees,
-                paths.srcdir, paths.htmldir]
-            ret = dry(
-                "sphinx-build %s" % (" ".join(sphinxopts),), sphinx.main, sphinxopts)
+    @task
+    def doctests():
+        from paver.doctools import _get_paths
+        import sphinx
+        options.order('sphinx', add_rest=True)
+        paths = _get_paths()
+        sphinxopts = ['', '-b', 'doctest', '-d', paths.doctrees,
+            paths.srcdir, paths.htmldir]
+        ret = dry(
+            "sphinx-build %s" % (" ".join(sphinxopts),), sphinx.main, sphinxopts)
 
 
-        @task
-        @needs(['doctests', 'nosetests'])
-        def test():
-            pass
+    @task
+    @needs(['doctests', 'nosetests'])
+    def test():
+        pass
