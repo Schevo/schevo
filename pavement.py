@@ -16,25 +16,6 @@ else:
     from schevo.release import VERSION
 
 
-    DOCVERSION = VERSION
-    DEVELOPMENT = True
-
-
-    # Use branch name if git information is available; otherwise, use
-    # version number from setup_meta.
-    if DEVELOPMENT:
-        try:
-            git_head_path = path('.git/HEAD')
-            contents = git_head_path.open('rU').readline().strip()
-            name, value = contents.split()
-            BRANCH = value.split('/')[-1]
-            if BRANCH != 'master':
-                DOCVERSION += '-' + BRANCH
-        except:
-            pass
-        DOCVERSION += '-dev'
-
-
     setup(
         name='Schevo',
         version=VERSION,
@@ -143,11 +124,6 @@ else:
             endspec='==>',
             endoutput='<==end==>',
         ),
-        publish=Bunch(
-            username='schevo',
-            server='web7.webfaction.com',
-            path='/home2/schevo/schevo_docs/schevo/%s' % DOCVERSION,
-        ),
         sphinx=Bunch(
             docroot='doc',
             builddir='build',
@@ -180,27 +156,6 @@ else:
             import webbrowser
             index_file = path('doc/build/html/index.html')
             webbrowser.open('file://' + index_file.abspath())
-
-
-        @task
-        @needs(['paver.doctools.cog', 'paver.doctools.html', 'paver.doctools.uncog'])
-        @cmdopts([("username=", "u", "Username for remote server"),
-                  ("server=", "s", "Server to publish to"),
-                  ("path=", "p", "Path to publish to")])
-        def publish():
-            src_path = path('doc/build/html') / '.'
-            dest_path = path(options.path) / '.'
-            # Create the remote directory and copy files to it.
-            if options.username:
-                server = '%s@%s' % (options.username, options.server)
-            else:
-                server = options.server
-            if sys.platform == 'win32':
-                sh('plink %s "mkdir -p %s"' % (server, options.path))
-                sh('pscp -r -v -batch %s %s:%s' % (src_path, server, dest_path))
-            else:
-                sh('ssh %s "mkdir -p %s"' % (server, options.path))
-                sh('rsync -zav --delete %s %s:%s' % (src_path, server, dest_path))
 
 
         @task
